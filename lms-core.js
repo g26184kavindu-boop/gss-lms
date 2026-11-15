@@ -4,6 +4,15 @@
 (function () {
     'use strict';
 
+    /* ---------- Favicon (GSS Logo on all LMS pages) ---------- */
+    if (document.head && !document.querySelector('link[rel="icon"], link[rel="shortcut icon"]')) {
+        const icon = document.createElement('link');
+        icon.rel = 'icon';
+        icon.type = 'image/jpeg';
+        icon.href = 'gsspicture.jpg';
+        document.head.appendChild(icon);
+    }
+
     const SUPABASE_URL = 'https://vdglyvehezapesbrovqp.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_t0AeLmN1tQkQLaH5s968eA_KSeFdTGl';
 
