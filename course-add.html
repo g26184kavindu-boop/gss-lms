@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Add - GSS LMS</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="lms-core.js"></script>
+    <script src="lms-auth.js"></script>
+    <script>LMS.guard(['admin', 'super_admin']);</script>
+    <script src="drive-upload.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .custom-scroll::-webkit-scrollbar{width:5px}
+        .custom-scroll::-webkit-scrollbar-track{background:transparent}
+        .custom-scroll::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:10px;transition:background .3s}
+        .custom-scroll::-webkit-scrollbar-thumb:hover{background:#94a3b8}
+    </style>
+</head>
+<body class="bg-gray-50 font-sans flex h-screen overflow-hidden">
+
+<!-- Dynamic Sidebar -->
+<aside class="fixed left-0 top-0 h-screen bg-white shadow-xl z-50 w-20 hover:w-64 transition-all duration-300 ease-in-out flex flex-col justify-between py-6 px-4 group border-r border-gray-100 flex-shrink-0">
+    <div class="space-y-8 flex flex-col h-full overflow-hidden">
+        <div class="flex items-center space-x-3 overflow-hidden flex-shrink-0">
+            <img src="gsspicture.jpg" alt="GSS Logo" class="h-10 w-10 object-contain flex-shrink-0">
+            <span class="font-bold text-stone-800 text-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">GSS LMS</span>
+        </div>
+        <nav id="sidebar-nav" class="space-y-1.5 flex-1 overflow-y-auto overflow-x-hidden pr-1 custom-scroll"></nav>
+    </div>
+    <div class="text-xs text-stone-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap flex-shrink-0">&copy; 2026 GSS Solution</div>
+</aside>
+
+<div class="flex-1 ml-20 p-8 h-full overflow-y-auto">
+    <main class="grid grid-cols-1 md:grid-cols-2 gap-12 items-start max-w-7xl mx-auto">
+
+        <!-- Form Card -->
+        <div class="max-w-xl bg-white p-8 rounded-2xl shadow-sm border border-gray-100 w-full mb-12">
+            <h1 class="text-3xl sm:text-4xl font-semibold text-stone-950 tracking-tight leading-tight mb-2">Add Course</h1>
+            <p class="text-stone-500 text-sm mb-6">Fill out the fields below to register a new course into the system.</p>
+
+            <form id="course-form" class="space-y-5">
+                <!-- Course ID -->
+                <div class="space-y-1.5">
+                    <label for="course-id" class="block text-xs font-semibold uppercase tracking-wider text-stone-700">Course ID <span class="text-rose-500">*</span></label>
+                    <input type="text" id="course-id" required readonly class="w-full px-4 py-2.5 text-sm font-mono text-stone-600 bg-gray-100 border border-gray-300 rounded-xl focus:outline-none cursor-not-allowed">
+                </div>
+
+                <!-- Course Category -->
+                <div class="space-y-1.5">
+                    <label for="course-category" class="block text-xs font-semibold uppercase tracking-wider text-stone-700">Course Category <span class="text-rose-500">*</span></label>
+                    <select id="course-category" required class="w-full px-4 py-2.5 text-sm text-stone-700 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="" disabled selected>Select category</option>
+                        <option value="New">New</option>
+                        <option value="Center Update">Center Update</option>
+                        <option value="Skill">Skill</option>
+                    </select>
+                </div>
+
+                <!-- Course Name -->
+                <div class="space-y-1.5">
+                    <label for="course-name" class="block text-xs font-semibold uppercase tracking-wider text-stone-700">Course Name <span class="text-rose-500">*</span></label>
+                    <input type="text" id="course-name" placeholder="Enter course name" required class="w-full px-4 py-2.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-400">
+                </div>
+
+                <hr class="border-gray-100 my-4">
+
+                <!-- Lesson & Format -->
+                <div class="space-y-4">
+                    <p class="text-stone-800 text-sm font-bold uppercase tracking-wider">Lesson Configuration</p>
+                    <div class="flex flex-col sm:flex-row gap-4 items-start">
+                        <div class="space-y-1.5 flex-1 w-full">
+                            <label for="lesson-title" class="block text-xs font-semibold uppercase tracking-wider text-stone-700">Lesson Title:</label>
+                            <input type="text" id="lesson-title" placeholder="Enter lesson title" class="w-full px-4 py-2.5 text-sm text-stone-700 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div class="space-y-1.5 w-full sm:w-52">
+                            <label for="learning-format" class="block text-xs font-semibold uppercase tracking-wider text-stone-700">Learning Format <span class="text-rose-500">*</span></label>
+                            <select id="learning-format" required class="w-full px-4 py-2.5 text-sm text-stone-700 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="" disabled selected>Select format</option>
+                                <option value="all">All (Video + PDF)</option>
+                                <option value="video">Video Only</option>
+                                <option value="pdf">PDF Only</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dynamic Content Sections -->
+                <div id="content-sections" class="space-y-6 pt-2">
+                    <!-- Video Upload & Checkpoints -->
+                    <div id="video-section" class="p-5 border border-gray-200 rounded-2xl bg-stone-50/50 hidden space-y-4">
+                        <div>
+                            <label for="video-file-input" class="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-2">Upload Video (MP4 / WebM) <span class="text-rose-500">*</span></label>
+                            <input type="file" id="video-file-input" accept="video/mp4,video/webm" class="w-full text-xs text-stone-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                        </div>
+                        <div class="pt-3 border-t border-gray-200 space-y-3">
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-stone-800">Configure 3 Pause Points (5 Questions Per Pause)</h3>
+                            <p class="text-xs text-stone-500">Pause timestamp එකේදී video එක නතර වී ප්‍රශ්න අසයි. වැරදුනහොත් rewind වේ.</p>
+                            <div id="video-checkpoints-container" class="space-y-5 max-h-[500px] overflow-y-auto pr-2 custom-scroll"></div>
+                        </div>
+                    </div>
+
+                    <!-- PDF Upload -->
+                    <div id="pdf-section" class="p-5 border border-gray-200 rounded-2xl bg-stone-50/50 hidden space-y-3">
+                        <label for="pdf-file-input" class="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-2">Upload PDF Document <span class="text-rose-500">*</span></label>
+                        <input type="file" id="pdf-file-input" accept=".pdf" class="w-full text-xs text-stone-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                    </div>
+
+                    <!-- Final MCQ Quiz Section -->
+                    <div id="final-quiz-section" class="p-5 border border-gray-200 rounded-2xl bg-stone-50/50 hidden space-y-4">
+                        <div class="flex justify-between items-center border-b pb-3">
+                            <div>
+                                <h3 class="text-sm font-bold uppercase tracking-wider text-stone-800">Final MCQ Assessment Quiz <span class="text-rose-500">*</span></h3>
+                                <p class="text-xs text-stone-500">ප්‍රශ්නයට අදාළව පින්තූර (Images) එක් කළ හැක.</p>
+                            </div>
+                            <button type="button" id="add-final-quiz-btn" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold transition shadow-sm">+ Add Question</button>
+                        </div>
+
+                        <!-- Marks Setting Box -->
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 bg-blue-50/70 border border-blue-100 rounded-xl">
+                            <div>
+                                <label for="default-marks" class="block text-[11px] font-bold uppercase text-stone-600 mb-1">Marks / Question</label>
+                                <div class="flex gap-2">
+                                    <input type="number" id="default-marks" min="0.5" step="0.5" value="1" class="w-20 px-2 py-1 text-xs border border-gray-300 rounded-lg bg-white">
+                                    <button type="button" id="apply-marks-btn" class="px-2 py-1 text-[11px] font-semibold text-blue-700 bg-white border border-blue-200 hover:bg-blue-100 rounded-lg transition">Apply All</button>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="pass-percent" class="block text-[11px] font-bold uppercase text-stone-600 mb-1">Pass Mark (%)</label>
+                                <input type="number" id="pass-percent" min="1" max="100" value="50" class="w-24 px-2 py-1 text-xs border border-gray-300 rounded-lg bg-white">
+                            </div>
+                            <div class="text-xs text-stone-700 space-y-0.5">
+                                <p>Questions: <b id="sum-q">0</b></p>
+                                <p>Total Marks: <b id="sum-total" class="text-blue-700">0</b></p>
+                                <p>Pass Requires: <b id="sum-pass" class="text-emerald-700">0</b></p>
+                            </div>
+                        </div>
+
+                        <div id="final-quiz-questions-container" class="space-y-5 max-h-[550px] overflow-y-auto pr-2 custom-scroll"></div>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="pt-4 border-t border-gray-100">
+                    <button type="submit" id="submit-btn" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm rounded-xl shadow-sm transition focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        Submit Course
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Sticky Visual Graphic -->
+        <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100 hidden md:block sticky top-8">
+            <img src="training.webp" alt="Course training visualization" class="w-full h-auto max-h-[480px] object-contain mx-auto rounded-xl">
+        </div>
+    </main>
+</div>
+
+<script>
+    const supabaseClient = window.LMS.db;
+    LMS.renderSidebar();
+
+    // Generate next unique numeric Course ID without colliding on deletions
+    window.addEventListener('DOMContentLoaded', async () => {
+        const input = document.getElementById('course-id');
+        try {
+            const { data, error } = await supabaseClient.from('courses').select('id');
+            if (!error && Array.isArray(data)) {
+                const maxNum = data.reduce((max, row) => {
+                    const n = parseInt(String(row.id), 10);
+                    return (!isNaN(n) && /^\d+$/.test(String(row.id).trim())) ? Math.max(max, n) : max;
+                }, 0);
+                input.value = String(maxNum + 1).padStart(4, '0');
+            } else {
+                input.value = '0001';
+            }
+        } catch (_) {
+            input.value = '0001';
+        }
+    });
+
+    const formatDropdown = document.getElementById('learning-format');
+    const videoSection = document.getElementById('video-section');
+    const pdfSection = document.getElementById('pdf-section');
+    const finalQuizSection = document.getElementById('final-quiz-section');
+    const finalQuizContainer = document.getElementById('final-quiz-questions-container');
+
+    (function buildPausePoints() {
+        let html = '';
+        for (let p = 1; p <= 3; p++) {
+            html += `<div class="p-4 border border-blue-200 rounded-xl bg-white space-y-4 pause-block" data-pause="${p}">
+            <div class="flex justify-between items-center bg-blue-50 p-2.5 rounded-lg">
+                <span class="text-xs font-bold uppercase text-blue-700">Pause Point ${p}</span>
+                <div class="flex items-center space-x-2">
+                    <span class="text-xs font-semibold text-stone-600">Timestamp (Sec):</span>
+                    <input type="number" min="1" placeholder="e.g. ${p * 30}" class="w-24 px-2.5 py-1 text-xs border border-gray-300 rounded-lg bg-white pause-time">
+                </div>
+            </div>
+            <div class="space-y-3 pl-2 sm:pl-4 border-l-2 border-stone-100">`;
+            for (let q = 1; q <= 5; q++) {
+                html += `<div class="p-3 border border-gray-200 rounded-lg bg-stone-50/50 space-y-2 cp-box" data-qindex="${q}">
+                <label class="block text-[11px] font-bold uppercase text-stone-600">Question ${q} (for Pause Point ${p})</label>
+                <input type="text" placeholder="Enter question text..." class="w-full px-3 py-1.5 text-xs border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-blue-500 cp-text">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <input type="text" placeholder="Option A" class="px-2 py-1 text-xs border border-gray-200 rounded bg-white cp-opt-a">
+                    <input type="text" placeholder="Option B" class="px-2 py-1 text-xs border border-gray-200 rounded bg-white cp-opt-b">
+                    <input type="text" placeholder="Option C" class="px-2 py-1 text-xs border border-gray-200 rounded bg-white cp-opt-c">
+                    <input type="text" placeholder="Option D" class="px-2 py-1 text-xs border border-gray-200 rounded bg-white cp-opt-d">
+                </div>
+                <select class="w-full px-2 py-1 text-xs border border-gray-300 rounded bg-white cp-ans">
+                    <option value="" disabled selected>Select correct option</option>
+                    <option value="A">Option A</option><option value="B">Option B</option>
+                    <option value="C">Option C</option><option value="D">Option D</option>
+                </select>
+            </div>`;
+            }
+            html += `</div></div>`;
+        }
+        document.getElementById('video-checkpoints-container').innerHTML = html;
+    })();
+
+    function getDefaultMarks() {
+        const v = parseFloat(document.getElementById('default-marks').value);
+        return v > 0 ? v : 1;
+    }
+    const round2 = LMS.round2;
+
+    function updateMarksSummary() {
+        const items = finalQuizContainer.querySelectorAll('.final-quiz-item');
+        let total = 0;
+        items.forEach(it => {
+            const m = parseFloat(it.querySelector('.final-quiz-marks').value);
+            if (m > 0) total += m;
+        });
+        const pct = Math.min(100, Math.max(1, parseFloat(document.getElementById('pass-percent').value) || 50));
+        document.getElementById('sum-q').textContent = items.length;
+        document.getElementById('sum-total').textContent = round2(total);
+        document.getElementById('sum-pass').textContent = `${round2(total * pct / 100)} / ${round2(total)}`;
+    }
+
+    function updateFinalQuizNumbers() {
+        finalQuizContainer.querySelectorAll('.final-quiz-item').forEach((it, i) => {
+            it.querySelector('.final-q-number').innerText = i + 1;
+        });
+        updateMarksSummary();
+    }
+
+    function addFinalQuizQuestionRow() {
+        const div = document.createElement('div');
+        div.className = 'p-5 border border-stone-200 rounded-xl bg-white space-y-3.5 final-quiz-item relative shadow-sm';
+        div.innerHTML = `
+        <div class="flex justify-between items-center border-b pb-2">
+            <label class="block text-xs font-bold uppercase text-blue-600">Question <span class="final-q-number"></span></label>
+            <button type="button" class="remove-q text-rose-500 hover:text-rose-700 text-xs font-semibold">Remove</button>
+        </div>
+
+        <div>
+            <label class="block text-xs font-semibold text-stone-700 mb-1">Question Text <span class="text-rose-500">*</span></label>
+            <input type="text" placeholder="Enter question text..." class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 final-quiz-q">
+        </div>
+
+        <div class="p-3 bg-stone-50 rounded-xl border border-dashed border-stone-300 space-y-2">
+            <div class="flex items-center justify-between">
+                <label class="block text-[11px] font-bold uppercase text-stone-600">Attach Question Image (Optional)</label>
+                <button type="button" class="clear-img text-[10px] text-rose-500 hover:underline hidden">Clear Image</button>
+            </div>
+            <input type="file" accept="image/*" class="w-full text-xs text-stone-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 final-quiz-img">
+            <div class="img-preview-container hidden mt-2">
+                <img src="" alt="Question Image Preview" class="img-preview h-24 w-auto object-contain rounded-lg border border-stone-200 bg-white">
+            </div>
+            <p class="text-[10px] text-stone-400">පින්තූරය බලා පිළිතුරු දිය යුතු ප්‍රශ්න සඳහා Image එකක් අමුණන්න. (Left: Image, Right: Question layout).</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+            <input type="text" placeholder="Option A" class="px-3 py-1.5 text-xs border border-gray-200 rounded-lg final-quiz-opt-a">
+            <input type="text" placeholder="Option B" class="px-3 py-1.5 text-xs border border-gray-200 rounded-lg final-quiz-opt-b">
+            <input type="text" placeholder="Option C" class="px-3 py-1.5 text-xs border border-gray-200 rounded-lg final-quiz-opt-c">
+            <input type="text" placeholder="Option D" class="px-3 py-1.5 text-xs border border-gray-200 rounded-lg final-quiz-opt-d">
+        </div>
+
+        <div class="flex gap-3 items-end pt-1">
+            <div class="flex-1">
+                <label class="block text-[11px] font-semibold text-stone-600 uppercase mb-1">Correct Answer:</label>
+                <select class="w-full px-3 py-1.5 text-xs border border-gray-300 rounded-lg final-quiz-ans">
+                    <option value="" disabled selected>Select correct option</option>
+                    <option value="A">Option A</option><option value="B">Option B</option>
+                    <option value="C">Option C</option><option value="D">Option D</option>
+                </select>
+            </div>
+            <div class="w-24">
+                <label class="block text-[11px] font-semibold text-blue-700 uppercase mb-1">Marks:</label>
+                <input type="number" min="0.5" step="0.5" value="${getDefaultMarks()}" class="w-full px-2 py-1.5 text-xs border border-blue-300 rounded-lg bg-blue-50 final-quiz-marks">
+            </div>
+        </div>`;
+
+        const fileInput = div.querySelector('.final-quiz-img');
+        const previewContainer = div.querySelector('.img-preview-container');
+        const previewImg = div.querySelector('.img-preview');
+        const clearBtn = div.querySelector('.clear-img');
+
+        fileInput.addEventListener('change', function() {
+            const file = this.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    previewImg.src = e.target.result;
+                    previewContainer.classList.remove('hidden');
+                    clearBtn.classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        clearBtn.addEventListener('click', () => {
+            fileInput.value = '';
+            previewImg.src = '';
+            previewContainer.classList.add('hidden');
+            clearBtn.classList.add('hidden');
+        });
+
+        div.querySelector('.remove-q').addEventListener('click', () => { div.remove(); updateFinalQuizNumbers(); });
+        div.querySelector('.final-quiz-marks').addEventListener('input', updateMarksSummary);
+        finalQuizContainer.appendChild(div);
+        updateFinalQuizNumbers();
+    }
+
+    addFinalQuizQuestionRow();
+    document.getElementById('add-final-quiz-btn').addEventListener('click', addFinalQuizQuestionRow);
+    document.getElementById('pass-percent').addEventListener('input', updateMarksSummary);
+    document.getElementById('apply-marks-btn').addEventListener('click', () => {
+        const m = getDefaultMarks();
+        finalQuizContainer.querySelectorAll('.final-quiz-marks').forEach(i => i.value = m);
+        updateMarksSummary();
+    });
+
+    formatDropdown.addEventListener('change', function () {
+        const v = this.value;
+        videoSection.classList.toggle('hidden', !(v === 'all' || v === 'video'));
+        pdfSection.classList.toggle('hidden', !(v === 'all' || v === 'pdf'));
+        finalQuizSection.classList.toggle('hidden', !v);
+    });
+
+    function getCreatorInfo() {
+        const s = LMS.getSession();
+        return {
+            createdBy: s?.gid || s?.user?.user_name || 'Admin',
+            department: s?.user?.department || 'Training'
+        };
+    }
+
+    document.getElementById('course-form').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const submitBtn = document.getElementById('submit-btn');
+        const resetBtn = () => { submitBtn.disabled = false; submitBtn.innerText = 'Submit Course'; };
+        const currentFormat = formatDropdown.value;
+        const newCourseId = document.getElementById('course-id').value.trim();
+        const courseName = document.getElementById('course-name').value.trim();
+        const lesson = document.getElementById('lesson-title').value.trim();
+        const videoFile = document.getElementById('video-file-input').files[0];
+        const pdfFile = document.getElementById('pdf-file-input').files[0];
+
+        const quizDomItems = finalQuizContainer.querySelectorAll('.final-quiz-item');
+        if (!quizDomItems.length) return alert('අවම වශයෙන් quiz ප්‍රශ්නයක් එකක්වත් එකතු කරන්න.');
+
+        let badIndex = 0, qNo = 0;
+        quizDomItems.forEach(item => {
+            qNo++;
+            const question = item.querySelector('.final-quiz-q').value.trim();
+            const opts = ['a', 'b', 'c', 'd'].map(k => item.querySelector('.final-quiz-opt-' + k).value.trim());
+            const ans = item.querySelector('.final-quiz-ans').value;
+            const marks = parseFloat(item.querySelector('.final-quiz-marks').value);
+            if (!question || opts.some(o => !o) || !ans || !(marks > 0)) {
+                badIndex = badIndex || qNo;
+            }
+        });
+        if (badIndex) return alert(`Question ${badIndex}: ප්‍රශ්නය, options 4ම, නිවැරදි පිළිතුර සහ ලකුණු (0ට වැඩි) සම්පූර්ණ කරන්න.`);
+
+        const videoQuestions = [];
+        if (currentFormat === 'video' || currentFormat === 'all') {
+            let badV = '';
+            document.querySelectorAll('.pause-block').forEach(block => {
+                const t = parseInt(block.querySelector('.pause-time').value, 10);
+                const qs = [];
+                block.querySelectorAll('.cp-box').forEach(box => {
+                    const question = box.querySelector('.cp-text').value.trim();
+                    if (!question) return;
+                    const o = ['a', 'b', 'c', 'd'].map(k => box.querySelector('.cp-opt-' + k).value.trim());
+                    const ans = box.querySelector('.cp-ans').value;
+                    if (o.some(x => !x) || !ans) { badV = badV || `Pause Point ${block.dataset.pause}, Question ${box.dataset.qindex}`; return; }
+                    qs.push({ question, options: { A: o[0], B: o[1], C: o[2], D: o[3] }, answer: ans });
+                });
+                if (qs.length && isNaN(t)) badV = badV || `Pause Point ${block.dataset.pause}: Pause Timestamp (Sec) එකක් දමන්න.`;
+                if (qs.length) videoQuestions.push({ pause_point: Number(block.dataset.pause), pause_time: isNaN(t) ? null : t, questions: qs });
+            });
+            if (badV) return alert(`${badV}: options 4ම සහ නිවැරදි පිළිතුර පුරවන්න.`);
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Processing uploads...';
+
+        try {
+            let drive_file_id = '', pdf_url = '';
+
+            if ((currentFormat === 'video' || currentFormat === 'all') && videoFile) {
+                try {
+                    submitBtn.innerText = 'Uploading Video...';
+                    if (window.LMS && typeof LMS.uploadVideo === 'function') {
+                        drive_file_id = await LMS.uploadVideo(videoFile, { onProgress: p => { submitBtn.innerText = `Uploading Video ${p}%`; } });
+                    }
+                } catch (err) {
+                    alert('Video Upload Failed: ' + err.message);
+                    return resetBtn();
+                }
+            }
+
+            if ((currentFormat === 'pdf' || currentFormat === 'all') && pdfFile) {
+                submitBtn.innerText = 'Uploading PDF...';
+                const fileName = `${Date.now()}_${pdfFile.name.replace(/[^a-zA-Z0-9_.-]/g, '_')}`;
+                const { error: upErr } = await supabaseClient.storage.from('course-pdfs').upload(fileName, pdfFile);
+                if (upErr) { alert('PDF Upload Failed: ' + upErr.message); return resetBtn(); }
+                pdf_url = supabaseClient.storage.from('course-pdfs').getPublicUrl(fileName).data.publicUrl;
+            }
+
+            submitBtn.innerText = 'Processing Quiz Images...';
+            const finalQuizzes = [];
+            for (let i = 0; i < quizDomItems.length; i++) {
+                const item = quizDomItems[i];
+                const question = item.querySelector('.final-quiz-q').value.trim();
+                const opts = ['a', 'b', 'c', 'd'].map(k => item.querySelector('.final-quiz-opt-' + k).value.trim());
+                const ans = item.querySelector('.final-quiz-ans').value;
+                const marks = parseFloat(item.querySelector('.final-quiz-marks').value);
+                const imgInput = item.querySelector('.final-quiz-img');
+
+                let questionImageUrl = null;
+                if (imgInput.files && imgInput.files[0]) {
+                    const imgFile = imgInput.files[0];
+                    const imgFileName = `quiz_${newCourseId}_q${i + 1}_${Date.now()}.${imgFile.name.split('.').pop()}`;
+                    const { error: imgErr } = await supabaseClient.storage.from('course-pdfs').upload(imgFileName, imgFile);
+                    if (!imgErr) {
+                        questionImageUrl = supabaseClient.storage.from('course-pdfs').getPublicUrl(imgFileName).data.publicUrl;
+                    } else {
+                        console.warn('Quiz image upload warning:', imgErr.message);
+                    }
+                }
+
+                finalQuizzes.push({
+                    question,
+                    image_url: questionImageUrl,
+                    options: { A: opts[0], B: opts[1], C: opts[2], D: opts[3] },
+                    answer: ans,
+                    marks
+                });
+            }
+
+            const totalMarks = round2(finalQuizzes.reduce((s, q) => s + q.marks, 0));
+            const passPercent = Math.min(100, Math.max(1, parseFloat(document.getElementById('pass-percent').value) || 50));
+            const creator = getCreatorInfo();
+
+            submitBtn.innerText = 'Saving Course to Database...';
+            const { error: insertError } = await supabaseClient.from('courses').insert([{
+                id: newCourseId,
+                category: document.getElementById('course-category').value,
+                name: courseName,
+                lesson: lesson,
+                format: currentFormat.toUpperCase(),
+                drive_file_id: drive_file_id,
+                pdf_file: pdf_url,
+                final_quizzes: finalQuizzes,
+                total_marks: totalMarks,
+                pass_percent: passPercent,
+                created_by: creator.createdBy,
+                department: creator.department,
+                video_questions: videoQuestions
+            }]);
+
+            if (insertError) {
+                alert('Database Insert Failed: ' + insertError.message);
+                return resetBtn();
+            }
+
+            alert(`Course (${newCourseId}) added successfully!\n\nTotal Marks: ${totalMarks}\nPass Mark: ${round2(totalMarks * passPercent / 100)} (${passPercent}%)\n\nQuestions with images will display in Split View!`);
+            window.location.href = `course-view.html?single_course_id=${encodeURIComponent(newCourseId)}`;
+        } catch (err) {
+            console.error(err);
+            alert('An unexpected error occurred: ' + err.message);
+            resetBtn();
+        }
+    });
+</script>
+</body>
+</html>

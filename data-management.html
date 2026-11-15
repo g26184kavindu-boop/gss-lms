@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Management - GSS LMS</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="lms-core.js"></script>
+    <script src="lms-auth.js"></script>
+    <script>LMS.guard(['super_admin']);</script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .custom-scroll::-webkit-scrollbar { width: 5px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: rgba(156, 163, 175, 0.5); border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans flex h-screen overflow-hidden">
+
+<!-- Sidebar Section -->
+<aside class="fixed left-0 top-0 h-screen bg-white shadow-xl z-50 w-20 hover:w-64 transition-all duration-300 ease-in-out flex flex-col justify-between py-6 px-4 group border-r border-gray-100 flex-shrink-0">
+    <div class="space-y-8 flex flex-col h-full overflow-hidden">
+        <div class="flex items-center space-x-3 overflow-hidden flex-shrink-0">
+            <img src="gsspicture.jpg" alt="GSS Logo" class="h-10 w-10 object-contain flex-shrink-0">
+            <span class="font-bold text-stone-800 text-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">GSS LMS</span>
+        </div>
+        <nav id="sidebar-nav" class="space-y-1.5 flex-1 overflow-y-auto overflow-x-hidden pr-1 custom-scroll"></nav>
+    </div>
+    <div class="text-xs text-stone-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap flex-shrink-0">
+        &copy; 2026 GSS Solution
+    </div>
+</aside>
+
+<!-- Main Content Area -->
+<main class="flex-1 ml-20 p-8 overflow-y-auto h-full space-y-8">
+    <header class="flex justify-between items-center">
+        <div>
+            <h1 class="text-3xl font-bold text-stone-900">Data Management</h1>
+            <p class="text-stone-500 text-sm mt-1">Backup database, bulk import data, and manage system logs</p>
+        </div>
+        <span class="px-3 py-1 bg-purple-50 text-purple-700 text-xs font-semibold rounded-full border border-purple-200">Super Admin Only</span>
+    </header>
+
+    <!-- Storage Indicator & Backup / Restore Section -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
+            <div>
+                <h3 class="text-lg font-bold text-stone-900">Supabase Connection Status</h3>
+                <p class="text-stone-500 text-sm mt-1">Live cloud connection status with Supabase database.</p>
+            </div>
+            <div class="my-4">
+                <div class="flex items-center space-x-2">
+                    <span id="db-status-dot" class="h-3 w-3 bg-emerald-500 rounded-full animate-pulse"></span>
+                    <span id="db-status-text" class="text-sm font-semibold text-stone-700">Checking connection...</span>
+                </div>
+            </div>
+            <p class="text-xs text-stone-400">All system courses, QAT records, and logs are synchronized directly with Supabase tables.</p>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
+            <div>
+                <h3 class="text-lg font-bold text-stone-900">Full Database Backup &amp; Restore</h3>
+                <p class="text-stone-500 text-sm mt-1">Download complete database backup or restore from a JSON file.</p>
+            </div>
+            <div class="flex gap-3 mt-4">
+                <button type="button" onclick="downloadFullBackup()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-4 rounded-xl text-sm transition shadow-sm">
+                    Download Backup
+                </button>
+                <label class="flex-1 bg-stone-100 hover:bg-stone-200 text-stone-700 font-semibold py-2.5 px-4 rounded-xl text-sm transition text-center cursor-pointer shadow-sm">
+                    Restore Backup
+                    <input type="file" id="restore-file-input" accept=".json" class="hidden" onchange="restoreFullBackup(event)">
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bulk Import Data Section -->
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+        <h3 class="text-lg font-bold text-stone-900">Bulk Import Data (CSV Upload to Supabase)</h3>
+        <p class="text-stone-500 text-sm mt-1">Select target table and upload a CSV file to import records directly into Supabase.</p>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 items-end">
+            <div>
+                <label for="import-target" class="block text-xs font-semibold text-stone-700 mb-1">Target Table</label>
+                <select id="import-target" class="w-full border border-stone-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="courses">Courses Table</option>
+                    <option value="qats">QATs Table</option>
+                    <option value="qat_completed_courses">Completed Courses Table</option>
+                </select>
+            </div>
+            <div>
+                <label for="csv-import-input" class="block text-xs font-semibold text-stone-700 mb-1">Select CSV File</label>
+                <input type="file" id="csv-import-input" accept=".csv" class="w-full text-xs text-stone-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+            </div>
+            <div>
+                <button type="button" onclick="handleCSVImport()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-4 rounded-xl text-sm transition">
+                    Import to Database
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Activity Logs -->
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+        <div class="flex justify-between items-center mb-4">
+            <div>
+                <h3 class="text-lg font-bold text-stone-900">System Activity Logs (Audit Trail)</h3>
+                <p class="text-stone-500 text-sm">Recent data management actions performed.</p>
+            </div>
+            <button type="button" onclick="clearActivityLogs()" class="text-xs text-rose-600 hover:underline font-medium">Clear Logs</button>
+        </div>
+        <div class="overflow-x-auto max-h-60 custom-scroll">
+            <table class="w-full text-left text-sm">
+                <thead class="bg-stone-50 text-stone-600 text-xs uppercase sticky top-0">
+                <tr>
+                    <th scope="col" class="p-3">Timestamp</th>
+                    <th scope="col" class="p-3">Action</th>
+                    <th scope="col" class="p-3">Details</th>
+                </tr>
+                </thead>
+                <tbody id="logs-table-body" class="divide-y divide-stone-100 text-stone-700"></tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+<script>
+    const supabaseClient = window.LMS.db;
+    const esc = LMS.esc;
+
+    document.addEventListener("DOMContentLoaded", function() {
+        LMS.renderSidebar();
+        loadActivityLogs();
+        checkConnection();
+    });
+
+    async function checkConnection() {
+        const dot = document.getElementById('db-status-dot');
+        const txt = document.getElementById('db-status-text');
+        try {
+            const { error } = await supabaseClient.from('courses').select('id', { head: true, count: 'exact' });
+            if (error) throw error;
+            dot.className = 'h-3 w-3 bg-emerald-500 rounded-full animate-pulse';
+            txt.textContent = 'Connected to Supabase';
+        } catch (err) {
+            dot.className = 'h-3 w-3 bg-rose-500 rounded-full';
+            txt.textContent = 'Connection error: ' + err.message;
+        }
+    }
+
+    function logActivity(action, details) {
+        const logs = JSON.parse(localStorage.getItem('gss_activity_logs')) || [];
+        const timestamp = new Date().toLocaleString();
+        logs.unshift({ timestamp, action, details });
+        if (logs.length > 50) logs.pop();
+        localStorage.setItem('gss_activity_logs', JSON.stringify(logs));
+        loadActivityLogs();
+    }
+
+    function loadActivityLogs() {
+        const logs = JSON.parse(localStorage.getItem('gss_activity_logs')) || [];
+        const tbody = document.getElementById('logs-table-body');
+        if (!logs.length) {
+            tbody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-stone-400 text-xs">No activity logs recorded yet.</td></tr>`;
+            return;
+        }
+        tbody.innerHTML = logs.map(log => `
+            <tr class="hover:bg-stone-50">
+                <td class="p-3 text-xs text-stone-500 whitespace-nowrap">${esc(log.timestamp)}</td>
+                <td class="p-3 font-semibold text-xs text-blue-600">${esc(log.action)}</td>
+                <td class="p-3 text-xs text-stone-600">${esc(log.details)}</td>
+            </tr>
+        `).join('');
+    }
+
+    function clearActivityLogs() {
+        localStorage.removeItem('gss_activity_logs');
+        loadActivityLogs();
+    }
+
+    async function downloadFullBackup() {
+        try {
+            const [cRes, qRes, aRes, ccRes] = await Promise.all([
+                supabaseClient.from('courses').select('*'),
+                supabaseClient.from('qats').select('*'),
+                supabaseClient.from('admins').select('*'),
+                supabaseClient.from('qat_completed_courses').select('*')
+            ]);
+
+            const backupData = {
+                timestamp: new Date().toISOString(),
+                courses: cRes.data || [],
+                qats: qRes.data || [],
+                admins: aRes.data || [],
+                qat_completed_courses: ccRes.data || []
+            };
+
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `GSS_LMS_Full_Backup_${new Date().toISOString().slice(0, 10)}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+
+            logActivity('Download Backup', 'Full database JSON backup downloaded successfully.');
+        } catch (err) {
+            alert('Backup failed: ' + err.message);
+        }
+    }
+
+    async function restoreFullBackup(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+            try {
+                const data = JSON.parse(e.target.result);
+                if (!confirm("Are you sure you want to restore data from this backup file?")) return;
+
+                if (data.courses?.length) await supabaseClient.from('courses').upsert(data.courses);
+                if (data.qats?.length) await supabaseClient.from('qats').upsert(data.qats);
+                if (data.admins?.length) await supabaseClient.from('admins').upsert(data.admins);
+                if (data.qat_completed_courses?.length) await supabaseClient.from('qat_completed_courses').upsert(data.qat_completed_courses);
+
+                alert("Database restored successfully!");
+                logActivity('Restore Backup', `Database restored from file: ${file.name}`);
+            } catch (err) {
+                alert("Invalid JSON backup file or restore failed: " + err.message);
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    function parseCsvLine(line) {
+        const result = [];
+        let cur = '';
+        let inQuotes = false;
+        for (let i = 0; i < line.length; i++) {
+            const ch = line[i];
+            if (inQuotes) {
+                if (ch === '"' && line[i + 1] === '"') {
+                    cur += '"';
+                    i++;
+                } else if (ch === '"') {
+                    inQuotes = false;
+                } else {
+                    cur += ch;
+                }
+            } else {
+                if (ch === '"') inQuotes = true;
+                else if (ch === ',') { result.push(cur.trim()); cur = ''; }
+                else cur += ch;
+            }
+        }
+        result.push(cur.trim());
+        return result;
+    }
+
+    async function handleCSVImport() {
+        const targetTable = document.getElementById('import-target').value;
+        const fileInput = document.getElementById('csv-import-input');
+        const file = fileInput.files[0];
+
+        if (!file) {
+            alert("Please select a CSV file first!");
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+            try {
+                const text = e.target.result;
+                const rows = text.split(/\r?\n/).filter(r => r.trim() !== '');
+                if (rows.length < 2) {
+                    alert("CSV file is empty or missing headers!");
+                    return;
+                }
+
+                const headers = parseCsvLine(rows[0]);
+                const records = [];
+
+                for (let i = 1; i < rows.length; i++) {
+                    const values = parseCsvLine(rows[i]);
+                    const obj = {};
+                    headers.forEach((h, idx) => {
+                        obj[h] = values[idx] !== undefined && values[idx] !== '' ? values[idx] : null;
+                    });
+                    records.push(obj);
+                }
+
+                const { error } = await supabaseClient.from(targetTable).upsert(records);
+                if (error) throw error;
+
+                alert(`Successfully imported ${records.length} records into table: ${targetTable}`);
+                logActivity('CSV Import', `Imported ${records.length} records into ${targetTable}`);
+                fileInput.value = '';
+            } catch (err) {
+                alert("Import failed: " + err.message);
+            }
+        };
+        reader.readAsText(file);
+    }
+</script>
+</body>
+</html>

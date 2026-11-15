@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QAT Details - GSS LMS</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="lms-core.js"></script>
+    <script src="lms-auth.js"></script>
+    <script>LMS.guard(['admin', 'super_admin']);</script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .custom-scroll::-webkit-scrollbar { width: 5px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; transition: background 0.3s ease; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans flex h-screen overflow-hidden">
+
+<!-- Sidebar Section -->
+<aside class="fixed left-0 top-0 h-screen bg-white shadow-xl z-50 w-20 hover:w-64 transition-all duration-300 ease-in-out flex flex-col justify-between py-6 px-4 group border-r border-gray-100 flex-shrink-0">
+    <div class="space-y-8 flex flex-col h-full overflow-hidden">
+        <div class="flex items-center space-x-3 overflow-hidden flex-shrink-0">
+            <img src="gsspicture.jpg" alt="GSS Logo" class="h-10 w-10 object-contain flex-shrink-0">
+            <span class="font-bold text-stone-800 text-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">GSS LMS</span>
+        </div>
+        <nav id="sidebar-nav" class="space-y-1.5 flex-1 overflow-y-auto overflow-x-hidden pr-1 custom-scroll"></nav>
+    </div>
+    <div class="text-xs text-stone-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap flex-shrink-0">
+        &copy; 2026 GSS Solution
+    </div>
+</aside>
+
+<main class="flex-1 ml-20 p-6 overflow-y-auto h-screen">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header Section -->
+        <div class="flex flex-col md:flex-row justify-between items-center mb-8 bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-800">QAT Details Management</h1>
+                <p class="text-sm text-gray-500 mt-1">Manage QAT details, account access, and course statistics</p>
+            </div>
+            <button type="button" id="add-qat-btn" onclick="openAddModal()" class="hidden mt-4 md:mt-0 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition shadow">
+                + Add New QAT
+            </button>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-500">Total QAT Registered</p>
+                    <h3 id="total-qat-count" class="text-3xl font-bold text-blue-600 mt-2">0</h3>
+                </div>
+                <div class="p-4 bg-blue-50 rounded-full text-blue-600">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-500">Total Completed Courses</p>
+                    <h3 id="total-completed-courses-count" class="text-3xl font-bold text-green-600 mt-2">0</h3>
+                </div>
+                <div class="p-4 bg-green-50 rounded-full text-green-600">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Registered QAT List Table -->
+        <div class="bg-white shadow-sm rounded-xl overflow-hidden border border-gray-200 mb-8">
+            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                <h3 class="text-lg font-bold text-gray-800">Registered QAT List</h3>
+                <span id="role-scope-indicator" class="text-xs text-stone-400 font-medium"></span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                    <tr id="qat-table-header" class="bg-gray-50 text-gray-600 uppercase text-xs tracking-wider">
+                        <th scope="col" class="py-3 px-6">GID</th>
+                        <th scope="col" class="py-3 px-6">Name</th>
+                        <th scope="col" class="py-3 px-6">Email Address</th>
+                        <th scope="col" class="py-3 px-6">Phone Number</th>
+                        <th scope="col" class="py-3 px-6">Join Date</th>
+                        <th scope="col" class="py-3 px-6">Account Status</th>
+                    </tr>
+                    </thead>
+                    <tbody id="qat-table-body" class="divide-y divide-gray-200 text-sm text-gray-700"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Complete Courses Table -->
+        <div class="bg-white shadow-sm rounded-xl overflow-hidden border border-gray-200 mb-12">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-bold text-gray-800">QAT Complete Courses Details</h3>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                    <tr class="bg-gray-50 text-gray-600 uppercase text-xs tracking-wider">
+                        <th scope="col" class="py-3 px-6">GID</th>
+                        <th scope="col" class="py-3 px-6">QAT Name</th>
+                        <th scope="col" class="py-3 px-6">Course ID</th>
+                        <th scope="col" class="py-3 px-6">Course Name</th>
+                        <th scope="col" class="py-3 px-6">Course Starting Date</th>
+                        <th scope="col" class="py-3 px-6">Course Complete Date</th>
+                        <th scope="col" class="py-3 px-6">Status</th>
+                    </tr>
+                    </thead>
+                    <tbody id="completed-courses-table-body" class="divide-y divide-gray-200 text-sm text-gray-700"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Modal for Adding / Editing QAT -->
+<div id="qat-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl max-h-[85vh] overflow-y-auto custom-scroll">
+        <h2 id="modal-title" class="text-xl font-bold text-gray-800 mb-4 sticky top-0 bg-white py-2 z-10">Add New QAT</h2>
+        <form id="qat-form" class="space-y-4">
+            <input type="hidden" id="edit-qat-original-gid" value="">
+
+            <div class="form-row space-y-1.5">
+                <label for="profile-picture" class="block text-xs font-semibold uppercase tracking-wider text-stone-700">Profile Picture</label>
+                <input
+                        type="file"
+                        id="profile-picture"
+                        accept="image/*"
+                        class="w-full text-xs text-stone-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border border-gray-300 rounded-xl p-1.5 bg-white transition">
+            </div>
+
+            <div class="form-row space-y-1.5">
+                <label for="qat-user-name" class="block text-xs font-semibold uppercase tracking-wider text-stone-700">User Name <span class="text-rose-500">*</span></label>
+                <input type="text" id="qat-user-name" placeholder="e.g. kn26184" required class="w-full px-4 py-2.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+
+            <div class="form-row space-y-1.5">
+                <label for="qat-id" class="block text-xs font-semibold uppercase tracking-wider text-stone-700">QAT G ID <span class="text-rose-500">*</span></label>
+                <input type="text" id="qat-id" placeholder="Enter QAT G ID (e.g. G26184)" required class="w-full px-4 py-2.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+
+            <div class="form-row space-y-1.5">
+                <label for="qat-name" class="block text-xs font-semibold uppercase tracking-wider text-stone-700">QAT Name <span class="text-rose-500">*</span></label>
+                <input type="text" id="qat-name" placeholder="Enter full name" required class="w-full px-4 py-2.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+
+            <div class="form-row space-y-1.5">
+                <label for="qat-email" class="block text-xs font-semibold uppercase tracking-wider text-stone-700">Office Mail Address <span class="text-rose-500">*</span></label>
+                <input type="email" id="qat-email" placeholder="g26184.kavindu@gmail.com" required class="w-full px-4 py-2.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+
+            <div class="form-row space-y-1.5">
+                <label for="qat-tel" class="block text-xs font-semibold uppercase tracking-wider text-stone-700">Contact <span class="text-rose-500">*</span></label>
+                <input type="tel" id="qat-tel" placeholder="07XXXXXXXX" required class="w-full px-4 py-2.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+
+            <div class="form-row space-y-1.5">
+                <label for="qat-join-date" class="block text-xs font-semibold uppercase tracking-wider text-stone-700">Join Date <span class="text-rose-500">*</span></label>
+                <input type="date" id="qat-join-date" required class="w-full px-4 py-2.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+
+            <div id="password-group" class="space-y-3 pt-1">
+                <div class="form-row space-y-1.5">
+                    <label for="qat-password" class="block text-xs font-semibold uppercase tracking-wider text-stone-700">
+                        Password <span id="pw-required-star" class="text-rose-500">*</span>
+                    </label>
+                    <input type="password" id="qat-password" placeholder="Enter password" class="w-full px-4 py-2.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <p id="pw-hint" class="text-[11px] text-stone-400">Must be at least 8 characters.</p>
+                </div>
+
+                <div class="form-row space-y-1.5">
+                    <label for="qat-confirm-password" class="block text-xs font-semibold uppercase tracking-wider text-stone-700">Confirm Password</label>
+                    <input type="password" id="qat-confirm-password" placeholder="Confirm password" class="w-full px-4 py-2.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+            </div>
+
+            <div class="flex justify-end space-x-2 mt-6 pt-3 border-t border-gray-100">
+                <button type="button" onclick="closeAddModal()" class="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-xl text-xs font-semibold transition">Cancel</button>
+                <button type="submit" id="save-qat-btn" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold transition shadow-sm">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    const supabaseClient = window.LMS.db;
+    const esc = LMS.esc;
+    const qv = LMS.postgrestVal;
+
+    const currentSession = LMS.getSession();
+    const isSuperAdmin = currentSession && currentSession.role === 'super_admin';
+
+    const qatModal = document.getElementById('qat-modal');
+    const qatForm = document.getElementById('qat-form');
+    const modalTitle = document.getElementById('modal-title');
+    let loadedQatsList = [];
+
+    function applyRolePermissions() {
+        const addBtn = document.getElementById('add-qat-btn');
+        const headerRow = document.getElementById('qat-table-header');
+        const indicator = document.getElementById('role-scope-indicator');
+
+        if (isSuperAdmin) {
+            if (addBtn) addBtn.classList.remove('hidden');
+            if (indicator) indicator.textContent = 'Super Admin Mode (Full Edit & Management Access)';
+            if (!document.getElementById('th-actions')) {
+                headerRow.insertAdjacentHTML('beforeend', '<th scope="col" id="th-actions" class="py-3 px-6 text-center">Actions</th>');
+            }
+        } else {
+            if (addBtn) addBtn.classList.add('hidden');
+            if (indicator) indicator.textContent = 'Admin Mode (View Only)';
+            document.getElementById('th-actions')?.remove();
+        }
+    }
+
+    async function renderQATPage() {
+        const qatTableBody = document.getElementById('qat-table-body');
+        const colSpan = isSuperAdmin ? 7 : 6;
+        qatTableBody.innerHTML = `<tr><td colspan="${colSpan}" class="py-6 text-center text-stone-400">Loading QAT details from Supabase...</td></tr>`;
+
+        try {
+            const { data: qats, error } = await supabaseClient.from('qats').select('*').order('qat_g_id', { ascending: true });
+            if (error) {
+                qatTableBody.innerHTML = `<tr><td colspan="${colSpan}" class="py-6 text-center text-rose-500">Error loading data: ${esc(error.message)}</td></tr>`;
+                return;
+            }
+
+            loadedQatsList = qats || [];
+            document.getElementById('total-qat-count').innerText = loadedQatsList.length;
+
+            if (!loadedQatsList.length) {
+                qatTableBody.innerHTML = `<tr><td colspan="${colSpan}" class="py-6 text-center text-gray-400">No QATs registered yet in Database.</td></tr>`;
+            } else {
+                qatTableBody.innerHTML = loadedQatsList.map(qat => {
+                    const isInactive = qat.status && String(qat.status).toLowerCase() === 'disabled';
+                    const statusBadge = isInactive
+                        ? `<span class="px-2.5 py-1 text-xs font-semibold bg-red-100 text-red-800 rounded-full">Disabled</span>`
+                        : `<span class="px-2.5 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded-full">Active</span>`;
+
+                    let actionsCell = '';
+                    if (isSuperAdmin) {
+                        const toggleLabel = isInactive ? 'Activate' : 'Disable';
+                        const toggleColor = isInactive ? 'text-emerald-700 bg-emerald-50 hover:bg-emerald-100' : 'text-amber-700 bg-amber-50 hover:bg-amber-100';
+                        actionsCell = `
+                            <td class="py-3 px-6 text-center space-x-1 whitespace-nowrap">
+                                <button type="button" data-action="edit" data-gid="${esc(qat.qat_g_id)}" class="text-blue-600 hover:text-blue-800 text-xs font-semibold px-2.5 py-1 bg-blue-50 hover:bg-blue-100 rounded-lg transition">Edit</button>
+                                <button type="button" data-action="toggle" data-gid="${esc(qat.qat_g_id)}" data-status="${esc(qat.status || 'Active')}" class="${toggleColor} text-xs font-semibold px-2.5 py-1 rounded-lg transition">${toggleLabel}</button>
+                                <button type="button" data-action="delete" data-gid="${esc(qat.qat_g_id)}" data-name="${esc(qat.name || qat.qat_g_id)}" class="text-rose-600 hover:text-rose-800 text-xs font-semibold px-2.5 py-1 bg-rose-50 hover:bg-rose-100 rounded-lg transition">Delete</button>
+                            </td>
+                        `;
+                    }
+
+                    return `
+                        <tr class="hover:bg-gray-50/70 transition border-b border-gray-100">
+                            <td class="py-3 px-6 font-mono text-xs font-semibold text-blue-600">${esc(qat.qat_g_id || '-')}</td>
+                            <td class="py-3 px-6 font-medium text-stone-900">${esc(qat.name || '-')}</td>
+                            <td class="py-3 px-6 text-stone-500 text-xs">${esc(qat.email || '-')}</td>
+                            <td class="py-3 px-6 text-stone-500 text-xs">${esc(qat.contact || '-')}</td>
+                            <td class="py-3 px-6 text-stone-500 text-xs">${esc(qat.join_date || '-')}</td>
+                            <td class="py-3 px-6">${statusBadge}</td>
+                            ${actionsCell}
+                        </tr>
+                    `;
+                }).join('');
+            }
+        } catch (err) {
+            console.error(err);
+            qatTableBody.innerHTML = `<tr><td colspan="${colSpan}" class="py-6 text-center text-rose-500">Database error occurred.</td></tr>`;
+        }
+
+        const coursesTableBody = document.getElementById('completed-courses-table-body');
+        coursesTableBody.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-stone-400">Loading completed courses...</td></tr>`;
+
+        try {
+            const { data: completedCourses, error: courseError } = await supabaseClient.from('qat_completed_courses').select('*');
+            if (courseError) {
+                coursesTableBody.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-rose-500">Error loading courses: ${esc(courseError.message)}</td></tr>`;
+                return;
+            }
+
+            document.getElementById('total-completed-courses-count').innerText = completedCourses ? completedCourses.length : 0;
+
+            if (!completedCourses || !completedCourses.length) {
+                coursesTableBody.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-gray-400">No completed courses recorded yet.</td></tr>`;
+            } else {
+                coursesTableBody.innerHTML = completedCourses.map(item => `
+                    <tr class="hover:bg-gray-50/70 transition">
+                        <td class="py-3 px-6 font-mono text-xs font-semibold text-blue-600">${esc(item.gid || '-')}</td>
+                        <td class="py-3 px-6 font-medium text-stone-900">${esc(item.qat_name || '-')}</td>
+                        <td class="py-3 px-6 font-mono text-xs font-semibold text-stone-700">${esc(item.course_id || '-')}</td>
+                        <td class="py-3 px-6 text-stone-700">${esc(item.course_name || '-')}</td>
+                        <td class="py-3 px-6 text-stone-500 text-xs">${esc(item.starting_date || '-')}</td>
+                        <td class="py-3 px-6 text-stone-500 text-xs">${esc(item.complete_date || '-')}</td>
+                        <td class="py-3 px-6">
+                            <span class="px-2.5 py-1 bg-green-50 text-green-700 rounded-full text-xs font-semibold">
+                                ${esc(item.status || 'Completed')}
+                            </span>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    function openAddModal() {
+        if (!isSuperAdmin) return alert('මෙම ක්‍රියාව සිදු කිරීමට අවසර ඇත්තේ Super Admin වරුන්ට පමණි.');
+        modalTitle.innerText = "Add New QAT";
+        qatForm.reset();
+        document.getElementById('edit-qat-original-gid').value = "";
+        document.getElementById('qat-id').readOnly = false;
+        document.getElementById('qat-id').classList.remove('bg-gray-100', 'cursor-not-allowed');
+        document.getElementById('qat-password').required = true;
+        document.getElementById('pw-required-star').classList.remove('hidden');
+        document.getElementById('pw-hint').innerText = "Must be at least 8 characters.";
+        qatModal.classList.remove('hidden');
+    }
+
+    function closeAddModal() {
+        qatModal.classList.add('hidden');
+    }
+
+    function editQat(qatGid) {
+        if (!isSuperAdmin) return alert('QAT ගිණුම් සංස්කරණය කිරීමට අවසර ඇත්තේ Super Admin වරුන්ට පමණි.');
+        const qat = loadedQatsList.find(q => String(q.qat_g_id).trim() === String(qatGid).trim());
+        if (!qat) return alert('QAT record not found!');
+
+        modalTitle.innerText = "Update QAT Details";
+        document.getElementById('edit-qat-original-gid').value = qat.qat_g_id;
+        document.getElementById('qat-user-name').value = qat.user_name || '';
+        document.getElementById('qat-id').value = qat.qat_g_id || '';
+        document.getElementById('qat-id').readOnly = true;
+        document.getElementById('qat-id').classList.add('bg-gray-100', 'cursor-not-allowed');
+
+        document.getElementById('qat-name').value = qat.name || '';
+        document.getElementById('qat-email').value = qat.email || '';
+        document.getElementById('qat-tel').value = qat.contact || '';
+        document.getElementById('qat-join-date').value = qat.join_date || '';
+
+        document.getElementById('qat-password').value = '';
+        document.getElementById('qat-password').required = false;
+        document.getElementById('qat-confirm-password').value = '';
+        document.getElementById('pw-required-star').classList.add('hidden');
+        document.getElementById('pw-hint').innerText = "Password වෙනස් කිරීමට අවශ්‍ය නම් පමණක් මෙතනට ඇතුල් කරන්න.";
+
+        qatModal.classList.remove('hidden');
+    }
+
+    async function toggleQatStatus(qatGid, currentStatus) {
+        if (!isSuperAdmin) return alert('QAT ගිණුම් Disable හෝ Activate කිරීමට අවසර ඇත්තේ Super Admin වරුන්ට පමණි.');
+        const isCurrentlyDisabled = String(currentStatus).toLowerCase() === 'disabled';
+        const newStatus = isCurrentlyDisabled ? 'Active' : 'Disabled';
+        const actionLabel = isCurrentlyDisabled ? 'Activate' : 'Disable';
+
+        if (!confirm(`Are you sure you want to ${actionLabel} QAT account (${qatGid})?`)) return;
+
+        try {
+            const { error } = await supabaseClient.from('qats').update({ status: newStatus }).eq('qat_g_id', qatGid);
+            if (error) throw error;
+            if (newStatus === 'Disabled' && window.LMS?.kick) await LMS.kick(qatGid);
+            alert(`QAT account (${qatGid}) successfully set to ${newStatus}!`);
+            renderQATPage();
+        } catch (err) {
+            alert('Error updating status: ' + err.message);
+        }
+    }
+
+    async function deleteQat(qatGid, qatName) {
+        if (!isSuperAdmin) return alert('QAT ගිණුම් මකා දැමීමට අවසර ඇත්තේ Super Admin වරුන්ට පමණි.');
+        if (!confirm(`Are you sure you want to permanently delete QAT: ${qatName} (${qatGid})? This action cannot be undone.`)) return;
+
+        try {
+            if (window.LMS?.kick) await LMS.kick(qatGid);
+            const { error } = await supabaseClient.from('qats').delete().eq('qat_g_id', qatGid);
+            if (error) throw error;
+            alert(`QAT (${qatGid}) deleted successfully!`);
+            renderQATPage();
+        } catch (err) {
+            alert('Delete Error: ' + err.message);
+        }
+    }
+
+    qatForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        if (!isSuperAdmin) return alert('මෙම ක්‍රියාව සිදු කිරීමට අවසර ඇත්තේ Super Admin වරුන්ට පමණි.');
+
+        const originalGid = document.getElementById('edit-qat-original-gid').value.trim();
+        const isEditing = originalGid !== "";
+        const password = document.getElementById('qat-password').value;
+        const confirmPassword = document.getElementById('qat-confirm-password').value;
+
+        if (password) {
+            if (password !== confirmPassword) return alert("Passwords do not match!");
+            if (password.length < 8) return alert("Password must be at least 8 characters long.");
+        }
+
+        const saveBtn = document.getElementById('save-qat-btn');
+        saveBtn.disabled = true;
+        saveBtn.innerText = isEditing ? 'Updating...' : 'Saving...';
+
+        try {
+            const profilePicInput = document.getElementById('profile-picture');
+            let profilePicUrl = '';
+
+            if (profilePicInput.files && profilePicInput.files[0]) {
+                const file = profilePicInput.files[0];
+                const fileExt = file.name.split('.').pop();
+                const fileName = `qat_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
+                const { error: storageError } = await supabaseClient.storage.from('course-pdfs').upload(fileName, file);
+                if (!storageError) {
+                    profilePicUrl = supabaseClient.storage.from('course-pdfs').getPublicUrl(fileName).data.publicUrl;
+                }
+            }
+
+            const qatData = {
+                user_name: document.getElementById('qat-user-name').value.trim(),
+                name: document.getElementById('qat-name').value.trim(),
+                email: document.getElementById('qat-email').value.trim(),
+                contact: document.getElementById('qat-tel').value.trim(),
+                join_date: document.getElementById('qat-join-date').value
+            };
+
+            if (profilePicUrl) qatData.profile_picture = profilePicUrl;
+            if (password) qatData.password = password;
+
+            if (isEditing) {
+                const { error: updErr } = await supabaseClient.from('qats').update(qatData).eq('qat_g_id', originalGid);
+                if (updErr) throw updErr;
+                alert("QAT details updated successfully!");
+            } else {
+                qatData.qat_g_id = document.getElementById('qat-id').value.trim();
+                qatData.status = 'Active';
+
+                const [admCheck, qatCheck, saCheck] = await Promise.all([
+                    supabaseClient.from('admins').select('id').or(`admin_g_id.ilike.${qv(qatData.qat_g_id)},user_name.ilike.${qv(qatData.user_name)}`),
+                    supabaseClient.from('qats').select('id').or(`qat_g_id.ilike.${qv(qatData.qat_g_id)},user_name.ilike.${qv(qatData.user_name)}`),
+                    supabaseClient.from('super_admin').select('id').or(`super_admin_g_id.ilike.${qv(qatData.qat_g_id)},user_name.ilike.${qv(qatData.user_name)}`)
+                ]);
+
+                if ((admCheck.data?.length > 0) || (qatCheck.data?.length > 0) || (saCheck.data?.length > 0)) {
+                    throw new Error(`මෙම G ID (${qatData.qat_g_id}) හෝ Username එක පද්ධතියේ දැනටමත් භාවිතයේ පවතී.`);
+                }
+
+                if (!password) throw new Error("Password is required for new QAT registration.");
+
+                const { error: insErr } = await supabaseClient.from('qats').insert([qatData]);
+                if (insErr) throw insErr;
+                alert("New QAT registered successfully!");
+            }
+
+            closeAddModal();
+            renderQATPage();
+        } catch (err) {
+            alert("Error: " + err.message);
+        } finally {
+            saveBtn.disabled = false;
+            saveBtn.innerText = 'Save';
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        if (!currentSession) return;
+        LMS.renderSidebar();
+        applyRolePermissions();
+
+        document.getElementById('qat-table-body')?.addEventListener('click', e => {
+            const btn = e.target.closest('button[data-action]');
+            if (!btn) return;
+            const { action, gid, status, name } = btn.dataset;
+            if (action === 'edit') editQat(gid);
+            else if (action === 'toggle') toggleQatStatus(gid, status);
+            else if (action === 'delete') deleteQat(gid, name);
+        });
+
+        renderQATPage();
+    });
+</script>
+</body>
+</html>

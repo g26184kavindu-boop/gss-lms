@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - GSS LMS</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="lms-core.js"></script>
+    <script src="lms-auth.js"></script>
+    <script>LMS.guard(['super_admin', 'admin', 'qat']);</script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .custom-scroll::-webkit-scrollbar { width: 5px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: transparent; border-radius: 10px; transition: background 0.3s ease; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans flex h-screen overflow-hidden">
+
+<aside class="fixed left-0 top-0 h-screen bg-white shadow-xl z-50 w-20 hover:w-64 transition-all duration-300 ease-in-out flex flex-col justify-between py-6 px-4 group border-r border-gray-100 flex-shrink-0">
+    <div class="space-y-8 flex flex-col h-full overflow-hidden">
+        <div class="flex items-center space-x-3 overflow-hidden flex-shrink-0">
+            <img src="gsspicture.jpg" alt="GSS Logo" class="h-10 w-10 object-contain flex-shrink-0">
+            <span class="font-bold text-stone-800 text-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">GSS LMS</span>
+        </div>
+        <nav id="sidebar-nav" class="space-y-1.5 flex-1 overflow-y-auto overflow-x-hidden pr-1 custom-scroll"></nav>
+    </div>
+    <div class="text-xs text-stone-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap flex-shrink-0">
+        &copy; 2026 GSS Solution
+    </div>
+</aside>
+
+<div class="flex-1 ml-20 p-8 h-full overflow-y-auto">
+    <main class="max-w-xl mx-auto bg-white p-8 rounded-xl shadow-sm border border-gray-100 mb-8">
+        <h1 class="font-display text-3xl sm:text-4xl font-semibold text-stone-950 tracking-tight mb-6">Settings</h1>
+
+        <form id="settings-form" class="space-y-6">
+            <div class="space-y-4 border-b border-gray-100 pb-6">
+                <h2 class="text-sm font-bold uppercase tracking-wider text-stone-800">Profile Picture</h2>
+                <div class="flex items-center space-x-4">
+                    <div class="relative">
+                        <img id="profile-preview" src="gsspicture.jpg" alt="Profile Preview" class="w-16 h-16 rounded-full object-cover border border-gray-200 shadow-sm">
+                    </div>
+                    <div class="flex-1">
+                        <label for="settings-profile-pic" class="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-2">Upload New Picture</label>
+                        <input
+                                type="file"
+                                id="settings-profile-pic"
+                                name="settings_profile_pic"
+                                accept="image/*"
+                                class="w-full text-sm text-stone-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border border-gray-300 rounded-lg bg-white transition">
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-4 border-b border-gray-100 pb-6">
+                <h2 class="text-sm font-bold uppercase tracking-wider text-stone-800">Privacy Settings</h2>
+
+                <div class="form-row space-y-2">
+                    <label for="profile-visibility" class="block text-xs font-semibold uppercase tracking-wider text-stone-700">
+                        Profile Details Visibility
+                    </label>
+                    <select
+                            id="profile-visibility"
+                            name="profile_visibility"
+                            class="w-full px-4 py-3 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition">
+                        <option value="public">Public (Everyone can see)</option>
+                        <option value="admins-only">Admins Only</option>
+                        <option value="private">Private (Only Me)</option>
+                    </select>
+                </div>
+
+                <div class="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                    <span class="text-xs font-semibold uppercase tracking-wider text-stone-700">Show Online Status</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="online-status-toggle" name="online_status" aria-label="Show Online Status" class="sr-only peer" checked>
+                        <span class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="space-y-4 border-b border-gray-100 pb-6">
+                <h2 class="text-sm font-bold uppercase tracking-wider text-stone-800">Change Password</h2>
+
+                <div class="form-row space-y-2">
+                    <label for="current-password" class="block text-xs font-semibold uppercase tracking-wider text-stone-700">Current Password
+                        <span class="text-rose-500">*</span>
+                    </label>
+                    <input
+                            type="password"
+                            id="current-password"
+                            name="current_password"
+                            placeholder="Enter current password"
+                            class="w-full px-4 py-3 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition">
+                </div>
+
+                <div class="form-row space-y-2">
+                    <label for="new-password" class="block text-xs font-semibold uppercase tracking-wider text-stone-700">New Password
+                        <span class="text-rose-500">*</span>
+                    </label>
+                    <input
+                            type="password"
+                            id="new-password"
+                            name="new_password"
+                            placeholder="Enter new password"
+                            class="w-full px-4 py-3 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition">
+                </div>
+
+                <div class="form-row space-y-2">
+                    <label for="confirm-password" class="block text-xs font-semibold uppercase tracking-wider text-stone-700">Confirm New Password
+                        <span class="text-rose-500">*</span>
+                    </label>
+                    <input
+                            type="password"
+                            id="confirm-password"
+                            placeholder="Confirm new password"
+                            class="w-full px-4 py-3 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition">
+                </div>
+            </div>
+
+            <div>
+                <button type="submit" id="save-settings-btn" class="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-sm transition duration-200">
+                    Save Changes
+                </button>
+            </div>
+        </form>
+    </main>
+
+    <section class="max-w-xl mx-auto bg-white p-8 rounded-xl shadow-sm border border-gray-100 mb-12">
+        <div class="space-y-4">
+            <h2 class="text-sm font-bold uppercase tracking-wider text-stone-800">Help &amp; Support / Feedback</h2>
+
+            <div class="form-row space-y-2">
+                <label for="issue-type" class="block text-xs font-semibold uppercase tracking-wider text-stone-700">
+                    Issue Type / Request
+                </label>
+                <select
+                        id="issue-type"
+                        class="w-full px-4 py-3 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition">
+                    <option value="support">Support Ticket (General Help)</option>
+                    <option value="bug">Report a Bug / Error</option>
+                    <option value="feedback">System Feedback / Suggestion</option>
+                </select>
+            </div>
+
+            <div class="form-row space-y-2">
+                <label for="support-message" class="block text-xs font-semibold uppercase tracking-wider text-stone-700">
+                    Describe Your Issue / Message <span class="text-rose-500">*</span>
+                </label>
+                <textarea
+                        id="support-message"
+                        name="support_message"
+                        rows="4"
+                        placeholder="Please describe the problem or feedback in detail..."
+                        class="w-full px-4 py-3 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition resize-none"></textarea>
+            </div>
+            <div class="form-row space-y-2">
+                <label for="support-screenshot" class="block text-xs font-semibold uppercase tracking-wider text-stone-700">
+                    Attach Screenshot (Optional)
+                </label>
+                <input
+                        type="file"
+                        id="support-screenshot"
+                        accept="image/*"
+                        class="w-full text-sm text-stone-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-gray-100 file:text-stone-700 hover:file:bg-gray-200 border border-gray-300 rounded-lg bg-white transition">
+            </div>
+
+            <button
+                    type="button"
+                    id="send-ticket-btn"
+                    class="w-full py-2.5 px-4 bg-stone-800 hover:bg-stone-900 text-white text-sm font-semibold rounded-lg shadow-sm transition duration-200">
+                Submit Support Ticket / Feedback
+            </button>
+        </div>
+    </section>
+</div>
+
+<script>
+    const supabaseClient = window.LMS.db;
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbySGYavrYriNmbs1OHIvtkCaP2y2-a3exXY9Bm0X8gvGgr9T405PzRRoWLTzUvTgvU/exec';
+
+    const profilePicInput = document.getElementById('settings-profile-pic');
+    const profilePreview = document.getElementById('profile-preview');
+    const visibilitySelect = document.getElementById('profile-visibility');
+    const onlineToggle = document.getElementById('online-status-toggle');
+    let uploadedImageBase64 = '';
+
+    function getActiveUserContext() {
+        const sa = JSON.parse(localStorage.getItem('currentSuperAdmin') || 'null');
+        const adm = JSON.parse(localStorage.getItem('currentAdmin') || 'null');
+        const qat = JSON.parse(localStorage.getItem('currentQat') || 'null');
+
+        if (sa && sa.user_name && sa.bootstrap !== true) {
+            return {
+                userData: sa,
+                tableName: 'super_admin',
+                identifierKey: sa.id ? 'id' : (sa.super_admin_g_id ? 'super_admin_g_id' : 'user_name'),
+                identifierVal: sa.id || sa.super_admin_g_id || sa.user_name,
+                storageKey: 'currentSuperAdmin'
+            };
+        }
+        if (adm) {
+            return {
+                userData: adm,
+                tableName: 'admins',
+                identifierKey: adm.id ? 'id' : 'admin_g_id',
+                identifierVal: adm.id || adm.admin_g_id,
+                storageKey: 'currentAdmin'
+            };
+        }
+        if (qat) {
+            return {
+                userData: qat,
+                tableName: 'qats',
+                identifierKey: 'qat_g_id',
+                identifierVal: qat.qat_g_id,
+                storageKey: 'currentQat'
+            };
+        }
+        return null;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        if (window.LMS && typeof LMS.renderSidebar === 'function') {
+            LMS.renderSidebar();
+        }
+        const ctx = getActiveUserContext();
+        if (ctx && ctx.userData) {
+            if (ctx.userData.profile_picture) {
+                profilePreview.src = ctx.userData.profile_picture;
+            }
+            if (ctx.userData.profile_visibility) {
+                visibilitySelect.value = ctx.userData.profile_visibility;
+            }
+            onlineToggle.checked = ctx.userData.show_online_status !== false;
+        }
+    });
+
+    if (profilePicInput) {
+        profilePicInput.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    profilePreview.src = e.target.result;
+                    uploadedImageBase64 = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+
+    const settingsForm = document.getElementById('settings-form');
+    const saveBtn = document.getElementById('save-settings-btn');
+
+    if (settingsForm) {
+        settingsForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const currentPasswordInput = document.getElementById('current-password').value;
+            const newPassword = document.getElementById('new-password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+
+            if (newPassword && newPassword !== confirmPassword) {
+                alert('New passwords do not match!');
+                return;
+            }
+            if (newPassword && newPassword.length < 8) {
+                alert('New password must be at least 8 characters long.');
+                return;
+            }
+
+            const ctx = getActiveUserContext();
+            if (!ctx || !ctx.identifierVal) {
+                alert('No logged-in user found in session! Please login again.');
+                return;
+            }
+
+            saveBtn.innerText = 'Saving...';
+            saveBtn.disabled = true;
+
+            try {
+                const { userData, tableName, identifierKey, identifierVal, storageKey } = ctx;
+                const updateData = {};
+
+                if (newPassword) {
+                    if (String(userData.password ?? '') !== currentPasswordInput) {
+                        alert('Current password is incorrect!');
+                        return;
+                    }
+                    updateData.password = newPassword;
+                }
+
+                if (uploadedImageBase64) {
+                    updateData.profile_picture = uploadedImageBase64;
+                }
+
+                const newOnlineStatus = onlineToggle.checked;
+                const newVisibility = visibilitySelect.value;
+                const privacyChanged =
+                    userData.show_online_status !== newOnlineStatus ||
+                    userData.profile_visibility !== newVisibility;
+
+                userData.show_online_status = newOnlineStatus;
+                userData.profile_visibility = newVisibility;
+
+                if (Object.keys(updateData).length > 0) {
+                    const { error } = await supabaseClient
+                        .from(tableName)
+                        .update(updateData)
+                        .eq(identifierKey, identifierVal)
+                        .select();
+
+                    if (error) {
+                        console.error('Supabase update error:', error);
+                        alert('Database update error: ' + error.message);
+                        return;
+                    }
+                    if (updateData.password) userData.password = updateData.password;
+                    if (updateData.profile_picture) userData.profile_picture = updateData.profile_picture;
+                }
+
+                localStorage.setItem(storageKey, JSON.stringify(userData));
+
+                if (Object.keys(updateData).length > 0 || privacyChanged) {
+                    alert('Settings updated successfully!');
+                    document.getElementById('current-password').value = '';
+                    document.getElementById('new-password').value = '';
+                    document.getElementById('confirm-password').value = '';
+                    uploadedImageBase64 = '';
+                } else {
+                    alert('No changes detected to update.');
+                }
+
+                try {
+                    const formData = new FormData(settingsForm);
+                    formData.append('form_type', 'settings_update');
+                    await fetch(scriptURL, { method: 'POST', mode: 'no-cors', body: formData });
+                } catch (_) {}
+            } catch (error) {
+                console.error('Error!', error);
+                alert('Connection error. Please check your internet connection.');
+            } finally {
+                saveBtn.innerText = 'Save Changes';
+                saveBtn.disabled = false;
+            }
+        });
+    }
+
+    const sendTicketBtn = document.getElementById('send-ticket-btn');
+    if (sendTicketBtn) {
+        sendTicketBtn.addEventListener('click', async function() {
+            const issueType = document.getElementById('issue-type').value;
+            const supportMessage = document.getElementById('support-message').value;
+            const screenshotInput = document.getElementById('support-screenshot');
+
+            if (!supportMessage.trim()) {
+                alert('Please describe your issue or feedback before submitting.');
+                return;
+            }
+
+            sendTicketBtn.innerText = 'Submitting Ticket...';
+            sendTicketBtn.disabled = true;
+
+            const sendData = async (base64String, name) => {
+                const payload = {
+                    form_type: 'support_ticket',
+                    issue_type: issueType,
+                    support_message: supportMessage,
+                    file_data: base64String,
+                    file_name: name
+                };
+
+                try {
+                    const response = await fetch(scriptURL, {
+                        method: 'POST',
+                        body: JSON.stringify(payload)
+                    });
+                    let result = { status: 'success' };
+                    try { result = await response.json(); } catch (_) {}
+
+                    if (result.status === 'success') {
+                        alert('Support ticket and screenshot sent successfully!');
+                        document.getElementById('support-message').value = '';
+                        screenshotInput.value = '';
+                    } else {
+                        alert('Error: ' + (result.message || 'Unable to submit ticket.'));
+                    }
+                } catch (error) {
+                    console.error('Error!', error);
+                    alert('Connection error. Please check your internet connection.');
+                } finally {
+                    sendTicketBtn.innerText = 'Submit Support Ticket / Feedback';
+                    sendTicketBtn.disabled = false;
+                }
+            };
+
+            if (screenshotInput.files.length > 0) {
+                const file = screenshotInput.files[0];
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const base64Content = e.target.result.split(',')[1];
+                    sendData(base64Content, file.name);
+                };
+                reader.readAsDataURL(file);
+            } else {
+                sendData('', '');
+            }
+        });
+    }
+</script>
+
+</body>
+</html>

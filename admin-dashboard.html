@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - GSS LMS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="lms-core.js"></script>
+  <script>LMS.guard(['admin']);</script>
+  <style>.custom-scroll::-webkit-scrollbar{width:5px}.custom-scroll::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:10px}</style>
+</head>
+<body class="bg-gray-50 font-sans flex h-screen overflow-hidden">
+
+<!-- Dynamic Sidebar -->
+<aside class="fixed left-0 top-0 h-screen bg-white shadow-xl z-50 w-20 hover:w-64 transition-all duration-300 flex flex-col justify-between py-6 px-4 group border-r border-gray-100 flex-shrink-0">
+  <div class="space-y-8 flex flex-col h-full overflow-hidden">
+    <div class="flex items-center space-x-3 overflow-hidden flex-shrink-0">
+      <img src="gsspicture.jpg" alt="GSS Logo" class="h-10 w-10 object-contain flex-shrink-0">
+      <span class="font-bold text-stone-800 text-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">GSS LMS</span>
+    </div>
+    <nav id="sidebar-nav" class="space-y-1.5 flex-1 overflow-y-auto overflow-x-hidden pr-1 custom-scroll"></nav>
+  </div>
+  <div class="text-xs text-stone-400 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap flex-shrink-0">&copy; 2026 GSS Solution</div>
+</aside>
+
+<div class="flex-1 ml-20 p-8 overflow-y-auto h-full space-y-8">
+  <header class="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+    <div>
+      <h1 class="text-3xl font-bold text-stone-900">Admin Dashboard</h1>
+      <div class="flex items-center gap-2 mt-1">
+        <span id="admin-dept-badge" class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 border border-blue-200">Department: Training</span>
+        <span class="text-stone-400 text-xs font-mono" id="admin-gid-badge"></span>
+      </div>
+    </div>
+    <p class="text-stone-500 text-sm"><span id="welcome-label"></span>, <span id="welcome-name" class="font-bold text-stone-800"></span></p>
+  </header>
+
+  <!-- Summary Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" id="cards"></div>
+
+  <!-- Course Status Section -->
+  <section class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+    <div class="flex justify-between items-center mb-3">
+      <div>
+        <h3 class="text-lg font-bold text-stone-900">My Courses Status</h3>
+        <p class="text-xs text-stone-400">ඔබ විසින් නිර්මාණය කළ පාඨමාලා සහ ඒවා සම්පූර්ණ කළ ඔබගේ QAT ලා ගණන.</p>
+      </div>
+      <a href="course-add.html" class="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg text-xs font-semibold transition">+ Add New Course</a>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-sm">
+        <thead>
+        <tr class="border-b text-stone-400 text-xs uppercase tracking-wider">
+          <th scope="col" class="pb-3">Course ID</th>
+          <th scope="col" class="pb-3">Course Name</th>
+          <th scope="col" class="pb-3">Created Date</th>
+          <th scope="col" class="pb-3">My QATs Completed</th>
+        </tr>
+        </thead>
+        <tbody id="course-tbody" class="divide-y divide-gray-50">
+        <tr><td colspan="4" class="py-4 text-center text-stone-400 text-sm">Loading courses...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- QAT Performance & Scores Section -->
+  <section class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-4">
+    <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+      <div>
+        <h2 class="text-xl font-bold text-stone-900">My QATs Performance &amp; Scores</h2>
+        <p class="text-stone-500 text-sm">ඔබගේ Course Links හරහා සම්බන්ධ වූ QAT ලාගේ ලකුණු විස්තර.</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <button type="button" onclick="resetFilters()" class="px-3 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-600 text-xs font-semibold rounded-xl transition">Reset</button>
+        <button type="button" onclick="exportToExcel()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl shadow-sm transition">Download Excel</button>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div>
+        <label for="f-qat" class="block text-xs font-semibold text-stone-600 mb-1">Filter by QAT G ID</label>
+        <select id="f-qat" class="w-full border border-stone-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <option value="">All My QAT G IDs</option>
+        </select>
+      </div>
+      <div>
+        <label for="f-course" class="block text-xs font-semibold text-stone-600 mb-1">Filter by Course ID</label>
+        <select id="f-course" class="w-full border border-stone-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <option value="">All My Course IDs</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto max-h-96 custom-scroll border border-stone-100 rounded-xl">
+      <table class="w-full text-left text-sm">
+        <thead class="bg-stone-50 text-stone-600 text-xs uppercase sticky top-0">
+        <tr>
+          <th scope="col" class="p-3">QAT</th>
+          <th scope="col" class="p-3">Course</th>
+          <th scope="col" class="p-3">Score</th>
+          <th scope="col" class="p-3">%</th>
+          <th scope="col" class="p-3">Result</th>
+          <th scope="col" class="p-3">Attempts</th>
+          <th scope="col" class="p-3">Completed On</th>
+        </tr>
+        </thead>
+        <tbody id="perf-tbody" class="divide-y divide-stone-100">
+        <tr><td colspan="7" class="py-4 text-center text-stone-400 text-sm">Loading performance data...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<script>
+  const S = LMS.getSession(), esc = LMS.esc, db = LMS.db, qv = LMS.postgrestVal;
+  const myGid = S?.gid || S?.user?.admin_g_id || '';
+  const myDept = S?.user?.department || 'Training';
+
+  let courses = [], qats = [], done = [], attempts = [], filteredPerfRows = [];
+
+  if (S) {
+    document.getElementById('welcome-label').textContent = LMS.t('welcome');
+    document.getElementById('welcome-name').textContent = S?.name || 'Admin';
+
+    const deptBadge = document.getElementById('admin-dept-badge');
+    if (deptBadge) deptBadge.textContent = `Department: ${myDept}`;
+
+    const gidBadge = document.getElementById('admin-gid-badge');
+    if (gidBadge && myGid) gidBadge.textContent = `• ID: ${myGid}`;
+
+    LMS.renderSidebar();
+  }
+
+  const pctOf = r => {
+    const sc = Number(r.score), tot = Number(r.total_marks);
+    return (r.score == null || isNaN(sc) || !(tot > 0)) ? null : Math.round(sc / tot * 1000) / 10;
+  };
+  const badge = (txt, cls) => `<span class="px-2.5 py-1 text-xs font-semibold ${cls} rounded-full">${esc(txt)}</span>`;
+  const row = html => `<tr class="hover:bg-gray-50/50">${html}</tr>`;
+  const empty = (n, m) => `<tr><td colspan="${n}" class="py-6 text-center text-stone-400 text-sm">${m}</td></tr>`;
+
+  async function load() {
+    if (!S) return;
+    const get = async (q, label) => {
+      try {
+        const r = await q;
+        if (r.error) { console.warn(label, r.error.message); return []; }
+        return r.data || [];
+      } catch (err) {
+        console.warn(label, err.message);
+        return [];
+      }
+    };
+
+    try {
+      courses = await get(
+              db.from('courses')
+                      .select('id, name, created_by, created_at, department')
+                      .eq('created_by', myGid),
+              'courses'
+      );
+
+      const myCourseIds = courses.map(c => String(c.id)).filter(Boolean);
+
+      if (myCourseIds.length > 0 && myGid) {
+        const quotedIds = myCourseIds.map(qv).join(',');
+        done = await get(
+                db.from('qat_completed_courses')
+                        .select('*')
+                        .or(`admin_g_id.eq.${qv(myGid)},course_id.in.(${quotedIds})`),
+                'completed'
+        );
+      } else if (myGid) {
+        done = await get(
+                db.from('qat_completed_courses')
+                        .select('*')
+                        .eq('admin_g_id', myGid),
+                'completed'
+        );
+      } else {
+        done = [];
+      }
+
+      const allQatsData = await get(db.from('qats').select('*'), 'qats');
+      const completedQatGids = new Set(done.map(d => String(d.gid)));
+      qats = allQatsData.filter(q =>
+              String(q.registered_via_admin) === String(myGid) || completedQatGids.has(String(q.qat_g_id))
+      );
+
+      if (myCourseIds.length > 0) {
+        attempts = await get(
+                db.from('qat_quiz_attempts')
+                        .select('gid, course_id, passed')
+                        .in('course_id', myCourseIds),
+                'attempts'
+        );
+      } else {
+        attempts = [];
+      }
+    } catch (e) {
+      console.error('Data loading error:', e);
+    } finally {
+      render();
+    }
+  }
+
+  function render() {
+    const activeQats = qats.filter(q => !q.status || q.status.toLowerCase() === 'active');
+    const scored = done.map(pctOf).filter(v => v !== null);
+    const avg = scored.length ? Math.round(scored.reduce((a, b) => a + b, 0) / scored.length * 10) / 10 + '%' : '-';
+
+    const card = (label, val, color) => `
+      <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+        <p class="text-xs font-semibold uppercase tracking-wider text-stone-500">${label}</p>
+        <h3 class="text-3xl font-extrabold ${color} mt-1">${val}</h3>
+      </div>
+    `;
+
+    const cardsEl = document.getElementById('cards');
+    if (cardsEl) {
+      cardsEl.innerHTML =
+              card('My Created Courses', courses.length, 'text-blue-600') +
+              card('My Enrolled QATs', activeQats.length, 'text-amber-600') +
+              card('Total Completions', done.length, 'text-emerald-600') +
+              card('Average Quiz Score', avg, 'text-purple-600');
+    }
+
+    const courseTbody = document.getElementById('course-tbody');
+    if (courseTbody) {
+      courseTbody.innerHTML = courses.length ? courses.map(c => {
+        const n = new Set(done.filter(d => String(d.course_id) === String(c.id)).map(d => d.gid)).size;
+        const createdDate = c.created_at ? new Date(c.created_at).toLocaleDateString() : '-';
+        return row(`
+          <td class="py-3 font-mono text-xs font-semibold text-blue-600">${esc(c.id)}</td>
+          <td class="py-3 font-medium text-stone-900">${esc(c.name)}</td>
+          <td class="py-3 text-xs text-stone-500">${esc(createdDate)}</td>
+          <td class="py-3">${badge(`${n} Completed`, n ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-100 text-stone-500')}</td>
+        `);
+      }).join('') : empty(4, 'ඔබ තවමත් පාඨමාලා (Courses) සාදා නැත. Add Course වෙත ගොස් නව Course එකක් සාදන්න.');
+    }
+
+    const fill = (id, label, vals) => {
+      const el = document.getElementById(id);
+      if (el) {
+        const curVal = el.value;
+        el.innerHTML = `<option value="">${label}</option>` + vals.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join('');
+        if (vals.includes(curVal)) el.value = curVal;
+      }
+    };
+
+    fill('f-qat', 'All My QAT G IDs', [...new Set(qats.map(q => q.qat_g_id).filter(Boolean))]);
+    fill('f-course', 'All My Course IDs', [...new Set(courses.map(c => c.id).filter(Boolean))]);
+
+    renderPerf();
+  }
+
+  function renderPerf() {
+    const fqEl = document.getElementById('f-qat');
+    const fcEl = document.getElementById('f-course');
+    const fq = fqEl ? fqEl.value.trim() : '';
+    const fc = fcEl ? fcEl.value.trim() : '';
+
+    const rows = done.filter(d => (!fq || String(d.gid) === fq) && (!fc || String(d.course_id) === fc));
+    filteredPerfRows = rows;
+
+    const perfTbody = document.getElementById('perf-tbody');
+    if (!perfTbody) return;
+
+    perfTbody.innerHTML = rows.length ? rows.map(r => {
+      const p = pctOf(r);
+      const n = attempts.filter(a => String(a.gid) === String(r.gid) && String(a.course_id) === String(r.course_id)).length;
+      const res = r.passed === true
+              ? badge('Passed', 'bg-emerald-50 text-emerald-600')
+              : r.passed === false
+                      ? badge('Failed', 'bg-rose-50 text-rose-600')
+                      : '-';
+
+      return row(`
+        <td class="p-3">
+          <span class="font-mono text-xs font-semibold text-blue-600">${esc(r.gid)}</span><br>
+          <span class="text-xs text-stone-600 font-medium">${esc(r.qat_name || 'QAT')}</span>
+        </td>
+        <td class="p-3">
+          <span class="font-mono text-xs font-semibold text-stone-700">${esc(r.course_id)}</span><br>
+          <span class="text-xs text-stone-500 truncate block max-w-xs">${esc(r.course_name || '-')}</span>
+        </td>
+        <td class="p-3 text-xs font-medium">${r.score == null ? '-' : esc(r.score) + ' / ' + esc(r.total_marks)}</td>
+        <td class="p-3 font-bold text-xs text-blue-600">${p === null ? '-' : p + '%'}</td>
+        <td class="p-3">${res}</td>
+        <td class="p-3 text-xs text-stone-600">${n || '1'}</td>
+        <td class="p-3 text-xs text-stone-500">${esc(r.complete_date || '-')}</td>
+      `);
+    }).join('') : empty(7, 'ඔබගේ පාඨමාලා සඳහා මෙතෙක් QAT ප්‍රතිඵල වාර්තා වී නොමැත.');
+  }
+
+  function resetFilters() {
+    const fqEl = document.getElementById('f-qat'); if (fqEl) fqEl.value = '';
+    const fcEl = document.getElementById('f-course'); if (fcEl) fcEl.value = '';
+    renderPerf();
+  }
+
+  function exportToExcel() {
+    const list = filteredPerfRows.length ? filteredPerfRows : done;
+    if (!list.length) return alert('No performance records available to export.');
+    const rows = list.map(r => ({
+      'QAT G ID': r.gid,
+      'QAT Name': r.qat_name || 'QAT',
+      'Course ID': r.course_id,
+      'Course Title': r.course_name || 'N/A',
+      'Score': r.score != null ? `${r.score} / ${r.total_marks}` : '-',
+      'Percentage (%)': pctOf(r) !== null ? `${pctOf(r)}%` : '-',
+      'Result': r.passed ? 'Passed' : 'Failed',
+      'Completed Date': r.complete_date || '-'
+    }));
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), 'My_QAT_Scores');
+    XLSX.writeFile(wb, `Admin_${myGid}_QAT_Scores.xlsx`);
+  }
+
+  document.getElementById('f-qat')?.addEventListener('change', renderPerf);
+  document.getElementById('f-course')?.addEventListener('change', renderPerf);
+
+  load();
+</script>
+</body>
+</html>

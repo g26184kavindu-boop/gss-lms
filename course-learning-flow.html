@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Learning Flow - GSS LMS</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="lms-core.js"></script>
+    <script src="lms-auth.js"></script>
+    <script>LMS.guard(['qat', 'admin', 'super_admin']);</script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 font-sans min-h-screen p-6">
+
+<div class="max-w-4xl mx-auto w-full bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+    <div class="flex justify-between items-center mb-4">
+        <span id="badge" class="text-xs font-semibold px-3 py-1 bg-blue-50 text-blue-700 rounded-full">Course</span>
+        <span id="progress" class="text-xs font-mono text-stone-400"></span>
+    </div>
+    <h1 id="title" class="text-2xl font-bold text-stone-900">Loading Course...</h1>
+    <p id="sub" class="text-stone-600 text-sm mt-1 mb-6"></p>
+
+    <!-- Retake Block Notice -->
+    <div id="retake-blocked-box" class="hidden p-6 bg-amber-50 border border-amber-200 rounded-2xl text-center space-y-3">
+        <div class="w-12 h-12 bg-amber-100 text-amber-700 rounded-full flex items-center justify-center mx-auto text-xl font-bold">🔒</div>
+        <h3 class="text-lg font-bold text-stone-900">පාඨමාලාව දැනටමත් සම්පූර්ණ කර ඇත (Already Completed)</h3>
+        <p id="retake-blocked-msg" class="text-xs text-stone-600 max-w-md mx-auto"></p>
+        <div class="pt-3">
+            <a href="qat-dashboard.html" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-xs transition">Go to Dashboard</a>
+        </div>
+    </div>
+
+    <!-- Active Retake Notice -->
+    <div id="retake-active-box" class="hidden p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 font-semibold mb-4">
+        ⚠️ Retake Mode Active: ඔබගේ Super Admin විසින් මෙම පාඨමාලාව නැවත හැදෑරීමට විශේෂ අවසරයක් ලබා දී ඇත.
+    </div>
+
+    <!-- Step 1: Details -->
+    <div id="step-details" class="hidden space-y-4">
+        <div id="details-info" class="p-5 bg-stone-50 rounded-xl border border-stone-200 text-sm text-stone-700 space-y-2"></div>
+        <p id="preview-note" class="hidden text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3 font-medium">Preview Mode: Admin / Super Admin ගේ ලකුණු සටහන් නොවේ.</p>
+    </div>
+
+    <!-- Step 2: Interactive Video with Mastery Pause Rewind -->
+    <div id="step-video" class="hidden space-y-4">
+        <div id="video-box" class="relative bg-black rounded-xl overflow-hidden aspect-video flex items-center justify-center text-stone-400 text-sm shadow-inner"></div>
+        <div class="p-3 bg-blue-50 border border-blue-100 rounded-xl flex flex-wrap items-center justify-between gap-2 text-xs text-blue-800 font-medium">
+            <span>වීඩියෝව අතරමගදී ප්‍රශ්න අසනු ලැබේ. නිවැරදි පිළිතුර ලබා දීමෙන් පමණක් ඉදිරියට Play වේ.</span>
+            <span id="video-status-text" class="font-bold"></span>
+        </div>
+    </div>
+
+    <!-- Step 3: PDF Document -->
+    <div id="step-pdf" class="hidden space-y-3">
+        <p class="text-sm text-stone-700 font-semibold">මෙම පාඨමාලාවට අදාළ ලේඛනය (PDF) කියවන්න:</p>
+        <div id="pdf-box" class="w-full h-[75vh] bg-white border border-gray-200 rounded-xl overflow-hidden flex items-center justify-center text-stone-400 text-sm shadow-sm"></div>
+    </div>
+
+    <!-- Step 4: Final Quiz -->
+    <div id="step-final-quiz" class="hidden space-y-6">
+        <div class="border-b pb-3">
+            <h3 class="text-lg font-bold text-stone-900">Final Assessment Quiz</h3>
+            <p id="quiz-info" class="text-xs text-stone-500 mt-1">සියලු ප්‍රශ්න වලට පිළිතුරු සපයා අවසානයේ Submit කරන්න.</p>
+        </div>
+        <div id="final-quiz-container" class="space-y-6"></div>
+    </div>
+
+    <!-- Step 5: Result -->
+    <div id="step-result" class="hidden text-center py-8 space-y-4"></div>
+
+    <!-- Navigation Bar -->
+    <div id="nav" class="border-t pt-5 mt-8 flex justify-between items-center">
+        <button type="button" id="back-btn" class="py-2.5 px-5 bg-stone-100 hover:bg-stone-200 text-stone-700 font-semibold rounded-xl text-sm transition">&larr; Back</button>
+        <button type="button" id="next-btn" class="py-2.5 px-6 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-sm transition shadow-sm">Next &rarr;</button>
+    </div>
+</div>
+
+<script>
+    const supabaseClient = window.LMS.db;
+    const esc = LMS.esc;
+    const round2 = LMS.round2;
+
+    const urlParams = new URLSearchParams(location.search);
+    const courseId = urlParams.get('id');
+    const refAdminFromUrl = urlParams.get('ref_admin');
+    const deptFromUrl = urlParams.get('dept');
+
+    const session = LMS.getSession();
+    if (!session) {
+        // Redirect handled by LMS.guard above
+    }
+    const canSave = session?.role === 'qat';
+
+    let course = null, quizzes = [], videoQs = [], steps = [], idx = 0, startedAt = null;
+    let videoEnded = false;
+    let checkpoints = [];
+    const cpQuestionIndices = { 0: 0, 1: 0, 2: 0 };
+
+    function show() {
+        document.querySelectorAll('[id^="step-"]').forEach(el => el.classList.add('hidden'));
+        const s = steps[idx];
+        document.getElementById('step-' + s).classList.remove('hidden');
+        const last = s === 'result';
+        document.getElementById('nav').classList.toggle('hidden', last);
+        document.getElementById('back-btn').classList.toggle('invisible', idx === 0);
+        document.getElementById('next-btn').innerHTML = s === 'details' ? 'Start Learning &rarr;' : s === 'final-quiz' ? 'Submit Quiz &check;' : 'Next &rarr;';
+        document.getElementById('progress').textContent = last ? '' : `Step ${idx + 1} / ${steps.length - 1}`;
+        window.scrollTo(0, 0);
+    }
+
+    document.getElementById('back-btn').addEventListener('click', () => { if (idx > 0) { idx--; show(); } });
+    document.getElementById('next-btn').addEventListener('click', () => {
+        if (steps[idx] === 'video' && canSave && (course.video_url || course.drive_file_id || course.youtube_video_id) && !videoEnded) {
+            return alert('වීඩියෝව සම්පූර්ණයෙන් නරඹා ප්‍රශ්න වලට නිවැරදිව පිළිතුරු දිය යුතුය.');
+        }
+        if (steps[idx] === 'final-quiz') return submitQuiz();
+        if (steps[idx] === 'details') startedAt = new Date().toISOString().split('T')[0];
+        idx++;
+        show();
+    });
+
+    async function loadCourse() {
+        if (!session) return;
+        if (!courseId) { document.getElementById('title').textContent = 'Course ID not found!'; return; }
+
+        if (canSave) {
+            const { data: doneRecord } = await supabaseClient
+                .from('qat_completed_courses')
+                .select('*')
+                .eq('gid', session.gid)
+                .eq('course_id', courseId)
+                .maybeSingle();
+
+            if (doneRecord && doneRecord.passed === true) {
+                if (!doneRecord.retake_allowed) {
+                    document.getElementById('title').textContent = doneRecord.course_name || 'Course Completed';
+                    document.getElementById('retake-blocked-msg').innerHTML = `ඔබ <b>${esc(doneRecord.complete_date || 'මීට පෙර')}</b> දින ලකුණු <b>${esc(doneRecord.score || 0)} / ${esc(doneRecord.total_marks || 0)}</b> ක් ලබාගනිමින් මෙම පාඨමාලාව සාර්ථකව සම්පූර්ණ කර ඇත. නැවත හැදෑරීම සඳහා ඔබගේ දෙපාර්තමේන්තුවේ Super Admin ගේ අවසරය අවශ්‍ය වේ.`;
+                    document.getElementById('retake-blocked-box').classList.remove('hidden');
+                    document.getElementById('nav').classList.add('hidden');
+                    return;
+                } else {
+                    document.getElementById('retake-active-box').classList.remove('hidden');
+                }
+            }
+        }
+
+        const { data, error } = await supabaseClient.from('courses').select('*').eq('id', courseId).maybeSingle();
+        if (error || !data) { document.getElementById('title').textContent = 'Failed to load course details.'; return; }
+
+        course = data;
+        quizzes = Array.isArray(data.final_quizzes) ? data.final_quizzes : [];
+        videoQs = Array.isArray(data.video_questions) ? data.video_questions : [];
+        const f = (data.format || 'ALL').toUpperCase();
+
+        steps = ['details'];
+        if (f !== 'PDF') steps.push('video');
+        if (f !== 'VIDEO') steps.push('pdf');
+        steps.push('final-quiz', 'result');
+
+        const assignedDept = deptFromUrl || course.department || 'Training';
+        const assignedAdmin = refAdminFromUrl || course.created_by || 'Admin';
+
+        document.getElementById('badge').textContent = `Format: ${f} | ${assignedDept} Dept`;
+        document.getElementById('title').textContent = data.name || 'Unnamed Course';
+        document.getElementById('sub').textContent = data.lesson ? `Lesson: ${data.lesson}` : '';
+        const total = quizzes.reduce((s, q) => s + (Number(q.marks) > 0 ? Number(q.marks) : 1), 0);
+
+        document.getElementById('details-info').innerHTML = `
+            <p>Department: <b class="text-blue-700">${esc(assignedDept)}</b></p>
+            <p>Created by Admin: <b class="font-mono text-stone-800">${esc(assignedAdmin)}</b></p>
+            <p>Category: <b>${esc(data.category || '-')}</b></p>
+            <p>Quiz Questions: <b>${quizzes.length}</b> | Total Marks: <b>${round2(total)}</b></p>
+            <p>Pass Mark: <b>${Number(data.pass_percent) || 50}%</b></p>
+        `;
+        document.getElementById('preview-note').classList.toggle('hidden', canSave);
+
+        setupVideo(data);
+        const pdf = data.pdf_file || data.pdf_url;
+        document.getElementById('pdf-box').innerHTML = pdf
+            ? `<iframe title="Course PDF Document" src="${esc(pdf)}#toolbar=0&navpanes=0" class="w-full h-full border-0"></iframe>`
+            : '<p class="text-stone-400">PDF ලේඛනයක් අමුණා නැත.</p>';
+
+        renderFinalQuiz();
+        show();
+    }
+
+    function renderIframeFallback(box, iframeSrc) {
+        box.innerHTML = `<iframe title="Course Video" src="${esc(iframeSrc)}" class="w-full h-full border-0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+        const statusEl = document.getElementById('video-status-text');
+        if (statusEl) {
+            statusEl.innerHTML = `<button type="button" id="mark-watched-btn" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold transition">Mark Video Watched &check;</button>`;
+            document.getElementById('mark-watched-btn').addEventListener('click', function () {
+                videoEnded = true;
+                this.textContent = 'Watched ✓';
+                this.disabled = true;
+                this.className = 'px-3 py-1 bg-emerald-100 text-emerald-700 rounded-lg text-xs font-semibold';
+            });
+        }
+    }
+
+    function setupVideo(data) {
+        const box = document.getElementById('video-box');
+        checkpoints = videoQs.filter(p => p.pause_time != null).sort((a, b) => a.pause_time - b.pause_time);
+
+        if (data.youtube_video_id && !data.video_url) {
+            const ytSrc = `https://www.youtube.com/embed/${encodeURIComponent(data.youtube_video_id)}?rel=0`;
+            renderIframeFallback(box, ytSrc);
+            return;
+        }
+
+        if (!data.video_url && data.drive_file_id) {
+            const drivePreview = `https://drive.google.com/file/d/${encodeURIComponent(data.drive_file_id)}/preview`;
+            renderIframeFallback(box, drivePreview);
+            return;
+        }
+
+        const src = data.video_url || '';
+        if (!src) {
+            box.textContent = 'වීඩියෝවක් අමුණා නැත.';
+            return;
+        }
+
+        box.innerHTML = `
+            <video id="player" class="w-full h-full" controls controlsList="nodownload" playsinline src="${esc(src)}"></video>
+            <div id="cp-overlay" class="hidden absolute inset-0 bg-white/95 backdrop-blur-sm z-30 overflow-y-auto p-6 flex flex-col justify-center"></div>
+        `;
+        const v = document.getElementById('player');
+
+        v.addEventListener('error', () => {
+            if (data.drive_file_id) {
+                renderIframeFallback(box, `https://drive.google.com/file/d/${encodeURIComponent(data.drive_file_id)}/preview`);
+            }
+        });
+
+        v.addEventListener('timeupdate', () => {
+            checkpoints.forEach((cp, ci) => {
+                if (!cp.passed && v.currentTime >= cp.pause_time && !cp.active) {
+                    triggerCheckpoint(v, cp, ci);
+                }
+            });
+        });
+
+        v.addEventListener('ended', () => {
+            const allPassed = checkpoints.every(c => c.passed);
+            if (allPassed) {
+                videoEnded = true;
+                const statusEl = document.getElementById('video-status-text');
+                if (statusEl) statusEl.textContent = 'Video Completed ✓';
+            }
+        });
+    }
+
+    function triggerCheckpoint(v, cp, ci) {
+        cp.active = true;
+        v.pause();
+        if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+
+        const ov = document.getElementById('cp-overlay');
+        const qList = cp.questions || [];
+        if (!qList.length) { cp.passed = true; cp.active = false; v.play(); return; }
+
+        const qIndex = (cpQuestionIndices[ci] || 0) % qList.length;
+        const currentQ = qList[qIndex];
+
+        ov.innerHTML = `
+            <div class="max-w-md mx-auto w-full space-y-4 bg-white p-6 rounded-2xl shadow-xl border border-stone-100">
+                <span class="text-xs font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full">Checkpoint ${ci + 1}</span>
+                <p class="text-sm font-bold text-stone-900">${esc(currentQ.question)}</p>
+                <div class="space-y-2 text-sm text-stone-700">
+                    ${['A', 'B', 'C', 'D'].map(k => `
+                        <label class="flex items-center gap-2 p-2.5 rounded-lg border border-stone-200 hover:bg-stone-50 cursor-pointer transition">
+                            <input type="radio" name="cp_ans" value="${k}" class="text-blue-600">
+                            <span><b>${k})</b> ${esc(currentQ.options?.[k])}</span>
+                        </label>
+                    `).join('')}
+                </div>
+                <p id="cp-feedback" class="text-xs font-semibold hidden"></p>
+                <button type="button" id="cp-submit-btn" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-sm transition">Submit Answer</button>
+            </div>
+        `;
+        ov.classList.remove('hidden');
+
+        document.getElementById('cp-submit-btn').onclick = () => {
+            const selected = ov.querySelector('input[name="cp_ans"]:checked');
+            if (!selected) return alert('කරුණාකර පිළිතුරක් තෝරන්න.');
+
+            const isCorrect = selected.value === currentQ.answer;
+            const fb = document.getElementById('cp-feedback');
+            fb.classList.remove('hidden');
+
+            if (isCorrect) {
+                fb.textContent = '✓ නිවැරදියි! වීඩියෝව ඉදිරියට ධාවනය වේ.';
+                fb.className = 'text-xs font-bold text-emerald-600';
+                cp.passed = true;
+                cp.active = false;
+                setTimeout(() => {
+                    ov.classList.add('hidden');
+                    v.play();
+                }, 1200);
+            } else {
+                cpQuestionIndices[ci] = (cpQuestionIndices[ci] + 1) % qList.length;
+                cp.active = false;
+
+                if (ci === 0) {
+                    fb.textContent = '✗ වැරදියි! වීඩියෝව නැවත මුල සිට ආරම්භ වේ.';
+                    fb.className = 'text-xs font-bold text-rose-600';
+                    setTimeout(() => {
+                        ov.classList.add('hidden');
+                        v.currentTime = 0;
+                        v.play();
+                    }, 1800);
+                } else if (ci === 1) {
+                    const prevTime = checkpoints[0]?.pause_time || 0;
+                    fb.textContent = '✗ වැරදියි! වීඩියෝව පළමු Checkpoint එකෙන් නැවත ධාවනය වේ.';
+                    fb.className = 'text-xs font-bold text-rose-600';
+                    setTimeout(() => {
+                        ov.classList.add('hidden');
+                        v.currentTime = prevTime;
+                        v.play();
+                    }, 1800);
+                } else {
+                    fb.textContent = '✗ වැරදියි! සම්පූර්ණ වීඩියෝව නැවත මුල සිට නැරඹිය යුතුය.';
+                    fb.className = 'text-xs font-bold text-rose-600';
+                    setTimeout(() => {
+                        ov.classList.add('hidden');
+                        v.currentTime = 0;
+                        v.play();
+                    }, 1800);
+                }
+            }
+        };
+    }
+
+    function renderFinalQuiz() {
+        const c = document.getElementById('final-quiz-container');
+        if (!quizzes.length) {
+            c.innerHTML = '<p class="text-stone-400 text-sm">මෙම පාඨමාලාවට Quiz ප්‍රශ්න නැත.</p>';
+            return;
+        }
+
+        c.innerHTML = quizzes.map((q, i) => {
+            const hasImg = !!q.image_url;
+            const marks = Number(q.marks) > 0 ? Number(q.marks) : 1;
+
+            if (hasImg) {
+                return `
+                <div class="p-6 bg-stone-50 rounded-2xl border border-stone-200 grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                    <div class="rounded-xl overflow-hidden border border-stone-200 bg-white flex items-center justify-center max-h-80 shadow-inner">
+                        <img src="${esc(q.image_url)}" alt="Question ${i + 1} visual" class="w-full h-full object-contain max-h-72 p-2">
+                    </div>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-start">
+                            <h4 class="text-sm font-bold text-stone-900">Q${i + 1}: ${esc(q.question)}</h4>
+                            <span class="text-xs font-semibold px-2 py-0.5 bg-blue-100 text-blue-700 rounded-md">${marks} mark(s)</span>
+                        </div>
+                        <div class="space-y-2 text-sm text-stone-700">
+                            ${['A', 'B', 'C', 'D'].map(k => `
+                                <label class="flex items-center gap-2 p-2.5 rounded-lg border border-stone-200 bg-white hover:bg-stone-100 cursor-pointer transition">
+                                    <input type="radio" name="fq_${i}" value="${k}" class="text-blue-600">
+                                    <span><b>${k})</b> ${esc(q.options?.[k])}</span>
+                                </label>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>`;
+            } else {
+                return `
+                <div class="p-5 bg-stone-50 rounded-xl border border-stone-200 space-y-3">
+                    <div class="flex justify-between items-center">
+                        <h4 class="text-sm font-bold text-stone-900">Q${i + 1}: ${esc(q.question)}</h4>
+                        <span class="text-xs font-semibold px-2 py-0.5 bg-blue-100 text-blue-700 rounded-md">${marks} mark(s)</span>
+                    </div>
+                    <div class="space-y-2 text-sm text-stone-700">
+                        ${['A', 'B', 'C', 'D'].map(k => `
+                            <label class="flex items-center gap-2 p-2.5 rounded-lg border border-stone-200 bg-white hover:bg-stone-100 cursor-pointer transition">
+                                <input type="radio" name="fq_${i}" value="${k}" class="text-blue-600">
+                                <span><b>${k})</b> ${esc(q.options?.[k])}</span>
+                            </label>
+                        `).join('')}
+                    </div>
+                </div>`;
+            }
+        }).join('');
+    }
+
+    async function submitQuiz() {
+        let score = 0, total = 0, missing = 0;
+        quizzes.forEach((q, i) => {
+            const m = Number(q.marks) > 0 ? Number(q.marks) : 1;
+            total += m;
+            const sel = document.querySelector(`input[name="fq_${i}"]:checked`);
+            if (!sel) missing++;
+            else if (sel.value === q.answer) score += m;
+        });
+        if (missing) return alert(`පිළිතුරු නොදුන් ප්‍රශ්න ${missing}ක් ඇත.`);
+
+        score = round2(score);
+        total = round2(total);
+        const pct = total ? round2(score / total * 100) : 100;
+        const passMark = Number(course.pass_percent) || 50;
+        const passed = pct >= passMark;
+
+        idx = steps.indexOf('result');
+        const el = document.getElementById('step-result');
+        el.innerHTML = passed
+            ? `<div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-3xl">✓</div>
+               <h2 class="text-2xl font-bold text-stone-900 mt-2">Congratulations, you passed!</h2>`
+            : `<div class="w-16 h-16 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto text-3xl">✗</div>
+               <h2 class="text-2xl font-bold text-stone-900 mt-2">ඔබ සමත් වූයේ නැත</h2>`;
+
+        el.innerHTML += `
+            <p class="text-stone-700 mt-2">Score: <b>${score} / ${total}</b> (${pct}%) | Pass Mark: <b>${passMark}%</b></p>
+            <p id="save-msg" class="text-xs text-stone-500 mt-1"></p>
+            <div class="flex gap-3 justify-center pt-4">
+                ${passed ? '' : '<button type="button" onclick="location.reload()" class="py-2.5 px-6 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-xl text-sm transition">Try Again</button>'}
+                <a href="course-view.html" class="py-2.5 px-6 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-sm transition">Back to Courses</a>
+            </div>
+        `;
+        show();
+
+        const msg = document.getElementById('save-msg');
+        if (!canSave) return;
+
+        const gid = session.gid;
+        try {
+            await supabaseClient.from('qat_quiz_attempts').insert([{
+                gid: gid,
+                course_id: String(course.id),
+                passed: passed
+            }]);
+        } catch (_) {}
+
+        if (!passed) return;
+
+        const refAdmin = refAdminFromUrl || course.created_by || 'Admin';
+        const courseDept = deptFromUrl || course.department || 'Training';
+        const today = new Date().toISOString().split('T')[0];
+
+        try {
+            const payload = {
+                gid: gid,
+                qat_name: session.name,
+                course_id: String(course.id),
+                course_name: course.name,
+                admin_g_id: refAdmin,
+                department: courseDept,
+                starting_date: startedAt || today,
+                complete_date: today,
+                status: 'Completed',
+                score: score,
+                total_marks: total,
+                passed: true,
+                retake_allowed: false
+            };
+
+            const { data: existing } = await supabaseClient
+                .from('qat_completed_courses')
+                .select('id')
+                .eq('gid', gid)
+                .eq('course_id', String(course.id))
+                .maybeSingle();
+
+            if (existing && existing.id) {
+                const { error: updErr } = await supabaseClient
+                    .from('qat_completed_courses')
+                    .update(payload)
+                    .eq('id', existing.id);
+                if (updErr) throw updErr;
+            } else {
+                const { error: insErr } = await supabaseClient
+                    .from('qat_completed_courses')
+                    .insert([payload]);
+                if (insErr) throw insErr;
+            }
+
+            await supabaseClient.from('qats').update({
+                department: courseDept,
+                registered_via_admin: refAdmin,
+                registered_via_course: String(course.id)
+            }).eq('qat_g_id', gid);
+
+            msg.textContent = `ප්‍රතිඵලය සාර්ථකව ${courseDept} දෙපාර්තමේන්තුව යටතේ සටහන් විය.`;
+            msg.className = 'text-xs text-emerald-600';
+        } catch (err) {
+            console.error('Save error:', err);
+            msg.textContent = 'Save Error: ' + err.message;
+            msg.className = 'text-xs text-rose-600';
+        }
+    }
+
+    loadCourse();
+</script>
+</body>
+</html>

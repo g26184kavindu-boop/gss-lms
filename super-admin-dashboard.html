@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Admin Dashboard - GSS LMS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="lms-core.js"></script>
+    <script>LMS.guard(['super_admin']);</script>
+    <style>
+        .custom-scroll::-webkit-scrollbar{width:5px}
+        .custom-scroll::-webkit-scrollbar-track{background:transparent}
+        .custom-scroll::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:10px}
+    </style>
+</head>
+<body class="bg-gray-50 font-sans flex h-screen overflow-hidden">
+
+<aside class="fixed left-0 top-0 h-screen bg-white shadow-xl z-50 w-20 hover:w-64 transition-all duration-300 ease-in-out flex flex-col justify-between py-6 px-4 group border-r border-gray-100 flex-shrink-0">
+    <div class="space-y-8 flex flex-col h-full overflow-hidden">
+        <div class="flex items-center space-x-3 overflow-hidden flex-shrink-0">
+            <img src="gsspicture.jpg" alt="GSS Logo" class="h-10 w-10 object-contain flex-shrink-0">
+            <span class="font-bold text-stone-800 text-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">GSS LMS</span>
+        </div>
+        <nav id="sidebar-nav" class="space-y-1.5 flex-1 overflow-y-auto overflow-x-hidden pr-1 custom-scroll"></nav>
+    </div>
+    <div class="text-xs text-stone-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap flex-shrink-0">&copy; 2026 GSS Solution</div>
+</aside>
+
+<div class="flex-1 ml-20 p-8 overflow-y-auto h-full space-y-8">
+    <header class="flex flex-col md:flex-row justify-between md:items-center gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-stone-900">Super Admin Dashboard</h1>
+            <div class="flex items-center gap-2 mt-1">
+                <span id="super-dept-badge" class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-purple-100 text-purple-800 border border-purple-200">Scope: General</span>
+                <span class="text-stone-400 text-xs">&bull; GSS Global System Solution</span>
+            </div>
+        </div>
+        <div class="flex flex-wrap items-center gap-3">
+            <p class="text-stone-500 text-sm">Welcome back, <span id="welcome-name" class="font-bold text-stone-800">Super Admin</span></p>
+            <button type="button" onclick="openHandoverModal()" class="inline-flex items-center space-x-1.5 px-3 py-1.5 text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg transition shadow-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+                <span>Handover Role</span>
+            </button>
+            <button type="button" onclick="openPwModal()" class="inline-flex items-center space-x-1.5 px-3 py-1.5 text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                <span>Change Password</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
+            <div class="flex items-center space-x-4">
+                <div class="p-4 bg-blue-50 text-blue-600 rounded-xl">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                </div>
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-stone-500">Department Courses</p>
+                    <h3 id="total-courses-count" class="text-3xl font-extrabold text-stone-900 mt-1">0</h3>
+                </div>
+            </div>
+            <div class="mt-4 pt-3 border-t border-gray-100 flex justify-end">
+                <a href="course-view.html" class="text-xs font-semibold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition">View Courses &rsaquo;</a>
+            </div>
+        </div>
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
+            <div class="flex items-center space-x-4">
+                <div class="p-4 bg-emerald-50 text-emerald-600 rounded-xl">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                </div>
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-stone-500">Department Admins</p>
+                    <h3 id="total-admins-count" class="text-3xl font-extrabold text-stone-900 mt-1">0</h3>
+                </div>
+            </div>
+            <div class="mt-4 pt-3 border-t border-gray-100 flex justify-end">
+                <a href="admin-details.html" class="text-xs font-semibold text-emerald-600 hover:text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-lg transition">View Admins &rsaquo;</a>
+            </div>
+        </div>
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
+            <div class="flex items-center space-x-4">
+                <div class="p-4 bg-amber-50 text-amber-600 rounded-xl">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                </div>
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-stone-500">Enrolled QATs</p>
+                    <h3 id="total-qats-count" class="text-3xl font-extrabold text-stone-900 mt-1">0</h3>
+                </div>
+            </div>
+            <div class="mt-4 pt-3 border-t border-gray-100 flex justify-end">
+                <a href="qat-details.html" class="text-xs font-semibold text-amber-600 hover:text-amber-700 bg-amber-50 hover:bg-amber-100 px-3 py-1.5 rounded-lg transition">View QATs &rsaquo;</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- General Super Admin Exclusive: Retake Audit Log Section -->
+    <div id="general-retake-audit-section" class="hidden bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-4">
+        <div class="flex justify-between items-center border-b pb-3">
+            <div>
+                <h3 class="text-lg font-bold text-stone-900">Course Retake Audit Log (විශේෂ අවසර වාර්තාව)</h3>
+                <p class="text-xs text-stone-500">Department Super Admin වරුන් විසින් QAT ලාට Course Retake කිරීමට ලබා දුන් සියලු අවසරයන්.</p>
+            </div>
+            <span class="px-2.5 py-1 text-xs font-semibold bg-purple-50 text-purple-700 rounded-full border border-purple-200">General Super Admin Only</span>
+        </div>
+        <div class="overflow-x-auto max-h-60 custom-scroll">
+            <table class="w-full text-left text-sm">
+                <thead><tr class="border-b text-stone-400 text-xs uppercase tracking-wider">
+                    <th scope="col" class="pb-2">Date / Time</th><th scope="col" class="pb-2">Department</th><th scope="col" class="pb-2">Granted By (Super Admin)</th><th scope="col" class="pb-2">QAT G ID &amp; Name</th><th scope="col" class="pb-2">Course</th>
+                </tr></thead>
+                <tbody id="retake-audit-tbody" class="divide-y divide-gray-50">
+                <tr><td colspan="5" class="py-4 text-center text-stone-400 text-xs">Loading audit logs...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- QAT Performance & Score Details -->
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-6">
+        <div>
+            <h2 class="text-xl font-bold text-stone-900">QAT Performance &amp; Retake Management</h2>
+            <p class="text-stone-500 text-sm mt-1">Review QAT completion scores and manage course retake permissions.</p>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+                <label for="super-filter-qat-gid" class="block text-xs font-semibold text-stone-700 mb-1">QAT G ID</label>
+                <select id="super-filter-qat-gid" class="w-full border border-stone-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"><option value="">All QAT G IDs</option></select>
+            </div>
+            <div>
+                <label for="super-filter-admin-gid" class="block text-xs font-semibold text-stone-700 mb-1">Admin G ID</label>
+                <select id="super-filter-admin-gid" class="w-full border border-stone-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"><option value="">All Admin G IDs</option></select>
+            </div>
+            <div>
+                <label for="super-filter-course-id" class="block text-xs font-semibold text-stone-700 mb-1">Course ID</label>
+                <select id="super-filter-course-id" class="w-full border border-stone-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"><option value="">All Course IDs</option></select>
+            </div>
+        </div>
+        <div class="flex flex-wrap gap-3 justify-end items-center pt-2">
+            <button type="button" onclick="resetSuperFilters()" class="px-4 py-2 text-xs font-semibold text-stone-600 bg-stone-100 hover:bg-stone-200 rounded-xl transition">Reset Filters</button>
+            <button type="button" onclick="applySuperScoreFilters()" class="px-5 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-sm transition">Apply Filter</button>
+            <button type="button" onclick="downloadSuperExcel()" class="px-4 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-sm transition">Download Excel</button>
+        </div>
+        <div class="overflow-x-auto max-h-80 custom-scroll border border-stone-100 rounded-xl">
+            <table class="w-full text-left text-sm border-collapse">
+                <thead class="bg-stone-50 text-stone-600 text-xs uppercase sticky top-0 border-b border-stone-100"><tr>
+                    <th scope="col" class="p-3">QAT G ID</th>
+                    <th scope="col" class="p-3">COURSE ID</th>
+                    <th scope="col" class="p-3">COURSE TITLE</th>
+                    <th scope="col" class="p-3 font-bold text-blue-600">SCORE (%)</th>
+                    <th scope="col" class="p-3">STATUS</th>
+                    <th scope="col" class="p-3 text-center">RETAKE ACTION</th>
+                </tr></thead>
+                <tbody id="super-score-tbody" class="divide-y divide-stone-100 text-stone-700"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Change Password Modal -->
+<div id="pw-modal" role="dialog" aria-modal="true" aria-labelledby="pw-modal-title" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+        <div class="flex justify-between items-center border-b pb-3">
+            <h2 id="pw-modal-title" class="text-lg font-bold text-stone-900">Change Super Admin Password</h2>
+            <button type="button" onclick="closePwModal()" aria-label="Close modal" class="text-stone-400 hover:text-stone-600 text-xl font-bold">&times;</button>
+        </div>
+        <form id="pw-form" class="space-y-3">
+            <div>
+                <label for="sa-current-pw" class="block text-xs font-semibold text-stone-700 mb-1">Current Password</label>
+                <input type="password" id="sa-current-pw" required class="w-full px-3 py-2 text-sm border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+                <label for="sa-new-pw" class="block text-xs font-semibold text-stone-700 mb-1">New Password (min 8 chars)</label>
+                <input type="password" id="sa-new-pw" minlength="8" required class="w-full px-3 py-2 text-sm border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+                <label for="sa-confirm-pw" class="block text-xs font-semibold text-stone-700 mb-1">Confirm New Password</label>
+                <input type="password" id="sa-confirm-pw" minlength="8" required class="w-full px-3 py-2 text-sm border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button type="button" onclick="closePwModal()" class="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-semibold rounded-xl transition">Cancel</button>
+                <button type="submit" id="pw-save-btn" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-xl transition">Update Password</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Handover Role Modal -->
+<div id="handover-modal" role="dialog" aria-modal="true" aria-labelledby="handover-modal-title" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+        <div class="flex justify-between items-center border-b pb-3">
+            <h2 id="handover-modal-title" class="text-lg font-bold text-stone-900">Handover Super Admin Role</h2>
+            <button type="button" onclick="closeHandoverModal()" aria-label="Close modal" class="text-stone-400 hover:text-stone-600 text-xl font-bold">&times;</button>
+        </div>
+        <p class="text-xs text-stone-500">Select a registered Admin in your department scope to promote and transfer Super Admin credentials.</p>
+        <form id="handover-form" class="space-y-3">
+            <div>
+                <label for="handover-admin-select" class="block text-xs font-semibold text-stone-700 mb-1">Target Admin</label>
+                <select id="handover-admin-select" required class="w-full px-3 py-2 text-sm border border-stone-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="" disabled selected>Select an Admin</option>
+                </select>
+            </div>
+            <div>
+                <label for="handover-password" class="block text-xs font-semibold text-stone-700 mb-1">Confirm Your Password</label>
+                <input type="password" id="handover-password" required placeholder="Enter your current password" class="w-full px-3 py-2 text-sm border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button type="button" onclick="closeHandoverModal()" class="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-semibold rounded-xl transition">Cancel</button>
+                <button type="submit" id="handover-submit-btn" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-xl transition">Confirm Handover</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    const supabaseClient = window.LMS.db;
+    let globalCoursesData = [], globalQatsData = [], globalAdminsData = [], globalCompletedData = [];
+    let filteredScoreData = [];
+    let loggedSuperAdminDept = 'General';
+    let currentSession = null;
+    let currentSessionUser = null;
+
+    const esc = LMS.esc;
+    const pctOf = r => {
+        const sc = Number(r.score), tot = Number(r.total_marks);
+        return (r.score == null || isNaN(sc) || !(tot > 0)) ? null : Math.round(sc / tot * 100);
+    };
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        LMS.renderSidebar();
+        try {
+            currentSession = LMS.getSession();
+            currentSessionUser = currentSession?.user;
+            if (currentSession && currentSession.name) {
+                document.getElementById('welcome-name').textContent = currentSession.name;
+            }
+            loggedSuperAdminDept = currentSessionUser?.department || 'General';
+
+            const badge = document.getElementById('super-dept-badge');
+            if (badge) {
+                if (loggedSuperAdminDept === 'General' || loggedSuperAdminDept === 'All') {
+                    badge.textContent = 'Scope: All Departments (General Super Admin)';
+                    badge.className = 'px-2.5 py-0.5 text-xs font-semibold rounded-full bg-purple-100 text-purple-800 border border-purple-200';
+                    document.getElementById('general-retake-audit-section').classList.remove('hidden');
+                    loadRetakeAuditLogs();
+                } else {
+                    badge.textContent = `Scope: ${loggedSuperAdminDept} Department`;
+                    badge.className = 'px-2.5 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 border border-blue-200';
+                }
+            }
+        } catch (e) { console.warn(e); }
+
+        document.getElementById('super-score-tbody')?.addEventListener('click', e => {
+            const btn = e.target.closest('button[data-action="grant-retake"]');
+            if (!btn) return;
+            grantRetakeAccess(btn.dataset.id, btn.dataset.gid, btn.dataset.qname, btn.dataset.cid, btn.dataset.cname);
+        });
+
+        await fetchSuperAdminDataFromDB();
+    });
+
+    async function fetchSuperAdminDataFromDB() {
+        try {
+            const aRes = await supabaseClient.from('admins').select('*');
+            const allAdmins = aRes.data || [];
+
+            if (loggedSuperAdminDept !== 'General' && loggedSuperAdminDept !== 'All') {
+                globalAdminsData = allAdmins.filter(a => (a.department || 'Training').toLowerCase() === loggedSuperAdminDept.toLowerCase());
+            } else {
+                globalAdminsData = allAdmins;
+            }
+
+            const cRes = await supabaseClient.from('courses').select('*');
+            const allCourses = cRes.data || [];
+            if (loggedSuperAdminDept !== 'General' && loggedSuperAdminDept !== 'All') {
+                const adminGids = new Set(globalAdminsData.map(a => String(a.admin_g_id)));
+                globalCoursesData = allCourses.filter(c => adminGids.has(String(c.created_by)) || (c.department && c.department.toLowerCase() === loggedSuperAdminDept.toLowerCase()));
+            } else {
+                globalCoursesData = allCourses;
+            }
+
+            const qRes = await supabaseClient.from('qats').select('*');
+            globalQatsData = qRes.data || [];
+
+            const courseIds = new Set(globalCoursesData.map(c => String(c.id)));
+            const ccRes = await supabaseClient.from('qat_completed_courses').select('*');
+            const allCc = ccRes.data || [];
+
+            if (loggedSuperAdminDept !== 'General' && loggedSuperAdminDept !== 'All') {
+                globalCompletedData = allCc.filter(c => courseIds.has(String(c.course_id)));
+            } else {
+                globalCompletedData = allCc;
+            }
+
+            document.getElementById('total-courses-count').textContent = globalCoursesData.length;
+            document.getElementById('total-admins-count').textContent = globalAdminsData.length;
+            document.getElementById('total-qats-count').textContent = globalQatsData.length;
+
+            populateSuperDropdowns();
+            filteredScoreData = [...globalCompletedData];
+            renderScoreTable(globalCompletedData);
+        } catch (err) {
+            console.error('Fetch error:', err);
+        }
+    }
+
+    function renderScoreTable(data) {
+        const tbody = document.getElementById('super-score-tbody');
+        if (!tbody) return;
+
+        if (!data || !data.length) {
+            tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-stone-400 text-xs">No completion records found in this scope.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = data.map(r => {
+            const p = pctOf(r);
+            const isRetakeActive = r.retake_allowed === true;
+            const retakeBtn = isRetakeActive
+                ? `<span class="px-2.5 py-1 text-xs font-semibold bg-emerald-50 text-emerald-700 rounded-lg border border-emerald-200">Retake Allowed</span>`
+                : `<button type="button" data-action="grant-retake" data-id="${esc(r.id)}" data-gid="${esc(r.gid)}" data-qname="${esc(r.qat_name || 'QAT')}" data-cid="${esc(r.course_id)}" data-cname="${esc(r.course_name || '')}" class="px-2.5 py-1 text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg transition">Allow Retake</button>`;
+
+            return `
+            <tr class="hover:bg-stone-50">
+                <td class="p-3 font-mono text-xs font-semibold">${esc(r.gid)}</td>
+                <td class="p-3 font-mono text-xs text-blue-600">${esc(r.course_id)}</td>
+                <td class="p-3 text-xs font-medium">${esc(r.course_name)}</td>
+                <td class="p-3 font-bold text-xs text-blue-600">${p !== null ? p + '%' : '-'}</td>
+                <td class="p-3 text-xs"><span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-600">${esc(r.status || 'Completed')}</span></td>
+                <td class="p-3 text-center">${retakeBtn}</td>
+            </tr>`;
+        }).join('');
+    }
+
+    async function grantRetakeAccess(recordId, qatGid, qatName, courseId, courseName) {
+        if (!confirm(`QAT (${qatName} - ${qatGid}) ට මෙම Course (${courseId}) එක නැවත (Retake) කිරීමට අවසර දීමට ඔබට සහතිකද?\n\nමෙම ක්‍රියාව General Super Admin ගේ Audit වාර්තාවේ සටහන් වේ.`)) {
+            return;
+        }
+
+        try {
+            const { error: updErr } = await supabaseClient
+                .from('qat_completed_courses')
+                .update({ retake_allowed: true, passed: false })
+                .eq('id', recordId);
+
+            if (updErr) throw updErr;
+
+            await supabaseClient.from('retake_audit_logs').insert([{
+                super_admin_gid: currentSessionUser?.super_admin_g_id || currentSession?.gid || 'SA',
+                super_admin_name: currentSessionUser?.super_admin_name || currentSession?.name || 'Super Admin',
+                department: loggedSuperAdminDept,
+                qat_gid: qatGid,
+                qat_name: qatName,
+                course_id: courseId,
+                course_name: courseName
+            }]);
+
+            alert(`QAT (${qatGid}) ට Course එක නැවත හැදෑරීමට සාර්ථකව අවසර ලබා දුන්නා! General Super Admin ට Audit Log එකක් නිකුත් විය.`);
+            await fetchSuperAdminDataFromDB();
+        } catch (e) {
+            alert('Retake grant error: ' + e.message);
+        }
+    }
+
+    async function loadRetakeAuditLogs() {
+        const tbody = document.getElementById('retake-audit-tbody');
+        try {
+            const { data: logs, error } = await supabaseClient
+                .from('retake_audit_logs')
+                .select('*')
+                .order('granted_at', { ascending: false })
+                .limit(50);
+
+            if (error || !logs || !logs.length) {
+                tbody.innerHTML = `<tr><td colspan="5" class="py-4 text-center text-stone-400 text-xs">No retake actions recorded yet.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = logs.map(l => `
+                <tr class="hover:bg-gray-50/70">
+                    <td class="py-2.5 px-3 text-xs text-stone-500">${esc(new Date(l.granted_at).toLocaleString())}</td>
+                    <td class="py-2.5 px-3 text-xs font-semibold text-blue-700">${esc(l.department)}</td>
+                    <td class="py-2.5 px-3 text-xs text-stone-800">${esc(l.super_admin_name)} <span class="font-mono text-stone-400">(${esc(l.super_admin_gid)})</span></td>
+                    <td class="py-2.5 px-3 text-xs font-medium text-stone-900">${esc(l.qat_name)} <span class="font-mono text-blue-600">(${esc(l.qat_gid)})</span></td>
+                    <td class="py-2.5 px-3 text-xs font-mono text-stone-700">${esc(l.course_id)} <span class="font-sans text-stone-500">${esc(l.course_name || '')}</span></td>
+                </tr>
+            `).join('');
+        } catch (e) {
+            tbody.innerHTML = `<tr><td colspan="5" class="py-4 text-center text-rose-500 text-xs">Failed to load audit logs.</td></tr>`;
+        }
+    }
+
+    function populateSuperDropdowns() {
+        const qSel = document.getElementById('super-filter-qat-gid');
+        const aSel = document.getElementById('super-filter-admin-gid');
+        const cSel = document.getElementById('super-filter-course-id');
+
+        qSel.innerHTML = '<option value="">All QAT G IDs</option>' + [...new Set(globalCompletedData.map(q => q.gid).filter(Boolean))].map(id => `<option value="${esc(id)}">${esc(id)}</option>`).join('');
+        aSel.innerHTML = '<option value="">All Admin G IDs</option>' + [...new Set(globalAdminsData.map(a => a.admin_g_id).filter(Boolean))].map(id => `<option value="${esc(id)}">${esc(id)}</option>`).join('');
+        cSel.innerHTML = '<option value="">All Course IDs</option>' + [...new Set(globalCoursesData.map(c => c.id).filter(Boolean))].map(id => `<option value="${esc(id)}">${esc(id)}</option>`).join('');
+    }
+
+    function applySuperScoreFilters() {
+        const selQat = document.getElementById('super-filter-qat-gid').value.trim();
+        const selAdmin = document.getElementById('super-filter-admin-gid').value.trim();
+        const selCourse = document.getElementById('super-filter-course-id').value.trim();
+
+        const adminCourses = selAdmin
+            ? new Set(globalCoursesData.filter(c => String(c.created_by) === selAdmin).map(c => String(c.id)))
+            : null;
+
+        let data = [...globalCompletedData];
+        if (selQat) data = data.filter(d => String(d.gid) === selQat);
+        if (selAdmin) data = data.filter(d => String(d.admin_g_id) === selAdmin || adminCourses.has(String(d.course_id)));
+        if (selCourse) data = data.filter(d => String(d.course_id) === selCourse);
+
+        filteredScoreData = data;
+        renderScoreTable(data);
+    }
+
+    function resetSuperFilters() {
+        document.getElementById('super-filter-qat-gid').value = '';
+        document.getElementById('super-filter-admin-gid').value = '';
+        document.getElementById('super-filter-course-id').value = '';
+        filteredScoreData = [...globalCompletedData];
+        renderScoreTable(globalCompletedData);
+    }
+
+    function downloadSuperExcel() {
+        const data = filteredScoreData.length ? filteredScoreData : globalCompletedData;
+        if (!data.length) return alert('No records to export.');
+        const rows = data.map(i => {
+            const p = pctOf(i);
+            return {
+                'QAT G ID': i.gid,
+                'Course ID': i.course_id,
+                'Course Title': i.course_name,
+                'Score (%)': p !== null ? p + '%' : '-',
+                'Status': i.status || 'Completed'
+            };
+        });
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), 'Scores');
+        XLSX.writeFile(wb, 'QAT_Scores.xlsx');
+    }
+
+    /* ---------- Change Password Modal ---------- */
+    function openPwModal() {
+        document.getElementById('pw-form').reset();
+        document.getElementById('pw-modal').classList.remove('hidden');
+    }
+    function closePwModal() {
+        document.getElementById('pw-modal').classList.add('hidden');
+    }
+    document.getElementById('pw-form').addEventListener('submit', async e => {
+        e.preventDefault();
+        const cur = document.getElementById('sa-current-pw').value;
+        const npw = document.getElementById('sa-new-pw').value;
+        const cpw = document.getElementById('sa-confirm-pw').value;
+        if (npw !== cpw) return alert('New passwords do not match!');
+        if (String(currentSessionUser?.password ?? '') !== cur) return alert('Current password is incorrect!');
+
+        const btn = document.getElementById('pw-save-btn');
+        btn.disabled = true;
+        btn.textContent = 'Updating...';
+        try {
+            const idKey = currentSessionUser?.id ? 'id' : 'super_admin_g_id';
+            const idVal = currentSessionUser?.id || currentSessionUser?.super_admin_g_id;
+            const { error } = await supabaseClient
+                .from('super_admin')
+                .update({ password: npw, confirm_password: npw })
+                .eq(idKey, idVal);
+            if (error) throw error;
+
+            currentSessionUser.password = npw;
+            currentSessionUser.confirm_password = npw;
+            localStorage.setItem('currentSuperAdmin', JSON.stringify(currentSessionUser));
+            alert('Password updated successfully!');
+            closePwModal();
+        } catch (err) {
+            alert('Error updating password: ' + err.message);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Update Password';
+        }
+    });
+
+    /* ---------- Handover Role Modal ---------- */
+    function openHandoverModal() {
+        const sel = document.getElementById('handover-admin-select');
+        const activeAdmins = globalAdminsData.filter(a => !a.status || String(a.status).toLowerCase() === 'active');
+        sel.innerHTML = '<option value="" disabled selected>Select an Admin</option>' +
+            activeAdmins.map(a => `<option value="${esc(a.id)}">${esc(a.admin_name || a.user_name)} (${esc(a.admin_g_id)} - ${esc(a.department || 'Training')})</option>`).join('');
+        document.getElementById('handover-form').reset();
+        document.getElementById('handover-modal').classList.remove('hidden');
+    }
+    function closeHandoverModal() {
+        document.getElementById('handover-modal').classList.add('hidden');
+    }
+    document.getElementById('handover-form').addEventListener('submit', async e => {
+        e.preventDefault();
+        const targetId = document.getElementById('handover-admin-select').value;
+        const pw = document.getElementById('handover-password').value;
+        if (!targetId) return alert('Please select a target Admin.');
+        if (String(currentSessionUser?.password ?? '') !== pw) return alert('Current password is incorrect!');
+
+        const targetAdmin = globalAdminsData.find(a => String(a.id) === String(targetId));
+        if (!targetAdmin) return alert('Selected Admin not found.');
+
+        if (!confirm(`Are you sure you want to handover the Super Admin role to ${targetAdmin.admin_name || targetAdmin.user_name} (${targetAdmin.admin_g_id})?`)) return;
+
+        const btn = document.getElementById('handover-submit-btn');
+        btn.disabled = true;
+        btn.textContent = 'Transferring...';
+        try {
+            const { error: insErr } = await supabaseClient.from('super_admin').insert([{
+                user_name: targetAdmin.user_name,
+                super_admin_g_id: targetAdmin.admin_g_id,
+                super_admin_name: targetAdmin.admin_name || targetAdmin.user_name,
+                biz_mail: targetAdmin.email,
+                department: loggedSuperAdminDept,
+                contact: targetAdmin.contact || '',
+                password: targetAdmin.password,
+                confirm_password: targetAdmin.password
+            }]);
+            if (insErr) throw insErr;
+
+            await supabaseClient.from('admins').update({ role: 'Super Admin' }).eq('id', targetAdmin.id);
+            alert('Super Admin role handed over successfully!');
+            closeHandoverModal();
+            await fetchSuperAdminDataFromDB();
+        } catch (err) {
+            alert('Handover failed: ' + err.message);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Confirm Handover';
+        }
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Admin Register - GSS LMS</title>
+    <script>document.documentElement.style.visibility = 'hidden';</script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="lms-core.js"></script>
+    <script src="lms-auth.js"></script>
+</head>
+<body class="bg-gray-50 font-sans min-h-screen p-6">
+
+<header class="bg-white border-b border-gray-100 shadow-sm -mx-6 -mt-6 mb-8 px-6 py-3 flex items-center justify-between">
+    <div class="flex items-center space-x-3">
+        <img src="gsspicture.jpg" alt="GSS Logo" class="h-10 w-10 object-contain">
+        <span class="font-bold text-stone-800 text-lg">GSS LMS</span>
+    </div>
+    <a href="index.html" class="inline-flex items-center space-x-1.5 px-3 py-1.5 text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-lg transition">
+        <span>Exit to Login</span>
+    </a>
+</header>
+
+<main class="max-w-xl mx-auto bg-white p-8 rounded-2xl shadow-sm border border-gray-100 mb-8">
+    <span class="px-3 py-1 text-xs font-semibold rounded-full bg-amber-50 text-amber-700">Super Admin Registration</span>
+    <h1 class="text-3xl font-semibold text-stone-950 tracking-tight mt-3 mb-2">Super Admin Register</h1>
+    <p class="text-stone-600 text-sm mb-6">Create a Super Admin account with unique credentials and designated department scope.</p>
+
+    <form id="super-admin-form" class="space-y-4">
+        <div>
+            <label for="sa-username" class="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1">User Name <span class="text-rose-500">*</span></label>
+            <input type="text" id="sa-username" placeholder="e.g. ka26184" required class="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+
+        <div>
+            <label for="sa-gid" class="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1">Super Admin G ID <span class="text-rose-500">*</span></label>
+            <input type="text" id="sa-gid" placeholder="e.g. G26184" required class="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+
+        <div>
+            <label for="sa-name" class="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1">Full Name <span class="text-rose-500">*</span></label>
+            <input type="text" id="sa-name" placeholder="Enter full name" required class="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+
+        <div>
+            <label for="sa-email" class="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1">Biz Mail Address <span class="text-rose-500">*</span></label>
+            <input type="email" id="sa-email" placeholder="name@gssintl.biz" required class="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+
+        <!-- Dynamic Department Selection & Add Feature -->
+        <div class="space-y-2">
+            <div class="flex justify-between items-center">
+                <label for="sa-dept" class="block text-xs font-semibold uppercase tracking-wider text-stone-700">
+                    Super Admin Scope / Department <span class="text-rose-500">*</span>
+                </label>
+                <button type="button" onclick="toggleNewDeptBox(true)" class="text-xs font-semibold text-blue-600 hover:text-blue-800 transition">
+                    + Add New Department
+                </button>
+            </div>
+
+            <select id="sa-dept" required class="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                <option value="" disabled selected>Loading Departments...</option>
+            </select>
+
+            <!-- Inline Input to Add New Department -->
+            <div id="new-dept-box" class="hidden p-3 bg-blue-50 border border-blue-200 rounded-xl space-y-2">
+                <label for="new-dept-input" class="block text-[11px] font-bold uppercase text-blue-900">Create New Department</label>
+                <div class="flex gap-2">
+                    <input type="text" id="new-dept-input" placeholder="e.g. Finance, Logistics, IT..." class="flex-1 px-3 py-1.5 text-xs border border-blue-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-blue-500">
+                    <button type="button" onclick="saveNewDepartment()" id="btn-save-dept" class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-sm transition">Save</button>
+                    <button type="button" onclick="toggleNewDeptBox(false)" class="px-3 py-1.5 bg-stone-200 hover:bg-stone-300 text-stone-700 text-xs font-semibold rounded-lg transition">Cancel</button>
+                </div>
+                <p id="new-dept-error" class="text-[11px] text-rose-600 font-semibold hidden"></p>
+            </div>
+
+            <p id="dept-note" class="text-[11px] text-stone-400 mt-1">General Super Admin සිටිය හැක්කේ එක් අයෙක් පමණි.</p>
+        </div>
+
+        <div>
+            <label for="sa-tel" class="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1">Contact <span class="text-rose-500">*</span></label>
+            <input type="tel" id="sa-tel" placeholder="07XXXXXXXX" required class="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+
+        <div>
+            <label for="sa-password" class="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1">Password <span class="text-rose-500">*</span></label>
+            <input type="password" id="sa-password" placeholder="At least 8 characters" required class="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+
+        <div>
+            <label for="sa-confirm-password" class="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1">Confirm Password <span class="text-rose-500">*</span></label>
+            <input type="password" id="sa-confirm-password" placeholder="Confirm password" required class="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+
+        <button type="submit" id="sa-submit-btn" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm rounded-xl shadow-sm transition">
+            Register Super Admin
+        </button>
+    </form>
+</main>
+
+<script>
+    const supabaseClient = window.LMS.db;
+    const esc = LMS.esc;
+    const qv = LMS.postgrestVal;
+    document.documentElement.style.visibility = 'visible';
+
+    let hasGeneralSuperAdmin = false;
+    let availableDepartments = ['Training', 'HR', 'QA', 'Operations'];
+
+    async function initDepartments() {
+        try {
+            const { data: gData } = await supabaseClient
+                .from('super_admin')
+                .select('id')
+                .eq('department', 'General');
+
+            hasGeneralSuperAdmin = gData && gData.length > 0;
+
+            const { data: deptData, error: deptErr } = await supabaseClient
+                .from('departments')
+                .select('name')
+                .order('name', { ascending: true });
+
+            if (!deptErr && deptData && deptData.length > 0) {
+                availableDepartments = deptData.map(d => d.name);
+            }
+
+            renderDepartmentDropdown();
+        } catch (e) {
+            console.warn(e);
+            renderDepartmentDropdown();
+        }
+    }
+
+    function renderDepartmentDropdown(selectedDept = '') {
+        const select = document.getElementById('sa-dept');
+        let html = '<option value="" disabled selected>Select Department Scope</option>';
+
+        if (hasGeneralSuperAdmin) {
+            html += `<option value="General" disabled class="text-gray-400">General (Main Root Super Admin) [Locked - Exists]</option>`;
+            document.getElementById('dept-note').textContent = '⚠️ General Super Admin දැනටමත් සිටී. ඔබට Register විය හැක්කේ Department Super Admin කෙනෙකු ලෙස පමණි.';
+            document.getElementById('dept-note').className = 'text-[11px] text-amber-600 font-semibold mt-1';
+        } else {
+            html += `<option value="General">General (Main Root Super Admin - All Depts)</option>`;
+        }
+
+        availableDepartments.forEach(dept => {
+            if (dept.toLowerCase() !== 'general') {
+                const isSel = selectedDept.toLowerCase() === dept.toLowerCase() ? 'selected' : '';
+                html += `<option value="${esc(dept)}" ${isSel}>${esc(dept)} Department</option>`;
+            }
+        });
+
+        html += `<option value="__NEW__" class="font-bold text-blue-600">+ Add New Department...</option>`;
+        select.innerHTML = html;
+    }
+
+    function toggleNewDeptBox(show) {
+        const box = document.getElementById('new-dept-box');
+        const input = document.getElementById('new-dept-input');
+        const err = document.getElementById('new-dept-error');
+        err.classList.add('hidden');
+
+        if (show) {
+            box.classList.remove('hidden');
+            input.value = '';
+            input.focus();
+        } else {
+            box.classList.add('hidden');
+            const select = document.getElementById('sa-dept');
+            if (select.value === '__NEW__') select.value = '';
+        }
+    }
+
+    document.getElementById('sa-dept').addEventListener('change', function() {
+        if (this.value === '__NEW__') {
+            toggleNewDeptBox(true);
+        }
+    });
+
+    async function saveNewDepartment() {
+        const input = document.getElementById('new-dept-input');
+        const err = document.getElementById('new-dept-error');
+        const btn = document.getElementById('btn-save-dept');
+        const val = input.value.trim();
+
+        err.classList.add('hidden');
+
+        if (!val) {
+            err.textContent = 'කරුණාකර දෙපාර්තමේන්තුවේ නම ඇතුල් කරන්න.';
+            err.classList.remove('hidden');
+            return;
+        }
+
+        if (val.toLowerCase() === 'general' || val.toLowerCase() === 'all') {
+            err.textContent = 'General හෝ All යන නම් දෙපාර්තමේන්තු ලෙස භාවිත කළ නොහැක.';
+            err.classList.remove('hidden');
+            return;
+        }
+
+        const formatted = val.charAt(0).toUpperCase() + val.slice(1);
+
+        if (availableDepartments.some(d => d.toLowerCase() === formatted.toLowerCase())) {
+            err.textContent = 'මෙම දෙපාර්තමේන්තුව දැනටමත් ලැයිස්තුවේ පවතී.';
+            err.classList.remove('hidden');
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerText = 'Saving...';
+
+        try {
+            const { error: insErr } = await supabaseClient
+                .from('departments')
+                .insert([{ name: formatted }]);
+
+            if (insErr && !insErr.message.includes('duplicate')) {
+                throw insErr;
+            }
+
+            availableDepartments.push(formatted);
+            renderDepartmentDropdown(formatted);
+            toggleNewDeptBox(false);
+            alert(`"${formatted} Department" සාර්ථකව පද්ධතියට එක් කළා!`);
+        } catch (e) {
+            err.textContent = 'Error: ' + e.message;
+            err.classList.remove('hidden');
+        } finally {
+            btn.disabled = false;
+            btn.innerText = 'Save';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', initDepartments);
+
+    document.getElementById('super-admin-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const username = document.getElementById('sa-username').value.trim();
+        const gid = document.getElementById('sa-gid').value.trim();
+        const name = document.getElementById('sa-name').value.trim();
+        const email = document.getElementById('sa-email').value.trim().toLowerCase();
+        const dept = document.getElementById('sa-dept').value;
+        const tel = document.getElementById('sa-tel').value.trim();
+        const pwd = document.getElementById('sa-password').value;
+        const confirmPwd = document.getElementById('sa-confirm-password').value;
+        const btn = document.getElementById('sa-submit-btn');
+
+        if (!dept || dept === '__NEW__') {
+            return alert('කරුණාකර වලංගු දෙපාර්තමේන්තුවක් තෝරන්න.');
+        }
+        if (!email.endsWith('@gssintl.biz')) {
+            return alert('Biz mail address must end with @gssintl.biz');
+        }
+        if (pwd !== confirmPwd) {
+            return alert('Passwords do not match!');
+        }
+        if (pwd.length < 8) {
+            return alert('Password must be at least 8 characters long.');
+        }
+
+        btn.disabled = true;
+        btn.innerText = 'Checking Uniqueness...';
+
+        try {
+            const [saCheck, admCheck, qatCheck] = await Promise.all([
+                supabaseClient.from('super_admin').select('id').or(`super_admin_g_id.ilike.${qv(gid)},user_name.ilike.${qv(username)},biz_mail.ilike.${qv(email)}`),
+                supabaseClient.from('admins').select('id').or(`admin_g_id.ilike.${qv(gid)},user_name.ilike.${qv(username)},email.ilike.${qv(email)}`),
+                supabaseClient.from('qats').select('id').or(`qat_g_id.ilike.${qv(gid)},user_name.ilike.${qv(username)},email.ilike.${qv(email)}`)
+            ]);
+
+            if ((saCheck.data?.length > 0) || (admCheck.data?.length > 0) || (qatCheck.data?.length > 0)) {
+                btn.disabled = false;
+                btn.innerText = 'Register Super Admin';
+                return alert(`මෙම G ID (${gid}), Username (${username}) හෝ Email ලිපිනය පද්ධතියේ වෙනත් අයෙකු විසින් දැනටමත් භාවිත කර ඇත!`);
+            }
+
+            if (dept === 'General') {
+                const { data: gCheck } = await supabaseClient.from('super_admin').select('id').eq('department', 'General');
+                if (gCheck && gCheck.length > 0) {
+                    btn.disabled = false;
+                    btn.innerText = 'Register Super Admin';
+                    return alert('General Super Admin කෙනෙක් දැනටමත් ලියාපදිංචි වී අවසන්. කරුණාකර වෙනත් Department එකක් තෝරන්න.');
+                }
+            }
+
+            btn.innerText = 'Registering...';
+
+            const { error: insErr } = await supabaseClient.from('super_admin').insert([{
+                user_name: username,
+                super_admin_g_id: gid,
+                super_admin_name: name,
+                biz_mail: email,
+                department: dept,
+                contact: tel,
+                password: pwd,
+                confirm_password: confirmPwd
+            }]);
+
+            if (insErr) throw insErr;
+
+            alert(`Super Admin (${dept} Scope) registered successfully! Please login with your credentials.`);
+            window.location.href = 'index.html';
+        } catch (err) {
+            alert('Registration error: ' + err.message);
+            btn.disabled = false;
+            btn.innerText = 'Register Super Admin';
+        }
+    });
+</script>
+</body>
+</html>

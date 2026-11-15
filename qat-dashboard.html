@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QAT Dashboard - GSS LMS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="lms-core.js"></script>
+  <script>LMS.guard(['qat']);</script>
+  <style>.custom-scroll::-webkit-scrollbar{width:5px}.custom-scroll::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:10px}</style>
+</head>
+<body class="bg-gray-50 font-sans flex h-screen overflow-hidden">
+
+<aside class="fixed left-0 top-0 h-screen bg-white shadow-xl z-50 w-20 hover:w-64 transition-all duration-300 flex flex-col justify-between py-6 px-4 group border-r border-gray-100">
+  <div class="space-y-8 flex flex-col h-full overflow-hidden">
+    <div class="flex items-center space-x-3 overflow-hidden flex-shrink-0">
+      <img src="gsspicture.jpg" alt="GSS Logo" class="h-10 w-10 object-contain flex-shrink-0">
+      <span class="font-bold text-stone-800 text-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">GSS LMS</span>
+    </div>
+    <nav id="sidebar-nav" class="space-y-1.5 flex-1 overflow-y-auto overflow-x-hidden pr-1 custom-scroll"></nav>
+  </div>
+  <div class="text-xs text-stone-400 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">&copy; 2026 GSS Solution</div>
+</aside>
+
+<div class="flex-1 ml-20 p-8 overflow-y-auto h-full space-y-8">
+  <header class="flex justify-between items-center bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+    <h1 class="text-3xl font-bold text-stone-900">QAT Dashboard</h1>
+    <div class="flex items-center space-x-3">
+      <div class="w-10 h-10 rounded-full overflow-hidden bg-stone-100 border border-stone-200 flex justify-center items-center">
+        <img id="avatar" src="" alt="Profile avatar" class="w-full h-full object-cover hidden">
+        <svg id="avatar-default" class="w-6 h-6 text-stone-400" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+      </div>
+      <p class="text-stone-500 text-sm"><span id="welcome-label"></span>, <span id="welcome-name" class="font-bold text-stone-800"></span></p>
+    </div>
+  </header>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" id="cards"></div>
+
+  <section class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-lg font-bold text-stone-900">My Completed Courses</h3>
+      <a href="course-view.html" class="text-sm font-semibold text-blue-600 hover:underline">Go to Courses</a>
+    </div>
+    <div class="overflow-x-auto"><table class="w-full text-left text-sm">
+      <thead><tr class="border-b text-stone-400 text-xs uppercase"><th scope="col" class="pb-3">Course</th><th scope="col" class="pb-3">Score</th><th scope="col" class="pb-3">%</th><th scope="col" class="pb-3">Result</th><th scope="col" class="pb-3">Attempts</th><th scope="col" class="pb-3">Completed On</th></tr></thead>
+      <tbody id="tbody" class="divide-y divide-gray-50"></tbody></table></div>
+  </section>
+</div>
+
+<script>
+  const S = LMS.getSession(), esc = LMS.esc, db = LMS.db;
+
+  if (S) {
+    document.getElementById('welcome-label').textContent = LMS.t('welcome');
+    document.getElementById('welcome-name').textContent = S.name;
+    if (S.user.profile_picture) {
+      const a = document.getElementById('avatar');
+      a.src = S.user.profile_picture;
+      a.classList.remove('hidden');
+      document.getElementById('avatar-default').classList.add('hidden');
+    }
+    LMS.renderSidebar();
+  }
+
+  const pctOf = r => {
+    const sc = Number(r.score), tot = Number(r.total_marks);
+    return (r.score == null || isNaN(sc) || !(tot > 0)) ? null : Math.round(sc / tot * 1000) / 10;
+  };
+
+  async function load() {
+    if (!S) return;
+    const tbody = document.getElementById('tbody');
+    if (!S.gid) {
+      tbody.innerHTML = '<tr><td colspan="6" class="py-4 text-center text-stone-400">Preview mode: QAT data නෑ.</td></tr>';
+      return;
+    }
+    const get = async (q, label) => {
+      const r = await q;
+      if (r.error) { console.warn(label, r.error.message); return []; }
+      return r.data || [];
+    };
+    const [courses, done, attempts] = await Promise.all([
+      get(db.from('courses').select('id'), 'courses'),
+      get(db.from('qat_completed_courses').select('*').eq('gid', S.gid), 'completed'),
+      get(db.from('qat_quiz_attempts').select('course_id,passed').eq('gid', S.gid), 'attempts')
+    ]);
+    const scored = done.map(pctOf).filter(v => v !== null);
+    const avg = scored.length ? Math.round(scored.reduce((a, b) => a + b, 0) / scored.length * 10) / 10 + '%' : '-';
+    const card = (l, v, c) => `<div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100"><p class="text-xs font-semibold uppercase tracking-wider text-stone-500">${l}</p><h3 class="text-3xl font-extrabold ${c} mt-1">${v}</h3></div>`;
+    document.getElementById('cards').innerHTML =
+            card('Available Courses', courses.length, 'text-blue-600') +
+            card('Completed', done.length, 'text-emerald-600') +
+            card('Pending', Math.max(courses.length - done.length, 0), 'text-amber-600') +
+            card('Average Score', avg, 'text-purple-600');
+
+    tbody.innerHTML = done.length ? done.map(r => {
+      const p = pctOf(r), n = attempts.filter(a => String(a.course_id) === String(r.course_id)).length;
+      const res = r.passed === false
+              ? '<span class="px-2.5 py-1 text-xs font-semibold bg-rose-50 text-rose-600 rounded-full">Failed</span>'
+              : '<span class="px-2.5 py-1 text-xs font-semibold bg-emerald-50 text-emerald-600 rounded-full">Passed</span>';
+      return `<tr class="hover:bg-gray-50/50"><td class="py-3"><span class="font-mono text-xs font-semibold">${esc(r.course_id)}</span> ${esc(r.course_name)}</td>
+            <td class="py-3">${r.score == null ? '-' : esc(r.score) + ' / ' + esc(r.total_marks)}</td><td class="py-3 font-bold text-blue-600">${p === null ? '-' : p + '%'}</td>
+            <td class="py-3">${res}</td><td class="py-3">${n || '-'}</td><td class="py-3 text-xs text-stone-500">${esc(r.complete_date || '-')}</td></tr>`;
+    }).join('') : '<tr><td colspan="6" class="py-4 text-center text-stone-400 text-sm">No completed courses yet.</td></tr>';
+  }
+  load();
+</script>
+</body>
+</html>

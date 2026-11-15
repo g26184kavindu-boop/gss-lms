@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GSS LMS</title>
+    <meta name="description" content="Global System Solution Learning Management System for QAT, Admin, and Super Admin training workflows.">
+    <meta property="og:title" content="GSS LMS">
+    <meta property="og:description" content="Global System Solution Learning Management System for QAT, Admin, and Super Admin training workflows.">
+    <meta property="og:type" content="website">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Supabase JS Client CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="site-header">
+    <div class="logo-container">
+        <img src="gsspicture.jpg" alt="GSS Global System Solution">
+    </div>
+    <div class="nav-buttons">
+        <button type="button" id="login-btn" class="btn login-btn">Login</button>
+        <button type="button" id="signup-btn" class="btn signup-btn">Sign up</button>
+    </div>
+</header>
+<main>
+    <div class="hero-content">
+        <h1 class="slide-text text-3xl sm:text-4xl font-bold text-blue-600 mb-2">Welcome To Global System Solution LMS</h1>
+        <h2 class="sub-text text-lg sm:text-xl font-bold text-stone-800">Empowering New Talent</h2>
+    </div>
+</main>
+
+<div id="login-modal" role="dialog" aria-modal="true" aria-labelledby="login-modal-title" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white p-6 rounded-xl shadow-lg max-w-sm w-full text-center relative">
+        <h3 id="login-modal-title" class="text-xl font-bold text-gray-800 mb-4">Admin / QAT Login</h3>
+
+        <form id="login-form" class="space-y-4 text-left">
+            <div>
+                <label for="login-username" class="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1">Username / Email / ID</label>
+                <input type="text" id="login-username" placeholder="Enter username, email or ID" autocomplete="username" required class="w-full px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+            </div>
+            <div>
+                <label for="login-password" class="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1">Password</label>
+                <input type="password" id="login-password" placeholder="Enter your password" autocomplete="current-password" required class="w-full px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+            </div>
+            <button type="submit" id="login-submit-btn" class="w-full py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition">Login</button>
+        </form>
+
+        <div class="mt-4 flex items-center justify-center space-x-2">
+            <span class="text-gray-400 text-xs">OR</span>
+        </div>
+        <div class="mt-4">
+            <button type="button" id="google-login-btn" class="w-full flex items-center justify-center py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+                <svg class="w-5 h-5 mr-2" viewBox="0 0 24 24" aria-hidden="true">
+                    <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
+                    <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.19v3.15C3.17 21.32 7.23 24 12 24z"/>
+                    <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.19C.43 8.1 0 9.81 0 12s.43 3.9 1.19 5.42l4.09-3.15z"/>
+                    <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.23 0 3.17 2.68 1.19 6.58l4.09 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+                </svg>
+                Continue with Google
+            </button>
+        </div>
+
+        <button type="button" id="close-login-modal" aria-label="Close login modal" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-xl font-bold">&times;</button>
+    </div>
+</div>
+
+<div id="signup-modal" role="dialog" aria-modal="true" aria-labelledby="signup-modal-title" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white p-6 rounded-xl shadow-lg max-w-sm w-full text-center relative">
+        <h3 id="signup-modal-title" class="text-lg font-bold text-gray-800 mb-4">Select Registration Type</h3>
+        <div class="flex flex-col space-y-3">
+            <a href="qat-register.html" id="signup-qat-link" class="w-full py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition">QAT Register</a>
+        </div>
+        <button type="button" id="close-modal" aria-label="Close registration modal" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-xl font-bold">&times;</button>
+    </div>
+</div>
+
+<!-- Order matters: lms-core.js -> lms-auth.js -> login.js -->
+<script src="lms-core.js"></script>
+<script src="lms-auth.js"></script>
+<script src="login.js"></script>
+</body>
+</html>
