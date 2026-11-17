@@ -540,4 +540,17 @@
 
             if (error) throw error;
 
-            alert('Admin deleted successfull
+            alert('Admin deleted successfully from database!');
+            await updateDashboard();
+        } catch (err) {
+            alert('Delete Error: ' + err.message);
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        LMS.renderSidebar();
+        updateDashboard();
+    });
+</script>
+</body>
+</html>
