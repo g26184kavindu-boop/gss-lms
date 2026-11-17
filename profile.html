@@ -4,16 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Profile - GSS LMS</title>
+    <!-- 1. CDN Libraries loaded first (Web Standard) -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- 2. Core App Logic -->
     <script src="lms-core.js"></script>
     <script src="lms-auth.js"></script>
     <script>LMS.guard(['super_admin', 'admin', 'qat']);</script>
-    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .custom-scroll::-webkit-scrollbar { width: 5px; }
-        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: transparent; border-radius: 10px; transition: background 0.3s ease; }
-        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .custom-scroll::-webkit-scrollbar {
+            width: 5px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+            transition: background 0.3s ease;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
     </style>
 </head>
 <body class="bg-gray-50 font-sans flex h-screen overflow-hidden">
@@ -34,7 +46,7 @@
 
 <!-- Main Content Wrapper -->
 <div class="flex-1 ml-20 p-8 h-full overflow-y-auto">
-    <main class="max-w-xl mx-auto bg-white p-8 rounded-xl shadow-sm border border-gray-100">
+    <main class="max-w-xl mx-auto bg-white p-8 rounded-2xl shadow-sm border border-gray-100 mb-12">
         <div class="flex items-center justify-between mb-6">
             <h1 class="font-display text-3xl sm:text-4xl font-semibold text-stone-950 tracking-tight">Profile</h1>
             <span id="role-badge" class="px-3 py-1 text-xs font-semibold rounded-full bg-blue-50 text-blue-700">Role</span>
@@ -44,7 +56,7 @@
         <div class="flex items-center space-x-4 mb-6 p-4 bg-stone-50 rounded-xl border border-stone-100">
             <div class="w-16 h-16 rounded-full overflow-hidden bg-stone-200 border-2 border-white shadow-sm flex items-center justify-center flex-shrink-0">
                 <img id="profile-preview-img" src="" alt="Profile" class="w-full h-full object-cover hidden">
-                <svg id="profile-default-svg" class="w-8 h-8 text-stone-400" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <svg id="profile-default-svg" class="w-8 h-8 text-stone-400" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
                 </svg>
             </div>
@@ -55,16 +67,17 @@
         </div>
 
         <form id="profile-form" class="space-y-5">
+            <!-- Profile Picture Field -->
             <div class="form-row space-y-2">
                 <div class="flex justify-between items-center">
-                    <label for="profile-picture" class="block text-xs font-semibold uppercase tracking-wider text-stone-700">
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-stone-700">
                         Profile Picture (Upload new to replace)
                     </label>
                     <button
                             type="button"
                             id="edit-btn"
                             class="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white font-medium text-xs rounded-lg shadow-sm transition flex items-center gap-1.5 focus:outline-none">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
                         </svg>
                         Edit Profile
@@ -75,64 +88,127 @@
                         id="profile-picture"
                         accept="image/*"
                         disabled
-                        class="w-full text-sm text-stone-500 file:mr-4 file:py-3 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border border-gray-300 rounded-lg p-2 bg-white transition disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60">
+                        class="w-full text-sm text-stone-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border border-gray-300 rounded-lg p-2 bg-white transition disabled:bg-gray-100 disabled:cursor-not-allowed">
             </div>
 
+            <!-- Name Field -->
             <div class="form-row space-y-2">
-                <label for="Preferred-first-name" class="block text-xs font-semibold uppercase tracking-wider text-stone-700">Name</label>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-stone-700">Full Name</label>
                 <input
                         type="text"
                         id="Preferred-first-name"
-                        placeholder="e.g. Kavindu Nirmal"
+                        placeholder="Enter full name"
                         disabled
-                        class="w-full px-4 py-3 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed">
+                        class="w-full px-4 py-2.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed">
             </div>
 
+            <!-- Date of Birth Field -->
             <div class="form-row space-y-2">
-                <label for="date-of-birth" class="block text-xs font-semibold uppercase tracking-wider text-stone-700">Date of Birth</label>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-stone-700">Date of Birth</label>
                 <input
                         type="date"
                         id="date-of-birth"
                         disabled
-                        class="w-full px-4 py-3 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed">
+                        class="w-full px-4 py-2.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed">
             </div>
 
+            <!-- NIC Field -->
             <div class="form-row space-y-2">
-                <label for="national-id" class="block text-xs font-semibold uppercase tracking-wider text-stone-700">NIC</label>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-stone-700">NIC (National Identity Card)</label>
                 <input
                         type="text"
                         id="national-id"
-                        placeholder="e.g. 961234567V"
+                        placeholder="e.g. 199612345678 or 961234567V"
                         disabled
-                        class="w-full px-4 py-3 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed">
+                        class="w-full px-4 py-2.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed">
             </div>
 
+            <!-- Telephone Number Field -->
             <div class="form-row space-y-2">
-                <label for="telephone-number" class="block text-xs font-semibold uppercase tracking-wider text-stone-700">Telephone Number</label>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-stone-700">Contact Number</label>
                 <input
                         type="tel"
                         id="telephone-number"
-                        placeholder="e.g. 0712345678"
+                        placeholder="e.g. 07XXXXXXXX"
                         disabled
-                        class="w-full px-4 py-3 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed">
+                        class="w-full px-4 py-2.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed">
             </div>
 
-            <div class="pt-4">
+            <!-- ========================================================
+                 EDUCATIONAL QUALIFICATIONS SECTION
+                 ======================================================== -->
+            
+            <!-- Ordinary Level (O/L) Results Section -->
+            <div class="border-t border-gray-200 pt-5 space-y-3">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-stone-800">Ordinary Level (O/L) Results</h3>
+                    <span class="text-[10px] text-stone-400">Passes Count</span>
+                </div>
+                <div class="grid grid-cols-5 gap-2">
+                    <div>
+                        <label class="block text-[10px] uppercase font-semibold text-stone-600 mb-1">A's</label>
+                        <input type="number" id="ol-a" min="0" max="10" placeholder="0" disabled class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white text-center disabled:bg-gray-100 disabled:cursor-not-allowed">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-semibold text-stone-600 mb-1">B's</label>
+                        <input type="number" id="ol-b" min="0" max="10" placeholder="0" disabled class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white text-center disabled:bg-gray-100 disabled:cursor-not-allowed">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-semibold text-stone-600 mb-1">C's</label>
+                        <input type="number" id="ol-c" min="0" max="10" placeholder="0" disabled class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white text-center disabled:bg-gray-100 disabled:cursor-not-allowed">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-semibold text-stone-600 mb-1">S's</label>
+                        <input type="number" id="ol-s" min="0" max="10" placeholder="0" disabled class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white text-center disabled:bg-gray-100 disabled:cursor-not-allowed">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-semibold text-stone-600 mb-1">F's</label>
+                        <input type="number" id="ol-f" min="0" max="10" placeholder="0" disabled class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white text-center disabled:bg-gray-100 disabled:cursor-not-allowed">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Advanced Level (A/L) Results Section -->
+            <div class="border-t border-gray-200 pt-5 space-y-2">
+                <label class="block text-xs font-semibold uppercase tracking-wider text-stone-700">Advanced Level (A/L) Stream &amp; Results</label>
+                <textarea
+                        id="al-details"
+                        rows="3"
+                        placeholder="e.g. Physical Science Stream: Combined Maths (B), Physics (B), Chemistry (C)"
+                        disabled
+                        class="w-full px-4 py-2.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition resize-none disabled:bg-gray-100 disabled:cursor-not-allowed"></textarea>
+            </div>
+
+            <!-- Higher Studies Section -->
+            <div class="border-t border-gray-200 pt-5 space-y-2">
+                <label for="higher-studies" class="block text-xs font-semibold uppercase tracking-wider text-stone-700">
+                    Higher Studies (Degrees / Diplomas / Certifications)
+                </label>
+                <textarea
+                        id="higher-studies"
+                        rows="3"
+                        placeholder="e.g. BSc (Hons) in Information Technology - SLIIT, NVQ Level 5 Diploma"
+                        disabled
+                        class="w-full px-4 py-2.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition resize-none disabled:bg-gray-100 disabled:cursor-not-allowed"></textarea>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="pt-4 border-t border-gray-100">
                 <button
                         type="submit"
                         id="save-btn"
                         disabled
-                        class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm rounded-lg shadow-sm transition focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-gray-300 disabled:cursor-not-allowed">
-                    Save Changes
+                        class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm rounded-xl shadow-sm transition focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-300 disabled:cursor-not-allowed">
+                    Save Profile Changes
                 </button>
             </div>
         </form>
     </main>
 </div>
 
+<!-- JavaScript Logic -->
 <script>
     const supabaseClient = window.LMS.db;
-    const session = LMS.getSession();
 
     const editBtn = document.getElementById('edit-btn');
     const saveBtn = document.getElementById('save-btn');
@@ -141,6 +217,16 @@
     const nicInput = document.getElementById('national-id');
     const dobInput = document.getElementById('date-of-birth');
     const phoneInput = document.getElementById('telephone-number');
+    
+    // Educational Inputs
+    const olAInput = document.getElementById('ol-a');
+    const olBInput = document.getElementById('ol-b');
+    const olCInput = document.getElementById('ol-c');
+    const olSInput = document.getElementById('ol-s');
+    const olFInput = document.getElementById('ol-f');
+    const alDetailsInput = document.getElementById('al-details');
+    const higherStudiesInput = document.getElementById('higher-studies');
+
     const profileForm = document.getElementById('profile-form');
     const roleBadge = document.getElementById('role-badge');
     const previewNameText = document.getElementById('preview-name-text');
@@ -148,45 +234,96 @@
     const profilePreviewImg = document.getElementById('profile-preview-img');
     const profileDefaultSvg = document.getElementById('profile-default-svg');
 
-    const ROLE_CFG = {
-        super_admin: { table: 'super_admin', storageKey: 'currentSuperAdmin', nameCol: 'super_admin_name', gidCol: 'super_admin_g_id', label: 'Super Admin' },
-        admin:       { table: 'admins',      storageKey: 'currentAdmin',      nameCol: 'admin_name',       gidCol: 'admin_g_id',       label: 'Admin' },
-        qat:         { table: 'qats',        storageKey: 'currentQat',        nameCol: 'name',             gidCol: 'qat_g_id',         label: 'QAT Technician' }
-    };
+    // Retrieve active session from LMS Core
+    const activeSession = LMS.getSession();
+    let userRole = activeSession?.role || 'qat';
+    let userData = activeSession?.user || {};
+    let uploadedImageBase64 = userData.profile_picture || '';
 
-    if (session) {
-        const cfg = ROLE_CFG[session.role];
-        let userData = session.user;
-        let uploadedImageBase64 = userData.profile_picture || '';
-
-        function getIdentifier() {
-            if (userData.id) return { key: 'id', val: userData.id };
-            if (userData[cfg.gidCol]) return { key: cfg.gidCol, val: userData[cfg.gidCol] };
-            return { key: 'user_name', val: userData.user_name };
+    // Update Role Badge on Profile
+    function updateRoleBadge() {
+        if (userRole === 'super_admin') {
+            const isGeneral = userData.department === 'General' || !userData.department;
+            roleBadge.textContent = isGeneral ? 'General Super Admin' : `${userData.department} Super Admin`;
+            roleBadge.className = 'px-3 py-1 text-xs font-semibold rounded-full bg-purple-50 text-purple-700 border border-purple-200';
+        } else if (userRole === 'admin') {
+            roleBadge.textContent = `${userData.department || 'Training'} Admin`;
+            roleBadge.className = 'px-3 py-1 text-xs font-semibold rounded-full bg-blue-50 text-blue-700 border border-blue-200';
+        } else {
+            roleBadge.textContent = 'QAT Member';
+            roleBadge.className = 'px-3 py-1 text-xs font-semibold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200';
         }
+    }
 
-        function updateRoleBadge() {
-            if (session.role === 'super_admin') {
-                roleBadge.textContent = 'Super Admin';
-                roleBadge.className = 'px-3 py-1 text-xs font-semibold rounded-full bg-purple-50 text-purple-700';
-            } else if (session.role === 'admin') {
-                roleBadge.textContent = 'Admin';
-                roleBadge.className = 'px-3 py-1 text-xs font-semibold rounded-full bg-blue-50 text-blue-700';
+    async function fetchLatestUserData() {
+        try {
+            let tableName = 'qats';
+            let identifierKey = 'qat_g_id';
+            let identifierVal = activeSession?.gid;
+
+            if (userRole === 'super_admin') {
+                tableName = 'super_admin';
+                identifierKey = 'super_admin_g_id';
+            } else if (userRole === 'admin') {
+                tableName = 'admins';
+                identifierKey = 'admin_g_id';
             } else {
-                roleBadge.textContent = 'QAT Technician';
-                roleBadge.className = 'px-3 py-1 text-xs font-semibold rounded-full bg-emerald-50 text-emerald-700';
+                tableName = 'qats';
+                identifierKey = 'qat_g_id';
             }
-        }
 
-        function loadUserData() {
-            const displayName = userData[cfg.nameCol] || userData.name || userData.user_name || 'User';
-            profileNameInput.value = displayName;
+            if (identifierVal) {
+                const { data, error } = await supabaseClient
+                    .from(tableName)
+                    .select('*')
+                    .eq(identifierKey, identifierVal)
+                    .maybeSingle();
+
+                if (!error && data) {
+                    userData = data;
+                    if (userRole === 'super_admin') localStorage.setItem('currentSuperAdmin', JSON.stringify(userData));
+                    else if (userRole === 'admin') localStorage.setItem('currentAdmin', JSON.stringify(userData));
+                    else localStorage.setItem('currentQat', JSON.stringify(userData));
+                }
+            }
+        } catch (err) {
+            console.error('Error fetching latest user data:', err);
+        }
+        loadUserData();
+    }
+
+    profilePicInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(uploadEvent) {
+                uploadedImageBase64 = uploadEvent.target.result;
+                profilePreviewImg.src = uploadedImageBase64;
+                profilePreviewImg.classList.remove('hidden');
+                profileDefaultSvg.classList.add('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    function loadUserData() {
+        if (userData) {
+            profileNameInput.value = userData.name || userData.admin_name || userData.super_admin_name || userData.user_name || '';
             dobInput.value = userData.dob || '';
             nicInput.value = userData.nic || '';
-            phoneInput.value = userData.contact || userData.phone || '';
+            phoneInput.value = userData.contact || '';
 
-            previewNameText.textContent = displayName;
-            previewRoleText.textContent = `ID: ${userData[cfg.gidCol] || userData.id || 'N/A'} (${cfg.label})`;
+            // Load Educational Qualifications
+            olAInput.value = userData.ol_a ?? 0;
+            olBInput.value = userData.ol_b ?? 0;
+            olCInput.value = userData.ol_c ?? 0;
+            olSInput.value = userData.ol_s ?? 0;
+            olFInput.value = userData.ol_f ?? 0;
+            alDetailsInput.value = userData.al_details || '';
+            higherStudiesInput.value = userData.higher_studies || '';
+
+            previewNameText.textContent = profileNameInput.value || 'User';
+            previewRoleText.textContent = `ID: ${activeSession?.gid || 'N/A'}`;
 
             if (userData.profile_picture && userData.profile_picture.trim() !== '') {
                 profilePreviewImg.src = userData.profile_picture;
@@ -197,106 +334,102 @@
                 profileDefaultSvg.classList.remove('hidden');
             }
         }
+    }
 
-        async function fetchLatestUserData() {
-            try {
-                const { key, val } = getIdentifier();
-                if (val) {
-                    const { data, error } = await supabaseClient.from(cfg.table).select('*').eq(key, val).single();
-                    if (!error && data) {
-                        userData = data;
-                        localStorage.setItem(cfg.storageKey, JSON.stringify(userData));
-                    }
-                }
-            } catch (err) {
-                console.error('Error fetching latest user data:', err);
-            }
-            loadUserData();
+    LMS.renderSidebar();
+    updateRoleBadge();
+    fetchLatestUserData();
+
+    // Enable inputs on Edit Profile button click
+    editBtn.addEventListener('click', function() {
+        const fields = [
+            profilePicInput, profileNameInput, dobInput, nicInput, phoneInput,
+            olAInput, olBInput, olCInput, olSInput, olFInput,
+            alDetailsInput, higherStudiesInput, saveBtn
+        ];
+
+        fields.forEach(f => { if (f) f.disabled = false; });
+        profileNameInput.focus();
+    });
+
+    // Save Changes Handler
+    profileForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        saveBtn.disabled = true;
+        saveBtn.innerText = 'Saving...';
+
+        const updateData = {
+            dob: dobInput.value.trim(),
+            nic: nicInput.value.trim(),
+            contact: phoneInput.value.trim(),
+            ol_a: parseInt(olAInput.value) || 0,
+            ol_b: parseInt(olBInput.value) || 0,
+            ol_c: parseInt(olCInput.value) || 0,
+            ol_s: parseInt(olSInput.value) || 0,
+            ol_f: parseInt(olFInput.value) || 0,
+            al_details: alDetailsInput.value.trim(),
+            higher_studies: higherStudiesInput.value.trim()
+        };
+
+        const newName = profileNameInput.value.trim();
+        if (newName) {
+            if (userRole === 'super_admin') updateData.super_admin_name = newName;
+            else if (userRole === 'admin') updateData.admin_name = newName;
+            else updateData.name = newName;
         }
 
-        profilePicInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(uploadEvent) {
-                    uploadedImageBase64 = uploadEvent.target.result;
-                    profilePreviewImg.src = uploadedImageBase64;
-                    profilePreviewImg.classList.remove('hidden');
-                    profileDefaultSvg.classList.add('hidden');
-                };
-                reader.readAsDataURL(file);
-            }
-        });
+        if (uploadedImageBase64) {
+            updateData.profile_picture = uploadedImageBase64;
+        }
 
-        LMS.renderSidebar();
-        updateRoleBadge();
-        fetchLatestUserData();
+        try {
+            let tableName = 'qats';
+            let identifierKey = 'qat_g_id';
+            let identifierVal = activeSession?.gid;
 
-        editBtn.addEventListener('click', function() {
-            profilePicInput.disabled = false;
-            profileNameInput.disabled = false;
-            dobInput.disabled = false;
-            nicInput.disabled = false;
-            phoneInput.disabled = false;
-            saveBtn.disabled = false;
-            profileNameInput.focus();
-        });
-
-        profileForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const updateData = {};
-
-            if (profileNameInput.value.trim() !== '') {
-                const newName = profileNameInput.value.trim();
-                userData[cfg.nameCol] = newName;
-                updateData[cfg.nameCol] = newName;
-            }
-            if (profilePicInput.files.length > 0 && uploadedImageBase64) {
-                userData.profile_picture = uploadedImageBase64;
-                updateData.profile_picture = uploadedImageBase64;
-            }
-            if (dobInput.value.trim() !== '') {
-                userData.dob = dobInput.value.trim();
-                updateData.dob = userData.dob;
-            }
-            if (nicInput.value.trim() !== '') {
-                userData.nic = nicInput.value.trim();
-                updateData.nic = userData.nic;
-            }
-            if (phoneInput.value.trim() !== '') {
-                userData.contact = phoneInput.value.trim();
-                updateData.contact = userData.contact;
+            if (userRole === 'super_admin') {
+                tableName = 'super_admin';
+                identifierKey = 'super_admin_g_id';
+            } else if (userRole === 'admin') {
+                tableName = 'admins';
+                identifierKey = 'admin_g_id';
+            } else {
+                tableName = 'qats';
+                identifierKey = 'qat_g_id';
             }
 
-            try {
-                const { key, val } = getIdentifier();
-                if (val && Object.keys(updateData).length > 0) {
-                    const { error } = await supabaseClient.from(cfg.table).update(updateData).eq(key, val).select();
-                    if (error) {
-                        console.error('Supabase update error:', error);
-                        alert('Database update error: ' + error.message);
-                        return;
-                    }
-                }
-            } catch (err) {
-                console.error('Database connection error:', err);
-            }
+            const { error } = await supabaseClient
+                .from(tableName)
+                .update(updateData)
+                .eq(identifierKey, identifierVal);
 
-            localStorage.setItem(cfg.storageKey, JSON.stringify(userData));
+            if (error) throw error;
 
-            profilePicInput.disabled = true;
-            profileNameInput.disabled = true;
-            dobInput.disabled = true;
-            nicInput.disabled = true;
-            phoneInput.disabled = true;
-            saveBtn.disabled = true;
-            profilePicInput.value = '';
+            // Sync with local session
+            Object.assign(userData, updateData);
+            if (userRole === 'super_admin') localStorage.setItem('currentSuperAdmin', JSON.stringify(userData));
+            else if (userRole === 'admin') localStorage.setItem('currentAdmin', JSON.stringify(userData));
+            else localStorage.setItem('currentQat', JSON.stringify(userData));
+
+            alert('Profile & Educational Qualifications updated successfully!');
+
+            // Re-lock fields
+            const fields = [
+                profilePicInput, profileNameInput, dobInput, nicInput, phoneInput,
+                olAInput, olBInput, olCInput, olSInput, olFInput,
+                alDetailsInput, higherStudiesInput, saveBtn
+            ];
+            fields.forEach(f => { if (f) f.disabled = true; });
 
             loadUserData();
-            alert('Profile details updated successfully!');
-        });
-    }
+        } catch (err) {
+            alert('Error updating profile: ' + err.message);
+        } finally {
+            saveBtn.disabled = true;
+            saveBtn.innerText = 'Save Profile Changes';
+        }
+    });
 </script>
-
 </body>
 </html>
