@@ -4,9 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Super Admin Dashboard - GSS LMS</title>
+    <!-- 1. CDN Libraries loaded first (Web Standard) -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- 2. Core App Logic -->
     <script src="lms-core.js"></script>
     <script>LMS.guard(['super_admin']);</script>
     <style>
@@ -17,6 +19,7 @@
 </head>
 <body class="bg-gray-50 font-sans flex h-screen overflow-hidden">
 
+<!-- Dynamic Sidebar -->
 <aside class="fixed left-0 top-0 h-screen bg-white shadow-xl z-50 w-20 hover:w-64 transition-all duration-300 ease-in-out flex flex-col justify-between py-6 px-4 group border-r border-gray-100 flex-shrink-0">
     <div class="space-y-8 flex flex-col h-full overflow-hidden">
         <div class="flex items-center space-x-3 overflow-hidden flex-shrink-0">
@@ -34,17 +37,19 @@
             <h1 class="text-3xl font-bold text-stone-900">Super Admin Dashboard</h1>
             <div class="flex items-center gap-2 mt-1">
                 <span id="super-dept-badge" class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-purple-100 text-purple-800 border border-purple-200">Scope: General</span>
-                <span class="text-stone-400 text-xs">&bull; GSS Global System Solution</span>
+                <span class="text-stone-400 text-xs">• GSS Global System Solution</span>
             </div>
         </div>
         <div class="flex flex-wrap items-center gap-3">
             <p class="text-stone-500 text-sm">Welcome back, <span id="welcome-name" class="font-bold text-stone-800">Super Admin</span></p>
-            <button type="button" onclick="openHandoverModal()" class="inline-flex items-center space-x-1.5 px-3 py-1.5 text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg transition shadow-sm">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+            
+            <button onclick="openHandoverModal()" class="inline-flex items-center space-x-1.5 px-3 py-1.5 text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg transition shadow-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
                 <span>Handover Role</span>
             </button>
-            <button type="button" onclick="openPwModal()" class="inline-flex items-center space-x-1.5 px-3 py-1.5 text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+
+            <button onclick="openPwModal()" class="inline-flex items-center space-x-1.5 px-3 py-1.5 text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
                 <span>Change Password</span>
             </button>
         </div>
@@ -55,7 +60,7 @@
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
             <div class="flex items-center space-x-4">
                 <div class="p-4 bg-blue-50 text-blue-600 rounded-xl">
-                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
                 </div>
                 <div>
                     <p class="text-xs font-semibold uppercase tracking-wider text-stone-500">Department Courses</p>
@@ -69,7 +74,7 @@
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
             <div class="flex items-center space-x-4">
                 <div class="p-4 bg-emerald-50 text-emerald-600 rounded-xl">
-                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                 </div>
                 <div>
                     <p class="text-xs font-semibold uppercase tracking-wider text-stone-500">Department Admins</p>
@@ -83,7 +88,7 @@
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
             <div class="flex items-center space-x-4">
                 <div class="p-4 bg-amber-50 text-amber-600 rounded-xl">
-                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
                 </div>
                 <div>
                     <p class="text-xs font-semibold uppercase tracking-wider text-stone-500">Enrolled QATs</p>
@@ -93,6 +98,45 @@
             <div class="mt-4 pt-3 border-t border-gray-100 flex justify-end">
                 <a href="qat-details.html" class="text-xs font-semibold text-amber-600 hover:text-amber-700 bg-amber-50 hover:bg-amber-100 px-3 py-1.5 rounded-lg transition">View QATs &rsaquo;</a>
             </div>
+        </div>
+    </div>
+
+    <!-- =========================================================================
+         ONLINE NOW SECTION (REAL-TIME LIVE TRACKING RESTORED)
+         ========================================================================= -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <div class="flex justify-between items-center mb-4">
+            <div class="flex items-center space-x-2">
+                <span class="h-2.5 w-2.5 bg-emerald-500 rounded-full animate-pulse"></span>
+                <h3 class="text-lg font-bold text-stone-900">Online Now</h3>
+            </div>
+            <span class="text-xs text-stone-400">Realtime: login වූ ගමන් පෙනේ, logout වූ ගමන් අයින් වේ</span>
+        </div>
+        <div class="grid grid-cols-2 gap-4 mb-4">
+            <div class="p-4 bg-emerald-50 rounded-xl">
+                <p class="text-xs font-semibold uppercase tracking-wider text-emerald-700">Admins Online</p>
+                <p id="online-admins" class="text-3xl font-extrabold text-emerald-700">0</p>
+            </div>
+            <div class="p-4 bg-amber-50 rounded-xl">
+                <p class="text-xs font-semibold uppercase tracking-wider text-amber-700">QATs Online</p>
+                <p id="online-qats" class="text-3xl font-extrabold text-amber-700">0</p>
+            </div>
+        </div>
+        <div class="overflow-x-auto max-h-60 custom-scroll">
+            <table class="w-full text-left text-sm">
+                <thead>
+                    <tr class="border-b border-gray-100 text-stone-400 text-xs uppercase tracking-wider">
+                        <th class="pb-2">Role</th>
+                        <th class="pb-2">G ID</th>
+                        <th class="pb-2">Name</th>
+                        <th class="pb-2">Department</th>
+                        <th class="pb-2">Online Since</th>
+                    </tr>
+                </thead>
+                <tbody id="online-tbody" class="divide-y divide-gray-50">
+                    <tr><td colspan="5" class="py-3 text-center text-stone-400 text-sm">Loading online members...</td></tr>
+                </tbody>
+            </table>
         </div>
     </div>
 
@@ -108,16 +152,64 @@
         <div class="overflow-x-auto max-h-60 custom-scroll">
             <table class="w-full text-left text-sm">
                 <thead><tr class="border-b text-stone-400 text-xs uppercase tracking-wider">
-                    <th scope="col" class="pb-2">Date / Time</th><th scope="col" class="pb-2">Department</th><th scope="col" class="pb-2">Granted By (Super Admin)</th><th scope="col" class="pb-2">QAT G ID &amp; Name</th><th scope="col" class="pb-2">Course</th>
+                    <th class="pb-2">Date / Time</th><th class="pb-2">Department</th><th class="pb-2">Granted By (Super Admin)</th><th class="pb-2">QAT G ID &amp; Name</th><th class="pb-2">Course</th>
                 </tr></thead>
                 <tbody id="retake-audit-tbody" class="divide-y divide-gray-50">
-                <tr><td colspan="5" class="py-4 text-center text-stone-400 text-xs">Loading audit logs...</td></tr>
+                    <tr><td colspan="5" class="py-4 text-center text-stone-400 text-xs">Loading audit logs...</td></tr>
                 </tbody>
             </table>
         </div>
     </div>
 
-    <!-- QAT Performance & Score Details -->
+    <!-- Active Admin Accounts -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <div class="flex justify-between items-center mb-4">
+            <div class="flex items-center space-x-2">
+                <h3 class="text-lg font-bold text-stone-900">Department Admin Accounts</h3>
+                <span id="active-admin-count" class="px-2.5 py-0.5 text-xs font-semibold bg-emerald-50 text-emerald-600 rounded-full">0</span>
+            </div>
+            <a href="admin-details.html" class="text-sm font-semibold text-blue-600 hover:underline">View All</a>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse table-fixed">
+                <thead><tr class="border-b border-gray-100 text-stone-400 text-xs uppercase tracking-wider">
+                    <th class="pb-3 font-semibold w-1/4">Admin ID</th>
+                    <th class="pb-3 font-semibold w-1/3">Admin Name</th>
+                    <th class="pb-3 font-semibold w-1/4">Department</th>
+                    <th class="pb-3 font-semibold w-1/6">Status</th>
+                </tr></thead>
+                <tbody id="active-admins-tbody" class="text-sm text-stone-700 divide-y divide-gray-50">
+                    <tr><td colspan="4" class="py-4 text-center text-stone-400 text-sm">Loading from database...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Active QAT Accounts -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <div class="flex justify-between items-center mb-4">
+            <div class="flex items-center space-x-2">
+                <h3 class="text-lg font-bold text-stone-900">Department QAT Accounts</h3>
+                <span id="active-qat-count" class="px-2.5 py-0.5 text-xs font-semibold bg-amber-50 text-amber-600 rounded-full">0</span>
+            </div>
+            <a href="qat-details.html" class="text-sm font-semibold text-blue-600 hover:underline">View All</a>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse table-fixed">
+                <thead><tr class="border-b border-gray-100 text-stone-400 text-xs uppercase tracking-wider">
+                    <th class="pb-3 font-semibold w-1/4">GID</th>
+                    <th class="pb-3 font-semibold w-1/3">QAT Name</th>
+                    <th class="pb-3 font-semibold w-1/4">Email</th>
+                    <th class="pb-3 font-semibold w-1/6">Status</th>
+                </tr></thead>
+                <tbody id="active-qats-tbody" class="text-sm text-stone-700 divide-y divide-gray-50">
+                    <tr><td colspan="4" class="py-4 text-center text-stone-400 text-sm">Loading from database...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- QAT Performance & Score Details (With Allow Retake Action) -->
     <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-6">
         <div>
             <h2 class="text-xl font-bold text-stone-900">QAT Performance &amp; Retake Management</h2>
@@ -125,32 +217,32 @@
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-                <label for="super-filter-qat-gid" class="block text-xs font-semibold text-stone-700 mb-1">QAT G ID</label>
+                <label class="block text-xs font-semibold text-stone-700 mb-1">QAT G ID</label>
                 <select id="super-filter-qat-gid" class="w-full border border-stone-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"><option value="">All QAT G IDs</option></select>
             </div>
             <div>
-                <label for="super-filter-admin-gid" class="block text-xs font-semibold text-stone-700 mb-1">Admin G ID</label>
+                <label class="block text-xs font-semibold text-stone-700 mb-1">Admin G ID</label>
                 <select id="super-filter-admin-gid" class="w-full border border-stone-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"><option value="">All Admin G IDs</option></select>
             </div>
             <div>
-                <label for="super-filter-course-id" class="block text-xs font-semibold text-stone-700 mb-1">Course ID</label>
+                <label class="block text-xs font-semibold text-stone-700 mb-1">Course ID</label>
                 <select id="super-filter-course-id" class="w-full border border-stone-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"><option value="">All Course IDs</option></select>
             </div>
         </div>
         <div class="flex flex-wrap gap-3 justify-end items-center pt-2">
-            <button type="button" onclick="resetSuperFilters()" class="px-4 py-2 text-xs font-semibold text-stone-600 bg-stone-100 hover:bg-stone-200 rounded-xl transition">Reset Filters</button>
-            <button type="button" onclick="applySuperScoreFilters()" class="px-5 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-sm transition">Apply Filter</button>
-            <button type="button" onclick="downloadSuperExcel()" class="px-4 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-sm transition">Download Excel</button>
+            <button onclick="resetSuperFilters()" class="px-4 py-2 text-xs font-semibold text-stone-600 bg-stone-100 hover:bg-stone-200 rounded-xl transition">Reset Filters</button>
+            <button onclick="applySuperScoreFilters()" class="px-5 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-sm transition">Apply Filter</button>
+            <button onclick="downloadSuperExcel()" class="px-4 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-sm transition">Download Excel</button>
         </div>
         <div class="overflow-x-auto max-h-80 custom-scroll border border-stone-100 rounded-xl">
             <table class="w-full text-left text-sm border-collapse">
                 <thead class="bg-stone-50 text-stone-600 text-xs uppercase sticky top-0 border-b border-stone-100"><tr>
-                    <th scope="col" class="p-3">QAT G ID</th>
-                    <th scope="col" class="p-3">COURSE ID</th>
-                    <th scope="col" class="p-3">COURSE TITLE</th>
-                    <th scope="col" class="p-3 font-bold text-blue-600">SCORE (%)</th>
-                    <th scope="col" class="p-3">STATUS</th>
-                    <th scope="col" class="p-3 text-center">RETAKE ACTION</th>
+                    <th class="p-3">QAT G ID</th>
+                    <th class="p-3">COURSE ID</th>
+                    <th class="p-3">COURSE TITLE</th>
+                    <th class="p-3 font-bold text-blue-600">SCORE (%)</th>
+                    <th class="p-3">STATUS</th>
+                    <th class="p-3 text-center">RETAKE ACTION</th>
                 </tr></thead>
                 <tbody id="super-score-tbody" class="divide-y divide-stone-100 text-stone-700"></tbody>
             </table>
@@ -158,58 +250,68 @@
     </div>
 </div>
 
-<!-- Change Password Modal -->
-<div id="pw-modal" role="dialog" aria-modal="true" aria-labelledby="pw-modal-title" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
-        <div class="flex justify-between items-center border-b pb-3">
-            <h2 id="pw-modal-title" class="text-lg font-bold text-stone-900">Change Super Admin Password</h2>
-            <button type="button" onclick="closePwModal()" aria-label="Close modal" class="text-stone-400 hover:text-stone-600 text-xl font-bold">&times;</button>
+<!-- Handover Modal -->
+<div id="handover-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center hidden z-[70] p-4">
+    <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-2xl max-w-lg w-full relative space-y-5">
+        <div class="border-b pb-3">
+            <h3 class="text-xl font-bold text-stone-900">Super Admin Role Handover</h3>
+            <p id="handover-subtitle" class="text-xs text-stone-500 mt-1">තම තනතුර සහ සම්පූර්ණ බලතල වෙනත් සුදුසු නිලධාරියෙකුට පැවරීම.</p>
         </div>
-        <form id="pw-form" class="space-y-3">
+
+        <form id="handover-form" class="space-y-4">
             <div>
-                <label for="sa-current-pw" class="block text-xs font-semibold text-stone-700 mb-1">Current Password</label>
-                <input type="password" id="sa-current-pw" required class="w-full px-3 py-2 text-sm border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <label class="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1">Select Successor (නව සුපිරි පරිපාලක) <span class="text-rose-500">*</span></label>
+                <select id="handover-target-select" required class="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white">
+                    <option value="" disabled selected>පැවරිය යුතු පුද්ගලයා තෝරන්න</option>
+                </select>
             </div>
+
             <div>
-                <label for="sa-new-pw" class="block text-xs font-semibold text-stone-700 mb-1">New Password (min 8 chars)</label>
-                <input type="password" id="sa-new-pw" minlength="8" required class="w-full px-3 py-2 text-sm border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <label class="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1">Action for Outgoing Account <span class="text-rose-500">*</span></label>
+                <select id="handover-outgoing-action" required class="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white">
+                    <option value="deactivate">Deactivate Account (ගිණුම අක්‍රිය කරන්න / ඉවත් වන්න)</option>
+                    <option value="demote">Demote to Regular Admin (සාමාන්‍ය Admin කෙනෙකු ලෙස පවත්වාගන්න)</option>
+                </select>
             </div>
+
             <div>
-                <label for="sa-confirm-pw" class="block text-xs font-semibold text-stone-700 mb-1">Confirm New Password</label>
-                <input type="password" id="sa-confirm-pw" minlength="8" required class="w-full px-3 py-2 text-sm border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <label class="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1">Confirm with Your Password <span class="text-rose-500">*</span></label>
+                <input type="password" id="handover-password" required placeholder="තහවුරු කිරීමට ඔබගේ Password එක ගසන්න" class="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500">
             </div>
-            <div class="flex justify-end gap-2 pt-2">
-                <button type="button" onclick="closePwModal()" class="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-semibold rounded-xl transition">Cancel</button>
-                <button type="submit" id="pw-save-btn" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-xl transition">Update Password</button>
+
+            <p id="handover-error" class="text-xs text-rose-600 font-semibold hidden"></p>
+
+            <div class="flex justify-end gap-2 pt-2 border-t">
+                <button type="button" onclick="closeHandoverModal()" class="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-semibold rounded-xl transition">Cancel</button>
+                <button type="submit" id="handover-submit-btn" class="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-xl shadow-sm transition">Transfer Ownership &amp; Logout</button>
             </div>
         </form>
+
+        <button onclick="closeHandoverModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-xl font-bold">&times;</button>
     </div>
 </div>
 
-<!-- Handover Role Modal -->
-<div id="handover-modal" role="dialog" aria-modal="true" aria-labelledby="handover-modal-title" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
-        <div class="flex justify-between items-center border-b pb-3">
-            <h2 id="handover-modal-title" class="text-lg font-bold text-stone-900">Handover Super Admin Role</h2>
-            <button type="button" onclick="closeHandoverModal()" aria-label="Close modal" class="text-stone-400 hover:text-stone-600 text-xl font-bold">&times;</button>
-        </div>
-        <p class="text-xs text-stone-500">Select a registered Admin in your department scope to promote and transfer Super Admin credentials.</p>
-        <form id="handover-form" class="space-y-3">
+<!-- Change Password Modal -->
+<div id="pw-modal" class="fixed inset-0 bg-black/50 items-center justify-center hidden z-[60] p-4">
+    <div class="bg-white p-6 rounded-2xl shadow-xl max-w-sm w-full relative">
+        <h3 class="text-lg font-bold text-gray-800 mb-4">Change Password</h3>
+        <form id="pw-form" class="space-y-4">
             <div>
-                <label for="handover-admin-select" class="block text-xs font-semibold text-stone-700 mb-1">Target Admin</label>
-                <select id="handover-admin-select" required class="w-full px-3 py-2 text-sm border border-stone-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="" disabled selected>Select an Admin</option>
-                </select>
+                <label class="block text-xs font-semibold uppercase text-stone-700 mb-1">Current Password</label>
+                <input type="password" id="pw-current" required class="w-full px-4 py-2 text-sm border border-gray-300 rounded-lg">
             </div>
             <div>
-                <label for="handover-password" class="block text-xs font-semibold text-stone-700 mb-1">Confirm Your Password</label>
-                <input type="password" id="handover-password" required placeholder="Enter your current password" class="w-full px-3 py-2 text-sm border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <label class="block text-xs font-semibold uppercase text-stone-700 mb-1">New Password</label>
+                <input type="password" id="pw-new" minlength="8" required class="w-full px-4 py-2 text-sm border border-gray-300 rounded-lg">
             </div>
-            <div class="flex justify-end gap-2 pt-2">
-                <button type="button" onclick="closeHandoverModal()" class="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-semibold rounded-xl transition">Cancel</button>
-                <button type="submit" id="handover-submit-btn" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-xl transition">Confirm Handover</button>
+            <div>
+                <label class="block text-xs font-semibold uppercase text-stone-700 mb-1">Confirm New Password</label>
+                <input type="password" id="pw-confirm" required class="w-full px-4 py-2 text-sm border border-gray-300 rounded-lg">
             </div>
+            <p id="pw-error" class="text-xs text-rose-600 hidden"></p>
+            <button type="submit" id="pw-submit" class="w-full py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition">Update Password</button>
         </form>
+        <button onclick="closePwModal()" class="absolute top-3 right-3 text-gray-400 text-xl font-bold">&times;</button>
     </div>
 </div>
 
@@ -218,23 +320,16 @@
     let globalCoursesData = [], globalQatsData = [], globalAdminsData = [], globalCompletedData = [];
     let filteredScoreData = [];
     let loggedSuperAdminDept = 'General';
-    let currentSession = null;
     let currentSessionUser = null;
 
-    const esc = LMS.esc;
-    const pctOf = r => {
-        const sc = Number(r.score), tot = Number(r.total_marks);
-        return (r.score == null || isNaN(sc) || !(tot > 0)) ? null : Math.round(sc / tot * 100);
-    };
+    function esc(v) { return String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
     document.addEventListener('DOMContentLoaded', async () => {
         LMS.renderSidebar();
         try {
-            currentSession = LMS.getSession();
-            currentSessionUser = currentSession?.user;
-            if (currentSession && currentSession.name) {
-                document.getElementById('welcome-name').textContent = currentSession.name;
-            }
+            const s = LMS.getSession();
+            currentSessionUser = s?.user;
+            if (s && s.name) document.getElementById('welcome-name').textContent = s.name;
             loggedSuperAdminDept = currentSessionUser?.department || 'General';
 
             const badge = document.getElementById('super-dept-badge');
@@ -251,12 +346,8 @@
             }
         } catch (e) { console.warn(e); }
 
-        document.getElementById('super-score-tbody')?.addEventListener('click', e => {
-            const btn = e.target.closest('button[data-action="grant-retake"]');
-            if (!btn) return;
-            grantRetakeAccess(btn.dataset.id, btn.dataset.gid, btn.dataset.qname, btn.dataset.cid, btn.dataset.cname);
-        });
-
+        // Start online watch
+        if (window.loadOnline) loadOnline();
         await fetchSuperAdminDataFromDB();
     });
 
@@ -264,7 +355,7 @@
         try {
             const aRes = await supabaseClient.from('admins').select('*');
             const allAdmins = aRes.data || [];
-
+            
             if (loggedSuperAdminDept !== 'General' && loggedSuperAdminDept !== 'All') {
                 globalAdminsData = allAdmins.filter(a => (a.department || 'Training').toLowerCase() === loggedSuperAdminDept.toLowerCase());
             } else {
@@ -275,7 +366,7 @@
             const allCourses = cRes.data || [];
             if (loggedSuperAdminDept !== 'General' && loggedSuperAdminDept !== 'All') {
                 const adminGids = new Set(globalAdminsData.map(a => String(a.admin_g_id)));
-                globalCoursesData = allCourses.filter(c => adminGids.has(String(c.created_by)) || (c.department && c.department.toLowerCase() === loggedSuperAdminDept.toLowerCase()));
+                globalCoursesData = allCourses.filter(c => adminGids.has(String(c.created_by)));
             } else {
                 globalCoursesData = allCourses;
             }
@@ -283,6 +374,7 @@
             const qRes = await supabaseClient.from('qats').select('*');
             globalQatsData = qRes.data || [];
 
+            // Completed courses
             const courseIds = new Set(globalCoursesData.map(c => String(c.id)));
             const ccRes = await supabaseClient.from('qat_completed_courses').select('*');
             const allCc = ccRes.data || [];
@@ -293,16 +385,60 @@
                 globalCompletedData = allCc;
             }
 
-            document.getElementById('total-courses-count').textContent = globalCoursesData.length;
-            document.getElementById('total-admins-count').textContent = globalAdminsData.length;
-            document.getElementById('total-qats-count').textContent = globalQatsData.length;
+            // Summary counters
+            const cCount = document.getElementById('total-courses-count'); if (cCount) cCount.textContent = globalCoursesData.length;
+            const aCount = document.getElementById('total-admins-count'); if (aCount) aCount.textContent = globalAdminsData.length;
+            const qCount = document.getElementById('total-qats-count'); if (qCount) qCount.textContent = globalQatsData.length;
 
+            renderActiveAdminTable();
+            renderActiveQatTable();
             populateSuperDropdowns();
-            filteredScoreData = [...globalCompletedData];
             renderScoreTable(globalCompletedData);
         } catch (err) {
             console.error('Fetch error:', err);
         }
+    }
+
+    function renderActiveAdminTable() {
+        const tbody = document.getElementById('active-admins-tbody');
+        const countBadge = document.getElementById('active-admin-count');
+        if (countBadge) countBadge.textContent = globalAdminsData.length;
+        if (!tbody) return;
+
+        if (!globalAdminsData || globalAdminsData.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-stone-400 text-sm">කිසිදු Admin ගිණුමක් හමු නොවීය (No admin accounts found)</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = globalAdminsData.slice(0, 10).map(a => `
+            <tr class="hover:bg-gray-50/50">
+                <td class="py-3 px-2 font-mono text-xs font-semibold text-stone-700">${esc(a.admin_g_id || a.id || '-')}</td>
+                <td class="py-3 px-2 font-medium text-stone-800">${esc(a.admin_name || a.user_name || '-')}</td>
+                <td class="py-3 px-2 text-xs text-stone-600">${esc(a.department || 'Training')}</td>
+                <td class="py-3 px-2"><span class="px-2.5 py-1 text-xs font-semibold bg-emerald-50 text-emerald-600 rounded-full">${esc(a.status || 'Active')}</span></td>
+            </tr>
+        `).join('');
+    }
+
+    function renderActiveQatTable() {
+        const tbody = document.getElementById('active-qats-tbody');
+        const countBadge = document.getElementById('active-qat-count');
+        if (countBadge) countBadge.textContent = globalQatsData.length;
+        if (!tbody) return;
+
+        if (!globalQatsData || globalQatsData.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-stone-400 text-sm">කිසිදු QAT ගිණුමක් හමු නොවීය (No QAT accounts found)</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = globalQatsData.slice(0, 10).map(q => `
+            <tr class="hover:bg-gray-50/50">
+                <td class="py-3 px-2 font-mono text-xs font-semibold text-stone-700">${esc(q.qat_g_id || q.gid || '-')}</td>
+                <td class="py-3 px-2 font-medium text-stone-800">${esc(q.name || q.user_name || '-')}</td>
+                <td class="py-3 px-2 text-xs text-stone-500">${esc(q.email || '-')}</td>
+                <td class="py-3 px-2"><span class="px-2.5 py-1 text-xs font-semibold bg-emerald-50 text-emerald-600 rounded-full">${esc(q.status || 'Active')}</span></td>
+            </tr>
+        `).join('');
     }
 
     function renderScoreTable(data) {
@@ -315,18 +451,17 @@
         }
 
         tbody.innerHTML = data.map(r => {
-            const p = pctOf(r);
             const isRetakeActive = r.retake_allowed === true;
             const retakeBtn = isRetakeActive
                 ? `<span class="px-2.5 py-1 text-xs font-semibold bg-emerald-50 text-emerald-700 rounded-lg border border-emerald-200">Retake Allowed</span>`
-                : `<button type="button" data-action="grant-retake" data-id="${esc(r.id)}" data-gid="${esc(r.gid)}" data-qname="${esc(r.qat_name || 'QAT')}" data-cid="${esc(r.course_id)}" data-cname="${esc(r.course_name || '')}" class="px-2.5 py-1 text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg transition">Allow Retake</button>`;
+                : `<button onclick="grantRetakeAccess('${esc(r.id)}', '${esc(r.gid)}', '${esc(r.qat_name || 'QAT')}', '${esc(r.course_id)}', '${esc(r.course_name || '')}')" class="px-2.5 py-1 text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg transition">Allow Retake</button>`;
 
             return `
             <tr class="hover:bg-stone-50">
                 <td class="p-3 font-mono text-xs font-semibold">${esc(r.gid)}</td>
                 <td class="p-3 font-mono text-xs text-blue-600">${esc(r.course_id)}</td>
                 <td class="p-3 text-xs font-medium">${esc(r.course_name)}</td>
-                <td class="p-3 font-bold text-xs text-blue-600">${p !== null ? p + '%' : '-'}</td>
+                <td class="p-3 font-bold text-xs text-blue-600">${r.score != null ? Math.round(r.score / (r.total_marks || 1) * 100) + '%' : '-'}</td>
                 <td class="p-3 text-xs"><span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-600">${esc(r.status || 'Completed')}</span></td>
                 <td class="p-3 text-center">${retakeBtn}</td>
             </tr>`;
@@ -334,9 +469,7 @@
     }
 
     async function grantRetakeAccess(recordId, qatGid, qatName, courseId, courseName) {
-        if (!confirm(`QAT (${qatName} - ${qatGid}) ට මෙම Course (${courseId}) එක නැවත (Retake) කිරීමට අවසර දීමට ඔබට සහතිකද?\n\nමෙම ක්‍රියාව General Super Admin ගේ Audit වාර්තාවේ සටහන් වේ.`)) {
-            return;
-        }
+        if (!confirm(`QAT (${qatName} - ${qatGid}) ට මෙම Course (${courseId}) එක නැවත (Retake) කිරීමට අවසර දීමට ඔබට සහතිකද?\n\nමෙම ක්‍රියාව General Super Admin ගේ Audit වාර්තාවේ සටහන් වේ.`)) return;
 
         try {
             const { error: updErr } = await supabaseClient
@@ -347,8 +480,8 @@
             if (updErr) throw updErr;
 
             await supabaseClient.from('retake_audit_logs').insert([{
-                super_admin_gid: currentSessionUser?.super_admin_g_id || currentSession?.gid || 'SA',
-                super_admin_name: currentSessionUser?.super_admin_name || currentSession?.name || 'Super Admin',
+                super_admin_gid: currentSessionUser?.super_admin_g_id || currentSessionUser?.gid || 'SA',
+                super_admin_name: currentSessionUser?.super_admin_name || currentSessionUser?.name || 'Super Admin',
                 department: loggedSuperAdminDept,
                 qat_gid: qatGid,
                 qat_name: qatName,
@@ -379,7 +512,7 @@
 
             tbody.innerHTML = logs.map(l => `
                 <tr class="hover:bg-gray-50/70">
-                    <td class="py-2.5 px-3 text-xs text-stone-500">${esc(new Date(l.granted_at).toLocaleString())}</td>
+                    <td class="py-2.5 px-3 text-xs text-stone-500">${new Date(l.granted_at).toLocaleString()}</td>
                     <td class="py-2.5 px-3 text-xs font-semibold text-blue-700">${esc(l.department)}</td>
                     <td class="py-2.5 px-3 text-xs text-stone-800">${esc(l.super_admin_name)} <span class="font-mono text-stone-400">(${esc(l.super_admin_gid)})</span></td>
                     <td class="py-2.5 px-3 text-xs font-medium text-stone-900">${esc(l.qat_name)} <span class="font-mono text-blue-600">(${esc(l.qat_gid)})</span></td>
@@ -396,23 +529,17 @@
         const aSel = document.getElementById('super-filter-admin-gid');
         const cSel = document.getElementById('super-filter-course-id');
 
-        qSel.innerHTML = '<option value="">All QAT G IDs</option>' + [...new Set(globalCompletedData.map(q => q.gid).filter(Boolean))].map(id => `<option value="${esc(id)}">${esc(id)}</option>`).join('');
-        aSel.innerHTML = '<option value="">All Admin G IDs</option>' + [...new Set(globalAdminsData.map(a => a.admin_g_id).filter(Boolean))].map(id => `<option value="${esc(id)}">${esc(id)}</option>`).join('');
-        cSel.innerHTML = '<option value="">All Course IDs</option>' + [...new Set(globalCoursesData.map(c => c.id).filter(Boolean))].map(id => `<option value="${esc(id)}">${esc(id)}</option>`).join('');
+        qSel.innerHTML = '<option value="">All QAT G IDs</option>' + [...new Set(globalCompletedData.map(q => q.gid))].map(id => `<option value="${esc(id)}">${esc(id)}</option>`).join('');
+        aSel.innerHTML = '<option value="">All Admin G IDs</option>' + [...new Set(globalAdminsData.map(a => a.admin_g_id))].map(id => `<option value="${esc(id)}">${esc(id)}</option>`).join('');
+        cSel.innerHTML = '<option value="">All Course IDs</option>' + [...new Set(globalCoursesData.map(c => c.id))].map(id => `<option value="${esc(id)}">${esc(id)}</option>`).join('');
     }
 
     function applySuperScoreFilters() {
         const selQat = document.getElementById('super-filter-qat-gid').value.trim();
-        const selAdmin = document.getElementById('super-filter-admin-gid').value.trim();
         const selCourse = document.getElementById('super-filter-course-id').value.trim();
 
-        const adminCourses = selAdmin
-            ? new Set(globalCoursesData.filter(c => String(c.created_by) === selAdmin).map(c => String(c.id)))
-            : null;
-
         let data = [...globalCompletedData];
-        if (selQat) data = data.filter(d => String(d.gid) === selQat);
-        if (selAdmin) data = data.filter(d => String(d.admin_g_id) === selAdmin || adminCourses.has(String(d.course_id)));
+        if (selQat) data = data.filter(d => d.gid === selQat);
         if (selCourse) data = data.filter(d => String(d.course_id) === selCourse);
 
         filteredScoreData = data;
@@ -423,120 +550,131 @@
         document.getElementById('super-filter-qat-gid').value = '';
         document.getElementById('super-filter-admin-gid').value = '';
         document.getElementById('super-filter-course-id').value = '';
-        filteredScoreData = [...globalCompletedData];
         renderScoreTable(globalCompletedData);
     }
 
     function downloadSuperExcel() {
         const data = filteredScoreData.length ? filteredScoreData : globalCompletedData;
         if (!data.length) return alert('No records to export.');
-        const rows = data.map(i => {
-            const p = pctOf(i);
-            return {
-                'QAT G ID': i.gid,
-                'Course ID': i.course_id,
-                'Course Title': i.course_name,
-                'Score (%)': p !== null ? p + '%' : '-',
-                'Status': i.status || 'Completed'
-            };
-        });
+        const rows = data.map(i => ({
+            'QAT G ID': i.gid,
+            'Course ID': i.course_id,
+            'Course Title': i.course_name,
+            'Score (%)': i.score != null ? Math.round(i.score / (i.total_marks || 1) * 100) + '%' : '-',
+            'Status': i.status || 'Completed'
+        }));
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), 'Scores');
         XLSX.writeFile(wb, 'QAT_Scores.xlsx');
     }
 
-    /* ---------- Change Password Modal ---------- */
-    function openPwModal() {
-        document.getElementById('pw-form').reset();
-        document.getElementById('pw-modal').classList.remove('hidden');
-    }
-    function closePwModal() {
-        document.getElementById('pw-modal').classList.add('hidden');
-    }
-    document.getElementById('pw-form').addEventListener('submit', async e => {
-        e.preventDefault();
-        const cur = document.getElementById('sa-current-pw').value;
-        const npw = document.getElementById('sa-new-pw').value;
-        const cpw = document.getElementById('sa-confirm-pw').value;
-        if (npw !== cpw) return alert('New passwords do not match!');
-        if (String(currentSessionUser?.password ?? '') !== cur) return alert('Current password is incorrect!');
-
-        const btn = document.getElementById('pw-save-btn');
-        btn.disabled = true;
-        btn.textContent = 'Updating...';
-        try {
-            const idKey = currentSessionUser?.id ? 'id' : 'super_admin_g_id';
-            const idVal = currentSessionUser?.id || currentSessionUser?.super_admin_g_id;
-            const { error } = await supabaseClient
-                .from('super_admin')
-                .update({ password: npw, confirm_password: npw })
-                .eq(idKey, idVal);
-            if (error) throw error;
-
-            currentSessionUser.password = npw;
-            currentSessionUser.confirm_password = npw;
-            localStorage.setItem('currentSuperAdmin', JSON.stringify(currentSessionUser));
-            alert('Password updated successfully!');
-            closePwModal();
-        } catch (err) {
-            alert('Error updating password: ' + err.message);
-        } finally {
-            btn.disabled = false;
-            btn.textContent = 'Update Password';
-        }
-    });
-
-    /* ---------- Handover Role Modal ---------- */
-    function openHandoverModal() {
-        const sel = document.getElementById('handover-admin-select');
-        const activeAdmins = globalAdminsData.filter(a => !a.status || String(a.status).toLowerCase() === 'active');
-        sel.innerHTML = '<option value="" disabled selected>Select an Admin</option>' +
-            activeAdmins.map(a => `<option value="${esc(a.id)}">${esc(a.admin_name || a.user_name)} (${esc(a.admin_g_id)} - ${esc(a.department || 'Training')})</option>`).join('');
+    /* Handover Functions */
+    async function openHandoverModal() {
+        const modal = document.getElementById('handover-modal');
+        const select = document.getElementById('handover-target-select');
+        const subtitle = document.getElementById('handover-subtitle');
+        const err = document.getElementById('handover-error');
+        err.classList.add('hidden');
         document.getElementById('handover-form').reset();
-        document.getElementById('handover-modal').classList.remove('hidden');
-    }
-    function closeHandoverModal() {
-        document.getElementById('handover-modal').classList.add('hidden');
-    }
-    document.getElementById('handover-form').addEventListener('submit', async e => {
-        e.preventDefault();
-        const targetId = document.getElementById('handover-admin-select').value;
-        const pw = document.getElementById('handover-password').value;
-        if (!targetId) return alert('Please select a target Admin.');
-        if (String(currentSessionUser?.password ?? '') !== pw) return alert('Current password is incorrect!');
+        select.innerHTML = '<option value="" disabled selected>Loading candidates...</option>';
+        modal.classList.remove('hidden');
 
-        const targetAdmin = globalAdminsData.find(a => String(a.id) === String(targetId));
-        if (!targetAdmin) return alert('Selected Admin not found.');
-
-        if (!confirm(`Are you sure you want to handover the Super Admin role to ${targetAdmin.admin_name || targetAdmin.user_name} (${targetAdmin.admin_g_id})?`)) return;
-
-        const btn = document.getElementById('handover-submit-btn');
-        btn.disabled = true;
-        btn.textContent = 'Transferring...';
         try {
-            const { error: insErr } = await supabaseClient.from('super_admin').insert([{
-                user_name: targetAdmin.user_name,
-                super_admin_g_id: targetAdmin.admin_g_id,
-                super_admin_name: targetAdmin.admin_name || targetAdmin.user_name,
-                biz_mail: targetAdmin.email,
-                department: loggedSuperAdminDept,
-                contact: targetAdmin.contact || '',
-                password: targetAdmin.password,
-                confirm_password: targetAdmin.password
-            }]);
-            if (insErr) throw insErr;
+            if (loggedSuperAdminDept === 'General' || loggedSuperAdminDept === 'All') {
+                subtitle.textContent = 'ඔබ Main General Super Admin බැවින්, ඕනෑම Department Super Admin කෙනෙකුට හෝ Admin කෙනෙකුට පූර්ණ General හිමිකාරිත්වය පැවරිය හැක.';
+                const [saRes, admRes] = await Promise.all([
+                    supabaseClient.from('super_admin').select('super_admin_g_id, super_admin_name, department').neq('department', 'General'),
+                    supabaseClient.from('admins').select('admin_g_id, admin_name, department, email').eq('status', 'Active')
+                ]);
+                let optHtml = '<option value="" disabled selected>පැවරිය යුතු නිලධාරියා තෝරන්න</option><optgroup label="Department Super Admins">';
+                (saRes.data || []).forEach(sa => { optHtml += `<option value="sa_${sa.super_admin_g_id}">${esc(sa.super_admin_name)} (${sa.super_admin_g_id}) - ${sa.department} Super Admin</option>`; });
+                optHtml += '</optgroup><optgroup label="Active Admins">';
+                (admRes.data || []).forEach(adm => { optHtml += `<option value="adm_${adm.admin_g_id}">${esc(adm.admin_name)} (${adm.admin_g_id}) - ${adm.department} Admin</option>`; });
+                optHtml += '</optgroup>';
+                select.innerHTML = optHtml;
+            } else {
+                subtitle.textContent = `ඔබ ${loggedSuperAdminDept} Department Super Admin බැවින්, ඔබේ Department එකේ Admin කෙනෙකුට මෙම තනතුර පැවරිය හැක.`;
+                const { data: deptAdmins } = await supabaseClient.from('admins').select('admin_g_id, admin_name, email').eq('department', loggedSuperAdminDept).eq('status', 'Active');
+                let optHtml = '<option value="" disabled selected>ඔබේ Department එකේ Admin කෙනෙකු තෝරන්න</option>';
+                (deptAdmins || []).forEach(adm => { optHtml += `<option value="adm_${adm.admin_g_id}">${esc(adm.admin_name)} (${adm.admin_g_id})</option>`; });
+                select.innerHTML = optHtml;
+            }
+        } catch (e) {
+            select.innerHTML = '<option value="" disabled selected>දත්ත ලබාගැනීම අසාර්ථකයි</option>';
+        }
+    }
 
-            await supabaseClient.from('admins').update({ role: 'Super Admin' }).eq('id', targetAdmin.id);
-            alert('Super Admin role handed over successfully!');
-            closeHandoverModal();
-            await fetchSuperAdminDataFromDB();
-        } catch (err) {
-            alert('Handover failed: ' + err.message);
-        } finally {
+    function closeHandoverModal() { document.getElementById('handover-modal').classList.add('hidden'); }
+
+    document.getElementById('handover-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const targetVal = document.getElementById('handover-target-select').value;
+        const outAction = document.getElementById('handover-outgoing-action').value;
+        const pwd = document.getElementById('handover-password').value;
+        const btn = document.getElementById('handover-submit-btn');
+        const err = document.getElementById('handover-error');
+        err.classList.add('hidden');
+
+        if (!targetVal) return alert('කරුණාකර පුද්ගලයෙකු තෝරන්න.');
+        if (!confirm('ඔබේ Super Admin තනතුර සහ බලතල මෙම පුද්ගලයාට පැවරීමට ඔබට විශ්වාසද?')) return;
+
+        btn.disabled = true;
+        btn.innerText = 'Verifying Password...';
+
+        try {
+            const { data: myAccount } = await supabaseClient.from('super_admin').select('*').eq('user_name', currentSessionUser.user_name).maybeSingle();
+            if (!myAccount || String(myAccount.password).trim() !== pwd.trim()) {
+                err.textContent = 'ඔබ ඇතුල් කළ Password එක වැරදියි.';
+                err.classList.remove('hidden');
+                btn.disabled = false;
+                btn.innerText = 'Transfer Ownership & Logout';
+                return;
+            }
+
+            const [targetType, targetGid] = targetVal.split('_');
+            if (loggedSuperAdminDept === 'General') {
+                if (targetType === 'sa') {
+                    await supabaseClient.from('super_admin').update({ department: 'General' }).eq('super_admin_g_id', targetGid);
+                } else {
+                    const { data: admInfo } = await supabaseClient.from('admins').select('*').eq('admin_g_id', targetGid).single();
+                    if (admInfo) {
+                        await supabaseClient.from('super_admin').insert([{
+                            user_name: admInfo.user_name, super_admin_g_id: admInfo.admin_g_id, super_admin_name: admInfo.admin_name,
+                            biz_mail: admInfo.email, contact: admInfo.contact, password: admInfo.password, confirm_password: admInfo.password, department: 'General'
+                        }]);
+                    }
+                }
+            } else {
+                const { data: admInfo } = await supabaseClient.from('admins').select('*').eq('admin_g_id', targetGid).single();
+                if (admInfo) {
+                    await supabaseClient.from('super_admin').insert([{
+                        user_name: admInfo.user_name, super_admin_g_id: admInfo.admin_g_id, super_admin_name: admInfo.admin_name,
+                        biz_mail: admInfo.email, contact: admInfo.contact, password: admInfo.password, confirm_password: admInfo.password, department: loggedSuperAdminDept
+                    }]);
+                }
+            }
+
+            if (outAction === 'deactivate') {
+                await supabaseClient.from('super_admin').delete().eq('user_name', currentSessionUser.user_name);
+            } else {
+                await supabaseClient.from('super_admin').update({ department: 'Retired' }).eq('user_name', currentSessionUser.user_name);
+            }
+
+            alert('Super Admin තනතුර සාර්ථකව පවරන ලදී!');
+            LMS.logout();
+        } catch (ex) {
+            err.textContent = 'Handover Error: ' + ex.message;
+            err.classList.remove('hidden');
             btn.disabled = false;
-            btn.textContent = 'Confirm Handover';
+            btn.innerText = 'Transfer Ownership & Logout';
         }
     });
+
+    function openPwModal() { document.getElementById('pw-modal').classList.remove('hidden'); document.getElementById('pw-modal').classList.add('flex'); }
+    function closePwModal() { document.getElementById('pw-modal').classList.add('hidden'); document.getElementById('pw-modal').classList.remove('flex'); }
 </script>
+
+<!-- Online Watcher Script (Crucial for Realtime Online Display) -->
+<script src="online-watch.js"></script>
 </body>
 </html>
