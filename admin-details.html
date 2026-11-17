@@ -4,16 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Details - GSS LMS</title>
+    <!-- 1. CDN Libraries loaded first (Web Standard) -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- 2. Core App Logic -->
     <script src="lms-core.js"></script>
     <script src="lms-auth.js"></script>
     <script>LMS.guard(['admin', 'super_admin']);</script>
-    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .custom-scroll::-webkit-scrollbar { width: 5px; }
-        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; transition: background 0.3s ease; }
-        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .custom-scroll::-webkit-scrollbar {
+            width: 5px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+            transition: background 0.3s ease;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
     </style>
 </head>
 <body class="bg-gray-50 font-sans flex h-screen overflow-hidden">
@@ -36,41 +48,41 @@
 <main class="flex-1 ml-20 p-6 overflow-y-auto h-screen">
     <div class="max-w-7xl mx-auto">
         <!-- Header Section -->
-        <div class="flex flex-col md:flex-row justify-between items-center mb-8 bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+        <div class="flex flex-col md:flex-row justify-between items-center mb-8 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
             <div>
                 <h1 class="text-2xl font-bold text-gray-800">Admin Details Management</h1>
-                <p class="text-sm text-gray-500 mt-1">Manage admin details and course statistics in the system</p>
+                <p class="text-sm text-gray-500 mt-1">Manage admin accounts, department access, and course statistics</p>
             </div>
-            <button type="button" onclick="openAddModal()" class="mt-4 md:mt-0 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition shadow">
+            <button onclick="openAddModal()" class="mt-4 md:mt-0 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition shadow-sm">
                 + Add New Admin
             </button>
         </div>
 
         <!-- Summary Cards Section -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex items-center justify-between">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
                 <div>
                     <p class="text-sm font-medium text-gray-500">Total Admins Registered</p>
                     <h3 id="total-admins-count" class="text-3xl font-bold text-blue-600 mt-2">0</h3>
                 </div>
                 <div class="p-4 bg-blue-50 rounded-full text-blue-600">
-                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                 </div>
             </div>
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex items-center justify-between">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
                 <div>
-                    <p class="text-sm font-medium text-gray-500">Total Courses Created by Admins</p>
-                    <h3 id="total-courses-count" class="text-3xl font-bold text-green-600 mt-2">0</h3>
+                    <p class="text-sm font-medium text-gray-500">Total Courses in System</p>
+                    <h3 id="total-courses-count" class="text-3xl font-bold text-emerald-600 mt-2">0</h3>
                 </div>
-                <div class="p-4 bg-green-50 rounded-full text-green-600">
-                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                <div class="p-4 bg-emerald-50 rounded-full text-emerald-600">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
                 </div>
             </div>
         </div>
 
         <!-- Admin Table Card -->
-        <div class="bg-white shadow-sm rounded-xl overflow-hidden border border-gray-200 mb-8">
-            <div class="px-6 py-4 border-b border-gray-200">
+        <div class="bg-white shadow-sm rounded-2xl overflow-hidden border border-gray-100 mb-8">
+            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
                 <h3 class="text-lg font-bold text-gray-800">Registered Admins List</h3>
             </div>
             <div class="overflow-x-auto">
@@ -81,19 +93,21 @@
                         <th scope="col" class="py-3 px-6">Name</th>
                         <th scope="col" class="py-3 px-6">Email Address</th>
                         <th scope="col" class="py-3 px-6">Phone Number</th>
-                        <th scope="col" class="py-3 px-6">Role</th>
+                        <th scope="col" class="py-3 px-6">Department</th>
                         <th scope="col" class="py-3 px-6">Account Status</th>
                         <th scope="col" class="py-3 px-6 text-center">Actions</th>
                     </tr>
                     </thead>
-                    <tbody id="admin-table-body" class="divide-y divide-gray-200 text-sm text-gray-700"></tbody>
+                    <tbody id="admin-table-body" class="divide-y divide-gray-100 text-sm text-gray-700">
+                        <tr><td colspan="7" class="py-6 text-center text-gray-400">Loading admins from database...</td></tr>
+                    </tbody>
                 </table>
             </div>
         </div>
 
         <!-- Courses Created List Table Card -->
-        <div class="bg-white shadow-sm rounded-xl overflow-hidden border border-gray-200 mb-12">
-            <div class="px-6 py-4 border-b border-gray-200">
+        <div class="bg-white shadow-sm rounded-2xl overflow-hidden border border-gray-100 mb-12">
+            <div class="px-6 py-4 border-b border-gray-100">
                 <h3 class="text-lg font-bold text-gray-800">Courses Created List</h3>
             </div>
             <div class="overflow-x-auto">
@@ -102,11 +116,13 @@
                     <tr class="bg-gray-50 text-gray-600 uppercase text-xs tracking-wider">
                         <th scope="col" class="py-3 px-6">Course ID</th>
                         <th scope="col" class="py-3 px-6">Course Name</th>
-                        <th scope="col" class="py-3 px-6">Lesson Title</th>
+                        <th scope="col" class="py-3 px-6">Created By (Admin GID)</th>
                         <th scope="col" class="py-3 px-6">Learning Format</th>
                     </tr>
                     </thead>
-                    <tbody id="admin-courses-table-body" class="divide-y divide-gray-200 text-sm text-gray-700"></tbody>
+                    <tbody id="admin-courses-table-body" class="divide-y divide-gray-100 text-sm text-gray-700">
+                        <tr><td colspan="4" class="py-6 text-center text-gray-400">Loading courses...</td></tr>
+                    </tbody>
                 </table>
             </div>
         </div>
@@ -114,12 +130,13 @@
 </main>
 
 <!-- Modal for Adding / Editing Admin -->
-<div id="admin-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl max-h-[85vh] overflow-y-auto custom-scroll">
+<div id="admin-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl max-h-[85vh] overflow-y-auto custom-scroll">
         <h2 id="modal-title" class="text-xl font-bold text-gray-800 mb-4 sticky top-0 bg-white py-2 z-10">Add New Admin</h2>
         <form id="admin-form" class="space-y-4">
-            <input type="hidden" id="edit-index" value="">
-            <div class="form-row space-y-2">
+            <input type="hidden" id="edit-admin-original-gid" value="">
+
+            <div class="form-row space-y-1.5">
                 <label for="profile-picture" class="block text-xs font-semibold uppercase tracking-wider text-stone-700">
                     Profile Picture
                 </label>
@@ -127,20 +144,20 @@
                         type="file"
                         id="profile-picture"
                         accept="image/*"
-                        class="w-full text-sm text-stone-500 file:mr-4 file:py-3 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border border-gray-300 rounded-lg p-2 bg-white transition">
+                        class="w-full text-xs text-stone-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border border-gray-300 rounded-xl p-1.5 bg-white transition">
             </div>
-            <div class="form-row space-y-2">
-                <label for="admin-user-name" class="block text-xs font-semibold uppercase tracking-wider text-stone-700">User Name
-                    <span class="text-rose-500">*</span>
-                </label>
+
+            <div class="form-row space-y-1.5">
+                <label for="admin-user-name" class="block text-xs font-semibold uppercase tracking-wider text-stone-700">User Name <span class="text-rose-500">*</span></label>
                 <input
                         type="text"
                         id="admin-user-name"
                         placeholder="e.g. kn26184"
                         required
-                        class="w-full px-4 py-3 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition">
+                        class="w-full px-4 py-2.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
             </div>
-            <div class="form-row space-y-2">
+
+            <div class="form-row space-y-1.5">
                 <label for="admin-id" class="block text-xs font-semibold uppercase tracking-wider text-stone-700">
                     Admin G ID <span class="text-rose-500">*</span>
                 </label>
@@ -149,9 +166,10 @@
                         id="admin-id"
                         placeholder="Enter Admin G ID (e.g. G26184)"
                         required
-                        class="w-full px-4 py-3 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition">
+                        class="w-full px-4 py-2.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
             </div>
-            <div class="form-row space-y-2">
+
+            <div class="form-row space-y-1.5">
                 <label for="admin-name" class="block text-xs font-semibold uppercase tracking-wider text-stone-700">
                     Admin Name <span class="text-rose-500">*</span>
                 </label>
@@ -160,9 +178,22 @@
                         id="admin-name"
                         placeholder="Enter full name"
                         required
-                        class="w-full px-4 py-3 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition">
+                        class="w-full px-4 py-2.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
             </div>
-            <div class="form-row space-y-2">
+
+            <div class="form-row space-y-1.5">
+                <label for="admin-dept" class="block text-xs font-semibold uppercase tracking-wider text-stone-700">
+                    Department <span class="text-rose-500">*</span>
+                </label>
+                <select id="admin-dept" required class="w-full px-4 py-2.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="Training">Training Department</option>
+                    <option value="HR">HR Department</option>
+                    <option value="QA">Quality Assurance Department</option>
+                    <option value="Operations">Operations Department</option>
+                </select>
+            </div>
+
+            <div class="form-row space-y-1.5">
                 <label for="admin-email" class="block text-xs font-semibold uppercase tracking-wider text-stone-700">
                     Biz Mail Address <span class="text-rose-500">*</span>
                 </label>
@@ -171,10 +202,11 @@
                         id="admin-email"
                         placeholder="kavindu_n@gssintl.biz"
                         required
-                        class="w-full px-4 py-3 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition">
-                <p class="text-xs text-stone-500 mt-1">Must be an official GSS business email ending with @gssintl.biz</p>
+                        class="w-full px-4 py-2.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <p class="text-[11px] text-stone-400 mt-0.5">Must be an official GSS email ending with @gssintl.biz</p>
             </div>
-            <div class="form-row space-y-2">
+
+            <div class="form-row space-y-1.5">
                 <label for="admin-tel" class="block text-xs font-semibold uppercase tracking-wider text-stone-700">
                     Contact <span class="text-rose-500">*</span>
                 </label>
@@ -183,61 +215,35 @@
                         id="admin-tel"
                         placeholder="07XXXXXXXX"
                         required
-                        class="w-full px-4 py-3 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition">
+                        class="w-full px-4 py-2.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
             </div>
-            <div class="form-row space-y-2">
+
+            <div class="form-row space-y-1.5">
                 <label for="admin-password" class="block text-xs font-semibold uppercase tracking-wider text-stone-700">
-                    Password <span id="adm-pw-star" class="text-rose-500">*</span>
+                    Password <span id="admin-pw-star" class="text-rose-500">*</span>
                 </label>
                 <input
                         type="password"
                         id="admin-password"
                         placeholder="Enter password"
-                        required
-                        class="w-full px-4 py-3 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition">
-                <p id="adm-pw-hint" class="text-xs text-stone-500 mt-1">Must be at least 8 characters.</p>
+                        class="w-full px-4 py-2.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <p id="admin-pw-hint" class="text-[11px] text-stone-400 mt-0.5">Must be at least 8 characters.</p>
             </div>
-            <div class="form-row space-y-2">
+
+            <div class="form-row space-y-1.5">
                 <label for="admin-confirm-password" class="block text-xs font-semibold uppercase tracking-wider text-stone-700">
-                    Confirm Password <span id="adm-cpw-star" class="text-rose-500">*</span>
+                    Confirm Password
                 </label>
                 <input
                         type="password"
                         id="admin-confirm-password"
                         placeholder="Confirm password"
-                        required
-                        class="w-full px-4 py-3 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition">
+                        class="w-full px-4 py-2.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
             </div>
 
-            <div>
-                <label for="admin-role" class="block text-xs font-semibold text-gray-600 mb-1">Role</label>
-                <select id="admin-role" class="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:border-blue-500">
-                    <option value="Super Admin">Super Admin</option>
-                    <option value="Admin" selected>Admin</option>
-                </select>
-            </div>
-            <div class="form-row space-y-2 pt-2">
-                <div class="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-lg">
-                    <span class="text-xs font-semibold uppercase tracking-wider text-stone-700">Super Admin Access</span>
-                    <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" id="super-admin-toggle" class="sr-only peer">
-                        <span class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></span>
-                    </label>
-                </div>
-            </div>
-            <div id="date-field-container" class="form-row space-y-2 hidden">
-                <label for="admin-date" class="block text-xs font-semibold uppercase tracking-wider text-stone-700">
-                    Effective Date (Handover / Transition)
-                </label>
-                <input
-                        type="date"
-                        id="admin-date"
-                        class="w-full px-4 py-3 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition">
-            </div>
-
-            <div class="flex justify-end space-x-2 mt-6 pt-2 border-t border-gray-100">
-                <button type="button" onclick="closeAddModal()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-300 transition">Cancel</button>
-                <button type="submit" id="save-admin-btn" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition">Save</button>
+            <div class="flex justify-end space-x-2 mt-6 pt-3 border-t border-gray-100">
+                <button type="button" onclick="closeAddModal()" class="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-xl text-xs font-semibold transition">Cancel</button>
+                <button type="submit" id="save-admin-btn" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold transition shadow-sm">Save</button>
             </div>
         </form>
     </div>
@@ -245,109 +251,113 @@
 
 <script>
     const supabaseClient = window.LMS.db;
-    const esc = LMS.esc;
+    const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
-    async function loadAdminCoursesTable() {
-        const adminCoursesTableBody = document.getElementById('admin-courses-table-body');
-        const totalCoursesElem = document.getElementById('total-courses-count');
-        let courses = [];
+    let loadedAdmins = [];
+
+    // 1. Live Fetch & Render Courses Table from Supabase
+    async function renderAdminCoursesTable() {
+        const tbody = document.getElementById('admin-courses-table-body');
+        if (!tbody) return;
 
         try {
-            const { data, error } = await supabaseClient.from('courses').select('id, name, lesson, format');
-            if (!error && Array.isArray(data)) {
-                courses = data;
+            const { data: courses, error } = await supabaseClient
+                .from('courses')
+                .select('*')
+                .order('id', { ascending: true });
+
+            if (error || !courses || courses.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-stone-500 text-sm">No courses registered yet.</td></tr>`;
+                document.getElementById('total-courses-count').innerText = '0';
+                return;
             }
+
+            document.getElementById('total-courses-count').innerText = courses.length;
+            tbody.innerHTML = courses.map(course => `
+                <tr class="hover:bg-gray-50/70 transition text-sm text-stone-700">
+                    <td class="py-3 px-6 font-mono text-xs font-semibold text-blue-600">${esc(course.id || '-')}</td>
+                    <td class="py-3 px-6 font-medium text-stone-900">${esc(course.name || 'Unnamed Course')}</td>
+                    <td class="py-3 px-6 font-mono text-xs text-stone-600">${esc(course.created_by || 'Admin')}</td>
+                    <td class="py-3 px-6 text-stone-600">${esc(course.format || 'ALL')}</td>
+                </tr>
+            `).join('');
         } catch (e) {
-            console.warn('Error loading courses from DB:', e);
+            tbody.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-stone-400 text-sm">Could not load courses.</td></tr>`;
         }
-
-        if (!courses.length) {
-            courses = JSON.parse(localStorage.getItem('gss_courses') || '[]');
-        }
-
-        if (totalCoursesElem) totalCoursesElem.innerText = courses.length;
-        if (!adminCoursesTableBody) return;
-
-        if (!courses.length) {
-            adminCoursesTableBody.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-stone-500 text-sm">No courses available.</td></tr>`;
-            return;
-        }
-
-        adminCoursesTableBody.innerHTML = courses.map(course => `
-            <tr class="hover:bg-gray-50 transition text-sm text-stone-700">
-                <td class="py-3 px-6 font-semibold text-blue-600">${esc(course.id || 'N/A')}</td>
-                <td class="py-3 px-6 font-medium text-stone-900">${esc(course.name || 'Unnamed Course')}</td>
-                <td class="py-3 px-6"><span class="px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-semibold">${esc(course.lesson || course.lessonTitle || 'N/A')}</span></td>
-                <td class="py-3 px-6 text-stone-600">${esc(course.format || 'N/A')}</td>
-            </tr>
-        `).join('');
     }
 
+    // 2. Fetch & Render Admins Table from Supabase
     async function updateDashboard() {
         const adminTableBody = document.getElementById('admin-table-body');
         const totalAdminsElem = document.getElementById('total-admins-count');
-        if (!adminTableBody) return;
 
+        if (!adminTableBody) return;
         adminTableBody.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-gray-400">Loading admins from database...</td></tr>`;
 
         try {
-            const { data: admins, error } = await supabaseClient.from('admins').select('*');
-            if (error) {
-                adminTableBody.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-rose-500 font-medium">Database Error: ${esc(error.message)}</td></tr>`;
-                return;
-            }
+            const { data: admins, error } = await supabaseClient
+                .from('admins')
+                .select('*')
+                .order('admin_g_id', { ascending: true });
 
-            if (totalAdminsElem) totalAdminsElem.innerText = admins ? admins.length : 0;
+            if (error) throw error;
 
-            if (!admins || !admins.length) {
+            loadedAdmins = admins || [];
+            if (totalAdminsElem) totalAdminsElem.innerText = loadedAdmins.length;
+
+            if (loadedAdmins.length === 0) {
                 adminTableBody.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-stone-500 text-sm">No admins registered yet in database.</td></tr>`;
-                await loadAdminCoursesTable();
+                await renderAdminCoursesTable();
                 return;
             }
 
-            adminTableBody.innerHTML = admins.map(admin => {
-                const isDisabled = admin.status === 'Disabled';
-                const statusBadge = isDisabled
+            adminTableBody.innerHTML = loadedAdmins.map(admin => {
+                const isInactive = admin.status && String(admin.status).toLowerCase() === 'disabled';
+                const statusBadge = isInactive
                     ? `<span class="px-2.5 py-1 text-xs font-semibold bg-red-100 text-red-800 rounded-full">Disabled</span>`
                     : `<span class="px-2.5 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded-full">Active</span>`;
 
-                const roleBadge = admin.role === 'Super Admin'
-                    ? `<span class="px-2.5 py-1 text-xs font-semibold bg-purple-100 text-purple-800 rounded-full inline-block">Super Admin</span>`
-                    : `<span class="px-2.5 py-1 text-xs font-semibold bg-blue-100 text-blue-800 rounded-full">Admin</span>`;
+                const toggleLabel = isInactive ? 'Activate' : 'Disable';
+                const toggleColor = isInactive ? 'text-emerald-700 bg-emerald-50 hover:bg-emerald-100' : 'text-amber-700 bg-amber-50 hover:bg-amber-100';
 
                 return `
-                <tr class="hover:bg-gray-50 transition border-b border-gray-100">
-                    <td class="py-3 px-6 font-medium">${esc(admin.admin_g_id || admin.id || '-')}</td>
-                    <td class="py-3 px-6">${esc(admin.admin_name || admin.user_name || '-')}</td>
-                    <td class="py-3 px-6 text-gray-500">${esc(admin.email || '-')}</td>
-                    <td class="py-3 px-6 text-gray-500">${esc(admin.contact || '-')}</td>
-                    <td class="py-3 px-6">${roleBadge}</td>
-                    <td class="py-3 px-6">${statusBadge}</td>
-                    <td class="py-3 px-6 text-center space-x-1">
-                        <button type="button" data-action="edit" data-id="${esc(admin.id)}" class="text-blue-600 hover:text-blue-800 text-xs font-semibold px-2 py-1 bg-blue-50 rounded transition">Edit</button>
-                        <button type="button" data-action="toggle" data-id="${esc(admin.id)}" data-gid="${esc(admin.admin_g_id || '')}" data-status="${esc(admin.status || 'Active')}" class="text-yellow-600 hover:text-yellow-800 text-xs font-semibold px-2 py-1 bg-yellow-50 rounded transition">${isDisabled ? 'Activate' : 'Disable'}</button>
-                        <button type="button" data-action="delete" data-id="${esc(admin.id)}" data-gid="${esc(admin.admin_g_id || '')}" data-email="${esc(admin.email || '')}" class="text-red-600 hover:text-red-800 text-xs font-semibold px-2 py-1 bg-red-50 rounded transition">Delete</button>
-                    </td>
-                </tr>`;
+                    <tr class="hover:bg-gray-50/70 transition border-b border-gray-100">
+                        <td class="py-3 px-6 font-mono text-xs font-semibold text-blue-600">${esc(admin.admin_g_id || '-')}</td>
+                        <td class="py-3 px-6 font-medium text-stone-900">${esc(admin.admin_name || admin.user_name || '-')}</td>
+                        <td class="py-3 px-6 text-stone-500 text-xs">${esc(admin.email || '-')}</td>
+                        <td class="py-3 px-6 text-stone-500 text-xs">${esc(admin.contact || '-')}</td>
+                        <td class="py-3 px-6 text-stone-700 text-xs font-medium">${esc(admin.department || 'Training')}</td>
+                        <td class="py-3 px-6">${statusBadge}</td>
+                        <td class="py-3 px-6 text-center space-x-1 whitespace-nowrap">
+                            <button onclick="editAdmin('${esc(admin.admin_g_id)}')" class="text-blue-600 hover:text-blue-800 text-xs font-semibold px-2.5 py-1 bg-blue-50 hover:bg-blue-100 rounded-lg transition">Edit</button>
+                            <button onclick="toggleStatus('${esc(admin.admin_g_id)}', '${esc(admin.status || 'Active')}')" class="${toggleColor} text-xs font-semibold px-2.5 py-1 rounded-lg transition">${toggleLabel}</button>
+                            <button onclick="deleteAdmin('${esc(admin.admin_g_id)}', '${esc(admin.email)}')" class="text-rose-600 hover:text-rose-800 text-xs font-semibold px-2.5 py-1 bg-rose-50 hover:bg-rose-100 rounded-lg transition">Delete</button>
+                        </td>
+                    </tr>
+                `;
             }).join('');
 
-            await loadAdminCoursesTable();
+            await renderAdminCoursesTable();
+
         } catch (err) {
-            console.error('Execution error:', err);
-            adminTableBody.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-rose-500">Failed to load admin list.</td></tr>`;
+            console.error("Execution error:", err);
+            adminTableBody.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-rose-500">Failed to load admins: ${err.message}</td></tr>`;
         }
     }
 
+    /* Modal Handlers */
     function openAddModal() {
         document.getElementById('modal-title').innerText = "Add New Admin";
         document.getElementById('admin-form').reset();
-        document.getElementById('edit-index').value = "";
+        document.getElementById('edit-admin-original-gid').value = "";
+        
+        document.getElementById('admin-id').readOnly = false;
+        document.getElementById('admin-id').classList.remove('bg-gray-100', 'cursor-not-allowed');
+        
         document.getElementById('admin-password').required = true;
-        document.getElementById('admin-confirm-password').required = true;
-        document.getElementById('adm-pw-star').classList.remove('hidden');
-        document.getElementById('adm-cpw-star').classList.remove('hidden');
-        document.getElementById('adm-pw-hint').innerText = "Must be at least 8 characters.";
-        document.getElementById('date-field-container').classList.add('hidden');
+        document.getElementById('admin-pw-star').classList.remove('hidden');
+        document.getElementById('admin-pw-hint').innerText = "Must be at least 8 characters.";
+        
         document.getElementById('admin-modal').classList.remove('hidden');
     }
 
@@ -355,102 +365,118 @@
         document.getElementById('admin-modal').classList.add('hidden');
     }
 
-    async function editAdmin(id) {
-        const { data: admin, error } = await supabaseClient.from('admins').select('*').eq('id', id).single();
-        if (error || !admin) {
-            alert("Error fetching admin details from database.");
+    /* 3. EDIT ADMIN (Fixed Primary Key: admin_g_id) */
+    function editAdmin(adminGid) {
+        const admin = loadedAdmins.find(a => String(a.admin_g_id).trim() === String(adminGid).trim());
+        if (!admin) {
+            alert("Admin details not found.");
             return;
         }
 
         document.getElementById('modal-title').innerText = "Update Admin Details";
+        document.getElementById('edit-admin-original-gid').value = admin.admin_g_id;
+
         document.getElementById('admin-id').value = admin.admin_g_id || '';
+        document.getElementById('admin-id').readOnly = true; // G ID should remain unique & unchanged on edit
+        document.getElementById('admin-id').classList.add('bg-gray-100', 'cursor-not-allowed');
+
         document.getElementById('admin-user-name').value = admin.user_name || '';
         document.getElementById('admin-name').value = admin.admin_name || '';
         document.getElementById('admin-email').value = admin.email || '';
         document.getElementById('admin-tel').value = admin.contact || '';
-        document.getElementById('admin-role').value = admin.role || 'Admin';
-        document.getElementById('super-admin-toggle').checked = admin.role === 'Super Admin';
-        document.getElementById('date-field-container').classList.toggle('hidden', admin.role !== 'Super Admin');
+        document.getElementById('admin-dept').value = admin.department || 'Training';
 
+        // Password is optional when editing
         document.getElementById('admin-password').value = '';
-        document.getElementById('admin-confirm-password').value = '';
         document.getElementById('admin-password').required = false;
-        document.getElementById('admin-confirm-password').required = false;
-        document.getElementById('adm-pw-star').classList.add('hidden');
-        document.getElementById('adm-cpw-star').classList.add('hidden');
-        document.getElementById('adm-pw-hint').innerText = "Leave blank to keep existing password.";
+        document.getElementById('admin-confirm-password').value = '';
+        document.getElementById('admin-pw-star').classList.add('hidden');
+        document.getElementById('admin-pw-hint').innerText = "Password වෙනස් කිරීමට අවශ්‍ය නම් පමණක් මෙතනට ඇතුල් කරන්න.";
 
-        document.getElementById('edit-index').value = admin.id;
         document.getElementById('admin-modal').classList.remove('hidden');
     }
 
+    /* 4. FORM SUBMIT (Fixed: Uses admin_g_id instead of id) */
     document.getElementById('admin-form').addEventListener('submit', async function(e) {
         e.preventDefault();
 
-        const recordId = document.getElementById('edit-index').value;
-        const email = document.getElementById('admin-email').value.trim().toLowerCase();
-        const pw = document.getElementById('admin-password').value;
-        const cpw = document.getElementById('admin-confirm-password').value;
+        const originalGid = document.getElementById('edit-admin-original-gid').value.trim();
+        const isEditing = originalGid !== "";
 
+        const email = document.getElementById('admin-email').value.trim().toLowerCase();
         if (!email.endsWith('@gssintl.biz')) {
             alert("Error: Only official GSS business email addresses ending with '@gssintl.biz' are allowed!");
             return;
         }
 
-        if (pw || recordId === "") {
-            if (pw !== cpw) {
+        const password = document.getElementById('admin-password').value;
+        const confirmPassword = document.getElementById('admin-confirm-password').value;
+
+        if (password) {
+            if (password !== confirmPassword) {
                 alert("Passwords do not match!");
                 return;
             }
-            if (pw.length < 8) {
+            if (password.length < 8) {
                 alert("Password must be at least 8 characters long.");
                 return;
             }
         }
 
-        const btn = document.getElementById('save-admin-btn');
-        btn.disabled = true;
-        btn.textContent = recordId ? 'Updating...' : 'Saving...';
+        const saveBtn = document.getElementById('save-admin-btn');
+        saveBtn.disabled = true;
+        saveBtn.innerText = isEditing ? 'Updating...' : 'Saving...';
 
         try {
-            const picInput = document.getElementById('profile-picture');
-            let profilePicUrl = '';
-            if (picInput.files && picInput.files[0]) {
-                const file = picInput.files[0];
-                const fileName = `admin_${Date.now()}_${Math.random().toString(36).slice(2, 7)}.${file.name.split('.').pop()}`;
-                const { error: upErr } = await supabaseClient.storage.from('course-pdfs').upload(fileName, file);
-                if (!upErr) {
-                    profilePicUrl = supabaseClient.storage.from('course-pdfs').getPublicUrl(fileName).data.publicUrl;
-                }
-            }
-
-            const isSuperToggle = document.getElementById('super-admin-toggle').checked;
-            const roleVal = isSuperToggle ? 'Super Admin' : document.getElementById('admin-role').value;
-
             const adminData = {
                 user_name: document.getElementById('admin-user-name').value.trim(),
-                admin_g_id: document.getElementById('admin-id').value.trim(),
                 admin_name: document.getElementById('admin-name').value.trim(),
+                department: document.getElementById('admin-dept').value,
                 email: email,
-                contact: document.getElementById('admin-tel').value.trim(),
-                role: roleVal
+                contact: document.getElementById('admin-tel').value.trim()
             };
 
-            if (profilePicUrl) adminData.profile_picture = profilePicUrl;
-            if (pw) {
-                adminData.password = pw;
-                adminData.confirm_password = pw;
+            if (password) {
+                adminData.password = password;
+                adminData.confirm_password = password;
             }
 
-            if (recordId === "") {
-                adminData.status = 'Active';
-                const { error } = await supabaseClient.from('admins').insert([adminData]);
+            if (isEditing) {
+                // UPDATE using admin_g_id (FIXED)
+                const { error } = await supabaseClient
+                    .from('admins')
+                    .update(adminData)
+                    .eq('admin_g_id', originalGid);
+
                 if (error) throw error;
-                alert('Admin added successfully!');
-            } else {
-                const { error } = await supabaseClient.from('admins').update(adminData).eq('id', recordId);
-                if (error) throw error;
+
                 alert('Admin updated successfully in database!');
+            } else {
+                // INSERT NEW ADMIN
+                adminData.admin_g_id = document.getElementById('admin-id').value.trim();
+                adminData.status = 'Active';
+                adminData.company_join_date = new Date().toISOString().split('T')[0];
+
+                if (!password) throw new Error("Password is required for new admin.");
+
+                // Cross-Table Uniqueness Verification
+                const [admCheck, qatCheck, saCheck] = await Promise.all([
+                    supabaseClient.from('admins').select('admin_g_id').or(`admin_g_id.ilike.${adminData.admin_g_id},user_name.ilike.${adminData.user_name},email.ilike.${adminData.email}`),
+                    supabaseClient.from('qats').select('qat_g_id').or(`qat_g_id.ilike.${adminData.admin_g_id},user_name.ilike.${adminData.user_name},email.ilike.${adminData.email}`),
+                    supabaseClient.from('super_admin').select('super_admin_g_id').or(`super_admin_g_id.ilike.${adminData.admin_g_id},user_name.ilike.${adminData.user_name},biz_mail.ilike.${adminData.email}`)
+                ]);
+
+                if ((admCheck.data?.length > 0) || (qatCheck.data?.length > 0) || (saCheck.data?.length > 0)) {
+                    throw new Error(`මෙම G ID (${adminData.admin_g_id}), Username හෝ Email එක දැනටමත් භාවිතයේ පවතී.`);
+                }
+
+                const { error } = await supabaseClient
+                    .from('admins')
+                    .insert([adminData]);
+
+                if (error) throw error;
+
+                alert('Admin added successfully!');
             }
 
             closeAddModal();
@@ -458,66 +484,60 @@
         } catch (err) {
             alert('Database Error: ' + err.message);
         } finally {
-            btn.disabled = false;
-            btn.textContent = 'Save';
+            saveBtn.disabled = false;
+            saveBtn.innerText = 'Save';
         }
     });
 
-    async function toggleStatus(id, gid, currentStatus) {
-        const newStatus = currentStatus === 'Disabled' ? 'Active' : 'Disabled';
-        const { error } = await supabaseClient.from('admins').update({ status: newStatus }).eq('id', id);
-        if (error) {
-            alert('Error updating status: ' + error.message);
-        } else {
-            if (newStatus === 'Disabled' && gid && window.LMS?.kick) {
-                await LMS.kick(gid);
+    /* 5. TOGGLE STATUS (Fixed: Uses admin_g_id + Realtime Kick) */
+    async function toggleStatus(adminGid, currentStatus) {
+        const isCurrentlyDisabled = String(currentStatus).toLowerCase() === 'disabled';
+        const newStatus = isCurrentlyDisabled ? 'Active' : 'Disabled';
+        const actionLabel = isCurrentlyDisabled ? 'Activate' : 'Disable';
+
+        if (!confirm(`Are you sure you want to ${actionLabel} admin account (${adminGid})?`)) {
+            return;
+        }
+
+        try {
+            // FIXED: .eq('admin_g_id', adminGid)
+            const { error } = await supabaseClient
+                .from('admins')
+                .update({ status: newStatus })
+                .eq('admin_g_id', adminGid);
+
+            if (error) throw error;
+
+            // If disabled, immediately kick out from active session
+            if (newStatus === 'Disabled' && window.LMS && typeof LMS.kick === 'function') {
+                await LMS.kick(adminGid);
             }
-            updateDashboard();
+
+            alert(`Admin account (${adminGid}) successfully set to ${newStatus}!`);
+            await updateDashboard();
+        } catch (err) {
+            alert('Error updating status: ' + err.message);
         }
     }
 
-    async function deleteAdmin(id, gid, email) {
-        if (confirm(`Are you sure you want to delete admin (${email}) permanently from database?`)) {
-            if (gid && window.LMS?.kick) {
-                await LMS.kick(gid);
-            }
-            const { error } = await supabaseClient.from('admins').delete().eq('id', id);
-            if (error) {
-                alert('Delete Error: ' + error.message);
-            } else {
-                alert('Admin deleted successfully from database!');
-                updateDashboard();
-            }
-        }
-    }
-
-    document.addEventListener("DOMContentLoaded", function() {
-        LMS.renderSidebar();
-
-        document.getElementById('admin-table-body')?.addEventListener('click', e => {
-            const btn = e.target.closest('button[data-action]');
-            if (!btn) return;
-            const { action, id, gid, status, email } = btn.dataset;
-            if (action === 'edit') editAdmin(id);
-            else if (action === 'toggle') toggleStatus(id, gid, status);
-            else if (action === 'delete') deleteAdmin(id, gid, email);
-        });
-
-        const superAdminToggle = document.getElementById('super-admin-toggle');
-        if (superAdminToggle) {
-            superAdminToggle.addEventListener('change', function() {
-                const dateFieldContainer = document.getElementById('date-field-container');
-                if (dateFieldContainer) {
-                    dateFieldContainer.classList.toggle('hidden', !this.checked);
-                }
-                if (this.checked) {
-                    document.getElementById('admin-role').value = 'Super Admin';
-                }
-            });
+    /* 6. DELETE ADMIN (Fixed: Uses admin_g_id + Realtime Kick) */
+    async function deleteAdmin(adminGid, email) {
+        if (!confirm(`Are you sure you want to delete admin (${email} - ${adminGid}) permanently from database?`)) {
+            return;
         }
 
-        updateDashboard();
-    });
-</script>
-</body>
-</html>
+        try {
+            // Kick user first if online
+            if (window.LMS && typeof LMS.kick === 'function') {
+                await LMS.kick(adminGid);
+            }
+
+            // FIXED: .eq('admin_g_id', adminGid)
+            const { error } = await supabaseClient
+                .from('admins')
+                .delete()
+                .eq('admin_g_id', adminGid);
+
+            if (error) throw error;
+
+            alert('Admin deleted successfull
