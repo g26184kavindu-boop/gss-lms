@@ -42,7 +42,7 @@
             <form id="course-form" class="space-y-5">
                 <!-- Course ID -->
                 <div class="space-y-1.5">
-                    <label for="course-id" class="block text-xs font-semibold uppercase tracking-wider text-stone-700">Course ID <span class="text-rose-500">*</span></label>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-stone-700">Course ID <span class="text-rose-500">*</span></label>
                     <input type="text" id="course-id" required readonly class="w-full px-4 py-2.5 text-sm font-mono text-stone-600 bg-gray-100 border border-gray-300 rounded-xl focus:outline-none cursor-not-allowed">
                 </div>
 
@@ -74,7 +74,7 @@
                             <input type="text" id="lesson-title" placeholder="Enter lesson title" class="w-full px-4 py-2.5 text-sm text-stone-700 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
                         <div class="space-y-1.5 w-full sm:w-52">
-                            <label for="learning-format" class="block text-xs font-semibold uppercase tracking-wider text-stone-700">Learning Format <span class="text-rose-500">*</span></label>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-stone-700">Learning Format <span class="text-rose-500">*</span></label>
                             <select id="learning-format" required class="w-full px-4 py-2.5 text-sm text-stone-700 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
                                 <option value="" disabled selected>Select format</option>
                                 <option value="all">All (Video + PDF)</option>
@@ -90,7 +90,7 @@
                     <!-- Video Upload & Checkpoints -->
                     <div id="video-section" class="p-5 border border-gray-200 rounded-2xl bg-stone-50/50 hidden space-y-4">
                         <div>
-                            <label for="video-file-input" class="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-2">Upload Video (MP4 / WebM) <span class="text-rose-500">*</span></label>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-2">Upload Video (MP4 / WebM) <span class="text-rose-500">*</span></label>
                             <input type="file" id="video-file-input" accept="video/mp4,video/webm" class="w-full text-xs text-stone-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
                         </div>
                         <div class="pt-3 border-t border-gray-200 space-y-3">
@@ -102,11 +102,11 @@
 
                     <!-- PDF Upload -->
                     <div id="pdf-section" class="p-5 border border-gray-200 rounded-2xl bg-stone-50/50 hidden space-y-3">
-                        <label for="pdf-file-input" class="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-2">Upload PDF Document <span class="text-rose-500">*</span></label>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-2">Upload PDF Document <span class="text-rose-500">*</span></label>
                         <input type="file" id="pdf-file-input" accept=".pdf" class="w-full text-xs text-stone-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
                     </div>
 
-                    <!-- Final MCQ Quiz Section -->
+                    <!-- Final MCQ Quiz Section (With Time Limit & Question Images) -->
                     <div id="final-quiz-section" class="p-5 border border-gray-200 rounded-2xl bg-stone-50/50 hidden space-y-4">
                         <div class="flex justify-between items-center border-b pb-3">
                             <div>
@@ -116,26 +116,31 @@
                             <button type="button" id="add-final-quiz-btn" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold transition shadow-sm">+ Add Question</button>
                         </div>
 
-                        <!-- Marks Setting Box -->
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 bg-blue-50/70 border border-blue-100 rounded-xl">
+                        <!-- Marks & Quiz Time Limit Setting Box -->
+                        <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 p-3.5 bg-blue-50/70 border border-blue-100 rounded-xl">
                             <div>
-                                <label for="default-marks" class="block text-[11px] font-bold uppercase text-stone-600 mb-1">Marks / Question</label>
+                                <label class="block text-[11px] font-bold uppercase text-stone-600 mb-1">Marks / Question</label>
                                 <div class="flex gap-2">
                                     <input type="number" id="default-marks" min="0.5" step="0.5" value="1" class="w-20 px-2 py-1 text-xs border border-gray-300 rounded-lg bg-white">
-                                    <button type="button" id="apply-marks-btn" class="px-2 py-1 text-[11px] font-semibold text-blue-700 bg-white border border-blue-200 hover:bg-blue-100 rounded-lg transition">Apply All</button>
+                                    <button type="button" id="apply-marks-btn" class="px-2 py-1 text-[11px] font-semibold text-blue-700 bg-white border border-blue-200 hover:bg-blue-100 rounded-lg transition">Apply</button>
                                 </div>
                             </div>
                             <div>
-                                <label for="pass-percent" class="block text-[11px] font-bold uppercase text-stone-600 mb-1">Pass Mark (%)</label>
-                                <input type="number" id="pass-percent" min="1" max="100" value="50" class="w-24 px-2 py-1 text-xs border border-gray-300 rounded-lg bg-white">
+                                <label class="block text-[11px] font-bold uppercase text-stone-600 mb-1">Pass Mark (%)</label>
+                                <input type="number" id="pass-percent" min="1" max="100" value="50" class="w-full px-2 py-1 text-xs border border-gray-300 rounded-lg bg-white">
+                            </div>
+                            <!-- Time Limit Field for Admin -->
+                            <div>
+                                <label class="block text-[11px] font-bold uppercase text-blue-900 mb-1">Time Limit (Mins) <span class="text-rose-500">*</span></label>
+                                <input type="number" id="quiz-time-limit" min="1" max="180" value="15" required class="w-full px-2 py-1 text-xs border border-blue-300 rounded-lg bg-white focus:ring-1 focus:ring-blue-500">
                             </div>
                             <div class="text-xs text-stone-700 space-y-0.5">
                                 <p>Questions: <b id="sum-q">0</b></p>
                                 <p>Total Marks: <b id="sum-total" class="text-blue-700">0</b></p>
-                                <p>Pass Requires: <b id="sum-pass" class="text-emerald-700">0</b></p>
                             </div>
                         </div>
 
+                        <!-- Container where questions are dynamically added -->
                         <div id="final-quiz-questions-container" class="space-y-5 max-h-[550px] overflow-y-auto pr-2 custom-scroll"></div>
                     </div>
                 </div>
@@ -151,7 +156,7 @@
 
         <!-- Sticky Visual Graphic -->
         <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100 hidden md:block sticky top-8">
-            <img src="training.webp" alt="Course training visualization" class="w-full h-auto max-h-[480px] object-contain mx-auto rounded-xl">
+            <img src="training.webp" alt="Course visualization placeholder" class="w-full h-auto max-h-[480px] object-contain mx-auto rounded-xl">
         </div>
     </main>
 </div>
@@ -160,21 +165,12 @@
     const supabaseClient = window.LMS.db;
     LMS.renderSidebar();
 
-    // Generate next unique numeric Course ID without colliding on deletions
     window.addEventListener('DOMContentLoaded', async () => {
         const input = document.getElementById('course-id');
         try {
-            const { data, error } = await supabaseClient.from('courses').select('id');
-            if (!error && Array.isArray(data)) {
-                const maxNum = data.reduce((max, row) => {
-                    const n = parseInt(String(row.id), 10);
-                    return (!isNaN(n) && /^\d+$/.test(String(row.id).trim())) ? Math.max(max, n) : max;
-                }, 0);
-                input.value = String(maxNum + 1).padStart(4, '0');
-            } else {
-                input.value = '0001';
-            }
-        } catch (_) {
+            const { count, error } = await supabaseClient.from('courses').select('*', { count: 'exact', head: true });
+            input.value = String((!error && count !== null ? count : 0) + 1).padStart(4, '0');
+        } catch (err) {
             input.value = '0001';
         }
     });
@@ -185,6 +181,7 @@
     const finalQuizSection = document.getElementById('final-quiz-section');
     const finalQuizContainer = document.getElementById('final-quiz-questions-container');
 
+    /* Build 3 Pause Points */
     (function buildPausePoints() {
         let html = '';
         for (let p = 1; p <= 3; p++) {
@@ -193,7 +190,7 @@
                 <span class="text-xs font-bold uppercase text-blue-700">Pause Point ${p}</span>
                 <div class="flex items-center space-x-2">
                     <span class="text-xs font-semibold text-stone-600">Timestamp (Sec):</span>
-                    <input type="number" min="1" placeholder="e.g. ${p * 30}" class="w-24 px-2.5 py-1 text-xs border border-gray-300 rounded-lg bg-white pause-time">
+                    <input type="number" placeholder="e.g. ${p * 30}" class="w-24 px-2.5 py-1 text-xs border border-gray-300 rounded-lg bg-white pause-time">
                 </div>
             </div>
             <div class="space-y-3 pl-2 sm:pl-4 border-l-2 border-stone-100">`;
@@ -223,7 +220,7 @@
         const v = parseFloat(document.getElementById('default-marks').value);
         return v > 0 ? v : 1;
     }
-    const round2 = LMS.round2;
+    const round2 = n => Math.round(n * 100) / 100;
 
     function updateMarksSummary() {
         const items = finalQuizContainer.querySelectorAll('.final-quiz-item');
@@ -232,10 +229,8 @@
             const m = parseFloat(it.querySelector('.final-quiz-marks').value);
             if (m > 0) total += m;
         });
-        const pct = Math.min(100, Math.max(1, parseFloat(document.getElementById('pass-percent').value) || 50));
         document.getElementById('sum-q').textContent = items.length;
         document.getElementById('sum-total').textContent = round2(total);
-        document.getElementById('sum-pass').textContent = `${round2(total * pct / 100)} / ${round2(total)}`;
     }
 
     function updateFinalQuizNumbers() {
@@ -253,12 +248,13 @@
             <label class="block text-xs font-bold uppercase text-blue-600">Question <span class="final-q-number"></span></label>
             <button type="button" class="remove-q text-rose-500 hover:text-rose-700 text-xs font-semibold">Remove</button>
         </div>
-
+        
         <div>
             <label class="block text-xs font-semibold text-stone-700 mb-1">Question Text <span class="text-rose-500">*</span></label>
             <input type="text" placeholder="Enter question text..." class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 final-quiz-q">
         </div>
 
+        <!-- Question Image Upload Field -->
         <div class="p-3 bg-stone-50 rounded-xl border border-dashed border-stone-300 space-y-2">
             <div class="flex items-center justify-between">
                 <label class="block text-[11px] font-bold uppercase text-stone-600">Attach Question Image (Optional)</label>
@@ -268,7 +264,6 @@
             <div class="img-preview-container hidden mt-2">
                 <img src="" alt="Question Image Preview" class="img-preview h-24 w-auto object-contain rounded-lg border border-stone-200 bg-white">
             </div>
-            <p class="text-[10px] text-stone-400">පින්තූරය බලා පිළිතුරු දිය යුතු ප්‍රශ්න සඳහා Image එකක් අමුණන්න. (Left: Image, Right: Question layout).</p>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
@@ -277,7 +272,7 @@
             <input type="text" placeholder="Option C" class="px-3 py-1.5 text-xs border border-gray-200 rounded-lg final-quiz-opt-c">
             <input type="text" placeholder="Option D" class="px-3 py-1.5 text-xs border border-gray-200 rounded-lg final-quiz-opt-d">
         </div>
-
+        
         <div class="flex gap-3 items-end pt-1">
             <div class="flex-1">
                 <label class="block text-[11px] font-semibold text-stone-600 uppercase mb-1">Correct Answer:</label>
@@ -326,7 +321,6 @@
 
     addFinalQuizQuestionRow();
     document.getElementById('add-final-quiz-btn').addEventListener('click', addFinalQuizQuestionRow);
-    document.getElementById('pass-percent').addEventListener('input', updateMarksSummary);
     document.getElementById('apply-marks-btn').addEventListener('click', () => {
         const m = getDefaultMarks();
         finalQuizContainer.querySelectorAll('.final-quiz-marks').forEach(i => i.value = m);
@@ -340,14 +334,17 @@
         finalQuizSection.classList.toggle('hidden', !v);
     });
 
-    function getCreatorInfo() {
+    function getCreatorId() {
         const s = LMS.getSession();
-        return {
-            createdBy: s?.gid || s?.user?.user_name || 'Admin',
-            department: s?.user?.department || 'Training'
-        };
+        return s?.gid || s?.user?.admin_g_id || s?.user?.super_admin_g_id || 'Admin';
     }
 
+    function getCreatorDept() {
+        const s = LMS.getSession();
+        return s?.user?.department || 'Training';
+    }
+
+    /* Form Submit */
     document.getElementById('course-form').addEventListener('submit', async function (e) {
         e.preventDefault();
         const submitBtn = document.getElementById('submit-btn');
@@ -358,7 +355,9 @@
         const lesson = document.getElementById('lesson-title').value.trim();
         const videoFile = document.getElementById('video-file-input').files[0];
         const pdfFile = document.getElementById('pdf-file-input').files[0];
+        const quizTimeLimit = parseInt(document.getElementById('quiz-time-limit').value) || 15;
 
+        // 1. Validate Quiz
         const quizDomItems = finalQuizContainer.querySelectorAll('.final-quiz-item');
         if (!quizDomItems.length) return alert('අවම වශයෙන් quiz ප්‍රශ්නයක් එකක්වත් එකතු කරන්න.');
 
@@ -373,8 +372,9 @@
                 badIndex = badIndex || qNo;
             }
         });
-        if (badIndex) return alert(`Question ${badIndex}: ප්‍රශ්නය, options 4ම, නිවැරදි පිළිතුර සහ ලකුණු (0ට වැඩි) සම්පූර්ණ කරන්න.`);
+        if (badIndex) return alert(`Question ${badIndex}: ප්‍රශ්නය, options 4ම, නිවැරදි පිළිතුර සහ ලකුණු සම්පූර්ණ කරන්න.`);
 
+        // 2. Validate Pause Points
         const videoQuestions = [];
         if (currentFormat === 'video' || currentFormat === 'all') {
             let badV = '';
@@ -401,18 +401,20 @@
         try {
             let drive_file_id = '', pdf_url = '';
 
+            // Video Upload
             if ((currentFormat === 'video' || currentFormat === 'all') && videoFile) {
                 try {
                     submitBtn.innerText = 'Uploading Video...';
                     if (window.LMS && typeof LMS.uploadVideo === 'function') {
                         drive_file_id = await LMS.uploadVideo(videoFile, { onProgress: p => { submitBtn.innerText = `Uploading Video ${p}%`; } });
                     }
-                } catch (err) {
-                    alert('Video Upload Failed: ' + err.message);
+                } catch (e) {
+                    alert('Video Upload Failed: ' + e.message);
                     return resetBtn();
                 }
             }
 
+            // PDF Upload
             if ((currentFormat === 'pdf' || currentFormat === 'all') && pdfFile) {
                 submitBtn.innerText = 'Uploading PDF...';
                 const fileName = `${Date.now()}_${pdfFile.name.replace(/[^a-zA-Z0-9_.-]/g, '_')}`;
@@ -421,6 +423,7 @@
                 pdf_url = supabaseClient.storage.from('course-pdfs').getPublicUrl(fileName).data.publicUrl;
             }
 
+            // Upload Quiz Images
             submitBtn.innerText = 'Processing Quiz Images...';
             const finalQuizzes = [];
             for (let i = 0; i < quizDomItems.length; i++) {
@@ -438,8 +441,6 @@
                     const { error: imgErr } = await supabaseClient.storage.from('course-pdfs').upload(imgFileName, imgFile);
                     if (!imgErr) {
                         questionImageUrl = supabaseClient.storage.from('course-pdfs').getPublicUrl(imgFileName).data.publicUrl;
-                    } else {
-                        console.warn('Quiz image upload warning:', imgErr.message);
                     }
                 }
 
@@ -454,8 +455,8 @@
 
             const totalMarks = round2(finalQuizzes.reduce((s, q) => s + q.marks, 0));
             const passPercent = Math.min(100, Math.max(1, parseFloat(document.getElementById('pass-percent').value) || 50));
-            const creator = getCreatorInfo();
 
+            // Save Course to Supabase
             submitBtn.innerText = 'Saving Course to Database...';
             const { error: insertError } = await supabaseClient.from('courses').insert([{
                 id: newCourseId,
@@ -468,8 +469,9 @@
                 final_quizzes: finalQuizzes,
                 total_marks: totalMarks,
                 pass_percent: passPercent,
-                created_by: creator.createdBy,
-                department: creator.department,
+                quiz_time_limit: quizTimeLimit, // 👈 Saved Time Limit
+                created_by: getCreatorId(),
+                department: getCreatorDept(),
                 video_questions: videoQuestions
             }]);
 
@@ -478,8 +480,8 @@
                 return resetBtn();
             }
 
-            alert(`Course (${newCourseId}) added successfully!\n\nTotal Marks: ${totalMarks}\nPass Mark: ${round2(totalMarks * passPercent / 100)} (${passPercent}%)\n\nQuestions with images will display in Split View!`);
-            window.location.href = `course-view.html?single_course_id=${encodeURIComponent(newCourseId)}`;
+            alert(`Course (${newCourseId}) added successfully!\n\n• Quiz Time Limit: ${quizTimeLimit} Minutes\n• Total Marks: ${totalMarks}`);
+            window.location.href = `course-view.html?single_course_id=${newCourseId}`;
         } catch (err) {
             console.error(err);
             alert('An unexpected error occurred: ' + err.message);
