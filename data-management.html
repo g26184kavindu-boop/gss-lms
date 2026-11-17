@@ -4,11 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Data Management - GSS LMS</title>
+    <!-- 1. CDN Libraries loaded first (Web Standard) -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- 2. Core App Logic -->
     <script src="lms-core.js"></script>
     <script src="lms-auth.js"></script>
     <script>LMS.guard(['super_admin']);</script>
-    <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .custom-scroll::-webkit-scrollbar { width: 5px; }
         .custom-scroll::-webkit-scrollbar-track { background: transparent; }
@@ -36,37 +39,42 @@
     <header class="flex justify-between items-center">
         <div>
             <h1 class="text-3xl font-bold text-stone-900">Data Management</h1>
-            <p class="text-stone-500 text-sm mt-1">Backup database, bulk import data, and manage system logs</p>
+            <p class="text-stone-500 text-sm mt-1">Master system data export, backup database, and manage audit logs</p>
         </div>
         <span class="px-3 py-1 bg-purple-50 text-purple-700 text-xs font-semibold rounded-full border border-purple-200">Super Admin Only</span>
     </header>
 
-    <!-- Storage Indicator & Backup / Restore Section -->
+    <!-- Master Export Cards -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
+        <!-- Master Qualifications & Personnel Export Card -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between space-y-4">
             <div>
-                <h3 class="text-lg font-bold text-stone-900">Supabase Connection Status</h3>
-                <p class="text-stone-500 text-sm mt-1">Live cloud connection status with Supabase database.</p>
-            </div>
-            <div class="my-4">
                 <div class="flex items-center space-x-2">
-                    <span id="db-status-dot" class="h-3 w-3 bg-emerald-500 rounded-full animate-pulse"></span>
-                    <span id="db-status-text" class="text-sm font-semibold text-stone-700">Checking connection...</span>
+                    <span class="h-2.5 w-2.5 bg-blue-600 rounded-full"></span>
+                    <h3 class="text-lg font-bold text-stone-900">Master Personnel &amp; Qualifications Export</h3>
                 </div>
+                <p class="text-stone-500 text-xs mt-1">මුළු පද්ධතියේම සිටින සියලුම Super Admins, Admins සහ QATs ලාගේ පුද්ගලික තොරතුරු සහ O/L, A/L, Higher Education සුදුසුකම් සහිත සම්පූර්ණ Excel වාර්තාව.</p>
             </div>
-            <p class="text-xs text-stone-400">All system courses, QAT records, and logs are synchronized directly with Supabase tables.</p>
+            <button onclick="downloadMasterPersonnelExcel()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-4 rounded-xl text-xs transition shadow-sm flex items-center justify-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                <span>Download Master Qualifications Excel Sheet</span>
+            </button>
         </div>
 
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
+        <!-- Full Database Backup (JSON) Card -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between space-y-4">
             <div>
-                <h3 class="text-lg font-bold text-stone-900">Full Database Backup &amp; Restore</h3>
-                <p class="text-stone-500 text-sm mt-1">Download complete database backup or restore from a JSON file.</p>
+                <div class="flex items-center space-x-2">
+                    <span class="h-2.5 w-2.5 bg-indigo-600 rounded-full"></span>
+                    <h3 class="text-lg font-bold text-stone-900">Complete System Full Database Backup</h3>
+                </div>
+                <p class="text-stone-500 text-xs mt-1">Courses, Questions, Results, Users සහ Retake Audit Logs ඇතුළු සම්පූර්ණ දත්ත ගබඩාවේ Full JSON Backup එක බාගත කිරීම.</p>
             </div>
-            <div class="flex gap-3 mt-4">
-                <button type="button" onclick="downloadFullBackup()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-4 rounded-xl text-sm transition shadow-sm">
-                    Download Backup
+            <div class="flex gap-2">
+                <button onclick="downloadFullBackup()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-4 rounded-xl text-xs transition shadow-sm">
+                    Download Full JSON Backup
                 </button>
-                <label class="flex-1 bg-stone-100 hover:bg-stone-200 text-stone-700 font-semibold py-2.5 px-4 rounded-xl text-sm transition text-center cursor-pointer shadow-sm">
+                <label class="flex-1 bg-stone-100 hover:bg-stone-200 text-stone-700 font-semibold py-2.5 px-4 rounded-xl text-xs transition text-center cursor-pointer shadow-sm">
                     Restore Backup
                     <input type="file" id="restore-file-input" accept=".json" class="hidden" onchange="restoreFullBackup(event)">
                 </label>
@@ -80,19 +88,20 @@
         <p class="text-stone-500 text-sm mt-1">Select target table and upload a CSV file to import records directly into Supabase.</p>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 items-end">
             <div>
-                <label for="import-target" class="block text-xs font-semibold text-stone-700 mb-1">Target Table</label>
-                <select id="import-target" class="w-full border border-stone-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <label class="block text-xs font-semibold text-stone-700 mb-1">Target Table</label>
+                <select id="import-target" class="w-full border border-stone-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
                     <option value="courses">Courses Table</option>
                     <option value="qats">QATs Table</option>
+                    <option value="admins">Admins Table</option>
                     <option value="qat_completed_courses">Completed Courses Table</option>
                 </select>
             </div>
             <div>
-                <label for="csv-import-input" class="block text-xs font-semibold text-stone-700 mb-1">Select CSV File</label>
+                <label class="block text-xs font-semibold text-stone-700 mb-1">Select CSV File</label>
                 <input type="file" id="csv-import-input" accept=".csv" class="w-full text-xs text-stone-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
             </div>
             <div>
-                <button type="button" onclick="handleCSVImport()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-4 rounded-xl text-sm transition">
+                <button onclick="handleCSVImport()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-4 rounded-xl text-sm transition">
                     Import to Database
                 </button>
             </div>
@@ -106,18 +115,19 @@
                 <h3 class="text-lg font-bold text-stone-900">System Activity Logs (Audit Trail)</h3>
                 <p class="text-stone-500 text-sm">Recent data management actions performed.</p>
             </div>
-            <button type="button" onclick="clearActivityLogs()" class="text-xs text-rose-600 hover:underline font-medium">Clear Logs</button>
+            <button onclick="clearActivityLogs()" class="text-xs text-rose-600 hover:underline font-medium">Clear Logs</button>
         </div>
         <div class="overflow-x-auto max-h-60 custom-scroll">
             <table class="w-full text-left text-sm">
                 <thead class="bg-stone-50 text-stone-600 text-xs uppercase sticky top-0">
                 <tr>
-                    <th scope="col" class="p-3">Timestamp</th>
-                    <th scope="col" class="p-3">Action</th>
-                    <th scope="col" class="p-3">Details</th>
+                    <th class="p-3">Timestamp</th>
+                    <th class="p-3">Action</th>
+                    <th class="p-3">Details</th>
                 </tr>
                 </thead>
-                <tbody id="logs-table-body" class="divide-y divide-stone-100 text-stone-700"></tbody>
+                <tbody id="logs-table-body" class="divide-y divide-stone-100 text-stone-700">
+                </tbody>
             </table>
         </div>
     </div>
@@ -125,30 +135,14 @@
 
 <script>
     const supabaseClient = window.LMS.db;
-    const esc = LMS.esc;
 
     document.addEventListener("DOMContentLoaded", function() {
         LMS.renderSidebar();
         loadActivityLogs();
-        checkConnection();
     });
 
-    async function checkConnection() {
-        const dot = document.getElementById('db-status-dot');
-        const txt = document.getElementById('db-status-text');
-        try {
-            const { error } = await supabaseClient.from('courses').select('id', { head: true, count: 'exact' });
-            if (error) throw error;
-            dot.className = 'h-3 w-3 bg-emerald-500 rounded-full animate-pulse';
-            txt.textContent = 'Connected to Supabase';
-        } catch (err) {
-            dot.className = 'h-3 w-3 bg-rose-500 rounded-full';
-            txt.textContent = 'Connection error: ' + err.message;
-        }
-    }
-
     function logActivity(action, details) {
-        const logs = JSON.parse(localStorage.getItem('gss_activity_logs')) || [];
+        let logs = JSON.parse(localStorage.getItem('gss_activity_logs')) || [];
         const timestamp = new Date().toLocaleString();
         logs.unshift({ timestamp, action, details });
         if (logs.length > 50) logs.pop();
@@ -157,19 +151,22 @@
     }
 
     function loadActivityLogs() {
-        const logs = JSON.parse(localStorage.getItem('gss_activity_logs')) || [];
+        let logs = JSON.parse(localStorage.getItem('gss_activity_logs')) || [];
         const tbody = document.getElementById('logs-table-body');
-        if (!logs.length) {
+        tbody.innerHTML = "";
+        if (logs.length === 0) {
             tbody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-stone-400 text-xs">No activity logs recorded yet.</td></tr>`;
             return;
         }
-        tbody.innerHTML = logs.map(log => `
-            <tr class="hover:bg-stone-50">
-                <td class="p-3 text-xs text-stone-500 whitespace-nowrap">${esc(log.timestamp)}</td>
-                <td class="p-3 font-semibold text-xs text-blue-600">${esc(log.action)}</td>
-                <td class="p-3 text-xs text-stone-600">${esc(log.details)}</td>
-            </tr>
-        `).join('');
+        logs.forEach(log => {
+            tbody.innerHTML += `
+                <tr class="hover:bg-stone-50">
+                    <td class="p-3 text-xs text-stone-500 whitespace-nowrap">${log.timestamp}</td>
+                    <td class="p-3 font-semibold text-xs text-blue-600">${log.action}</td>
+                    <td class="p-3 text-xs text-stone-600">${log.details}</td>
+                </tr>
+            `;
+        });
     }
 
     function clearActivityLogs() {
@@ -177,32 +174,134 @@
         loadActivityLogs();
     }
 
+    /* =========================================================================
+       MASTER PERSONNEL & EDUCATIONAL QUALIFICATIONS EXPORT (EXCEL)
+       ========================================================================= */
+    async function downloadMasterPersonnelExcel() {
+        try {
+            const [saRes, admRes, qatRes] = await Promise.all([
+                supabaseClient.from('super_admin').select('*'),
+                supabaseClient.from('admins').select('*'),
+                supabaseClient.from('qats').select('*')
+            ]);
+
+            const allRows = [];
+
+            // 1. Super Admins
+            (saRes.data || []).forEach(u => {
+                allRows.push({
+                    'Role': 'Super Admin',
+                    'Department': u.department || 'General',
+                    'G ID': u.super_admin_g_id || '-',
+                    'User Name': u.user_name || '-',
+                    'Full Name': u.super_admin_name || '-',
+                    'Email': u.biz_mail || '-',
+                    'Contact': u.contact || '-',
+                    'NIC': u.nic || '-',
+                    'DOB': u.dob || '-',
+                    'O/L A': u.ol_a || 0,
+                    'O/L B': u.ol_b || 0,
+                    'O/L C': u.ol_c || 0,
+                    'O/L S': u.ol_s || 0,
+                    'O/L F': u.ol_f || 0,
+                    'A/L Stream & Results': u.al_details || '-',
+                    'Higher Education': u.higher_studies || '-',
+                    'Status': u.status || 'Active'
+                });
+            });
+
+            // 2. Department Admins
+            (admRes.data || []).forEach(u => {
+                allRows.push({
+                    'Role': 'Admin',
+                    'Department': u.department || 'Training',
+                    'G ID': u.admin_g_id || '-',
+                    'User Name': u.user_name || '-',
+                    'Full Name': u.admin_name || '-',
+                    'Email': u.email || '-',
+                    'Contact': u.contact || '-',
+                    'NIC': u.nic || '-',
+                    'DOB': u.dob || '-',
+                    'O/L A': u.ol_a || 0,
+                    'O/L B': u.ol_b || 0,
+                    'O/L C': u.ol_c || 0,
+                    'O/L S': u.ol_s || 0,
+                    'O/L F': u.ol_f || 0,
+                    'A/L Stream & Results': u.al_details || '-',
+                    'Higher Education': u.higher_studies || '-',
+                    'Status': u.status || 'Active'
+                });
+            });
+
+            // 3. QAT Members
+            (qatRes.data || []).forEach(u => {
+                allRows.push({
+                    'Role': 'QAT',
+                    'Department': u.department || 'Quality Assurance',
+                    'G ID': u.qat_g_id || '-',
+                    'User Name': u.user_name || '-',
+                    'Full Name': u.name || '-',
+                    'Email': u.email || '-',
+                    'Contact': u.contact || '-',
+                    'NIC': u.nic || '-',
+                    'DOB': u.dob || '-',
+                    'O/L A': u.ol_a || 0,
+                    'O/L B': u.ol_b || 0,
+                    'O/L C': u.ol_c || 0,
+                    'O/L S': u.ol_s || 0,
+                    'O/L F': u.ol_f || 0,
+                    'A/L Stream & Results': u.al_details || '-',
+                    'Higher Education': u.higher_studies || '-',
+                    'Status': u.status || 'Active'
+                });
+            });
+
+            if (!allRows.length) return alert('No personnel records found to export.');
+
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.json_to_sheet(allRows);
+            XLSX.utils.book_append_sheet(wb, ws, 'All_Personnel_Qualifications');
+            XLSX.writeFile(wb, `GSS_LMS_Master_Personnel_Data_${new Date().toISOString().slice(0,10)}.xlsx`);
+
+            logActivity('Master Export', 'Master Personnel & Educational Qualifications Excel sheet downloaded.');
+        } catch (err) {
+            alert('Export failed: ' + err.message);
+        }
+    }
+
+    /* =========================================================================
+       COMPLETE FULL DATABASE BACKUP (JSON)
+       ========================================================================= */
     async function downloadFullBackup() {
         try {
-            const [cRes, qRes, aRes, ccRes] = await Promise.all([
+            const [cRes, qRes, aRes, saRes, ccRes, logsRes] = await Promise.all([
                 supabaseClient.from('courses').select('*'),
                 supabaseClient.from('qats').select('*'),
                 supabaseClient.from('admins').select('*'),
-                supabaseClient.from('qat_completed_courses').select('*')
+                supabaseClient.from('super_admin').select('*'),
+                supabaseClient.from('qat_completed_courses').select('*'),
+                supabaseClient.from('retake_audit_logs').select('*')
             ]);
 
             const backupData = {
                 timestamp: new Date().toISOString(),
-                courses: cRes.data || [],
-                qats: qRes.data || [],
+                super_admin: saRes.data || [],
                 admins: aRes.data || [],
-                qat_completed_courses: ccRes.data || []
+                qats: qRes.data || [],
+                courses: cRes.data || [],
+                qat_completed_courses: ccRes.data || [],
+                retake_audit_logs: logsRes.data || []
             };
 
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
             const downloadAnchor = document.createElement('a');
             downloadAnchor.setAttribute("href", dataStr);
-            downloadAnchor.setAttribute("download", `GSS_LMS_Full_Backup_${new Date().toISOString().slice(0, 10)}.json`);
+            downloadAnchor.setAttribute("download", `GSS_LMS_Full_Database_Backup_${new Date().toISOString().slice(0,10)}.json`);
             document.body.appendChild(downloadAnchor);
             downloadAnchor.click();
             downloadAnchor.remove();
 
-            logActivity('Download Backup', 'Full database JSON backup downloaded successfully.');
+            logActivity('Full Backup', 'Full system database JSON backup downloaded successfully.');
         } catch (err) {
             alert('Backup failed: ' + err.message);
         }
@@ -218,9 +317,10 @@
                 const data = JSON.parse(e.target.result);
                 if (!confirm("Are you sure you want to restore data from this backup file?")) return;
 
-                if (data.courses?.length) await supabaseClient.from('courses').upsert(data.courses);
-                if (data.qats?.length) await supabaseClient.from('qats').upsert(data.qats);
+                if (data.super_admin?.length) await supabaseClient.from('super_admin').upsert(data.super_admin);
                 if (data.admins?.length) await supabaseClient.from('admins').upsert(data.admins);
+                if (data.qats?.length) await supabaseClient.from('qats').upsert(data.qats);
+                if (data.courses?.length) await supabaseClient.from('courses').upsert(data.courses);
                 if (data.qat_completed_courses?.length) await supabaseClient.from('qat_completed_courses').upsert(data.qat_completed_courses);
 
                 alert("Database restored successfully!");
@@ -232,60 +332,27 @@
         reader.readAsText(file);
     }
 
-    function parseCsvLine(line) {
-        const result = [];
-        let cur = '';
-        let inQuotes = false;
-        for (let i = 0; i < line.length; i++) {
-            const ch = line[i];
-            if (inQuotes) {
-                if (ch === '"' && line[i + 1] === '"') {
-                    cur += '"';
-                    i++;
-                } else if (ch === '"') {
-                    inQuotes = false;
-                } else {
-                    cur += ch;
-                }
-            } else {
-                if (ch === '"') inQuotes = true;
-                else if (ch === ',') { result.push(cur.trim()); cur = ''; }
-                else cur += ch;
-            }
-        }
-        result.push(cur.trim());
-        return result;
-    }
-
     async function handleCSVImport() {
         const targetTable = document.getElementById('import-target').value;
         const fileInput = document.getElementById('csv-import-input');
         const file = fileInput.files[0];
 
-        if (!file) {
-            alert("Please select a CSV file first!");
-            return;
-        }
+        if (!file) return alert("Please select a CSV file first!");
 
         const reader = new FileReader();
         reader.onload = async function(e) {
             try {
                 const text = e.target.result;
-                const rows = text.split(/\r?\n/).filter(r => r.trim() !== '');
-                if (rows.length < 2) {
-                    alert("CSV file is empty or missing headers!");
-                    return;
-                }
+                const rows = text.split('\n').filter(r => r.trim() !== '');
+                if (rows.length < 2) return alert("CSV file is empty or missing headers!");
 
-                const headers = parseCsvLine(rows[0]);
+                const headers = rows[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
                 const records = [];
 
                 for (let i = 1; i < rows.length; i++) {
-                    const values = parseCsvLine(rows[i]);
+                    const values = rows[i].split(',').map(v => v.trim().replace(/^"|"$/g, ''));
                     const obj = {};
-                    headers.forEach((h, idx) => {
-                        obj[h] = values[idx] !== undefined && values[idx] !== '' ? values[idx] : null;
-                    });
+                    headers.forEach((h, idx) => { obj[h] = values[idx] || null; });
                     records.push(obj);
                 }
 
