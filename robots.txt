@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://gss-lms.pages.dev/sitemap.xml
