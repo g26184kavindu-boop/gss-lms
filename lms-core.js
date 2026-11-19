@@ -204,7 +204,8 @@
         document.documentElement.style.visibility = 'hidden';
         const s = getSession();
         if (!s) {
-            const currentFile = location.pathname.split('/').pop() || 'index.html';
+            const rawFile = location.pathname.split('/').pop() || 'index.html';
+            const currentFile = rawFile && !rawFile.includes('.') ? `${rawFile}.html` : rawFile;
             window.location.replace('index.html?redirect=' + encodeURIComponent(currentFile + location.search));
             return null;
         }
@@ -255,7 +256,8 @@
         const s = getSession();
         const nav = document.getElementById('sidebar-nav');
         if (!s || !nav) return;
-        const here = location.pathname.split('/').pop().toLowerCase();
+        const rawHere = location.pathname.split('/').pop().toLowerCase();
+        const here = rawHere && !rawHere.includes('.') ? `${rawHere}.html` : rawHere;
         const svg = d => `<svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${d}"/></svg>`;
         const label = txt => `<span class="font-medium text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">${txt}</span>`;
         const row = (attrs, icon, txt, cls) => `<a ${attrs} class="flex items-center space-x-4 p-2.5 rounded-lg transition cursor-pointer ${cls}">${svg(icon)}${label(txt)}</a>`;
