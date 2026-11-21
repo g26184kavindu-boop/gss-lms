@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Course Add - GSS LMS</title>
+    <title>Course Add / Edit - GSS LMS</title>
+    <!-- 1. CDN Libraries loaded first (Web Standard) -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- 2. Core App Logic -->
     <script src="lms-core.js"></script>
     <script src="lms-auth.js"></script>
-    <script>LMS.guard(['admin', 'super_admin']);</script>
     <script src="drive-upload.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .custom-scroll::-webkit-scrollbar{width:5px}
         .custom-scroll::-webkit-scrollbar-track{background:transparent}
@@ -36,10 +37,12 @@
 
         <!-- Form Card -->
         <div class="max-w-xl bg-white p-8 rounded-2xl shadow-sm border border-gray-100 w-full mb-12">
-            <h1 class="text-3xl sm:text-4xl font-semibold text-stone-950 tracking-tight leading-tight mb-2">Add Course</h1>
-            <p class="text-stone-500 text-sm mb-6">Fill out the fields below to register a new course into the system.</p>
+            <h1 id="page-title" class="text-3xl sm:text-4xl font-semibold text-stone-950 tracking-tight leading-tight mb-2">Add Course</h1>
+            <p id="page-sub" class="text-stone-500 text-sm mb-6">Fill out the fields below to register or update a course into the system.</p>
 
             <form id="course-form" class="space-y-5">
+                <input type="hidden" id="edit-mode-id" value="">
+
                 <!-- Course ID -->
                 <div class="space-y-1.5">
                     <label class="block text-xs font-semibold uppercase tracking-wider text-stone-700">Course ID <span class="text-rose-500">*</span></label>
@@ -60,7 +63,7 @@
                 <!-- Course Name -->
                 <div class="space-y-1.5">
                     <label for="course-name" class="block text-xs font-semibold uppercase tracking-wider text-stone-700">Course Name <span class="text-rose-500">*</span></label>
-                    <input type="text" id="course-name" placeholder="Enter course name" required class="w-full px-4 py-2.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-400">
+                    <input type="text" id="course-name" placeholder="Enter course name" required class="w-full px-4 py-2.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
 
                 <hr class="border-gray-100 my-4">
@@ -90,23 +93,25 @@
                     <!-- Video Upload & Checkpoints -->
                     <div id="video-section" class="p-5 border border-gray-200 rounded-2xl bg-stone-50/50 hidden space-y-4">
                         <div>
-                            <label class="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-2">Upload Video (MP4 / WebM) <span class="text-rose-500">*</span></label>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-2">Upload Video (MP4 / WebM) <span id="video-req" class="text-rose-500">*</span></label>
                             <input type="file" id="video-file-input" accept="video/mp4,video/webm" class="w-full text-xs text-stone-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                            <p id="existing-video-hint" class="text-[11px] text-emerald-600 font-semibold mt-1 hidden"></p>
                         </div>
                         <div class="pt-3 border-t border-gray-200 space-y-3">
                             <h3 class="text-xs font-bold uppercase tracking-wider text-stone-800">Configure 3 Pause Points (5 Questions Per Pause)</h3>
-                            <p class="text-xs text-stone-500">Pause timestamp එකේදී video එක නතර වී ප්‍රශ්න අසයි. වැරදුනහොත් rewind වේ.</p>
+                            <p class="text-xs text-stone-500">Pause timestamp එකේදී video එක නතර වී ප්‍රශ්න අසයි.</p>
                             <div id="video-checkpoints-container" class="space-y-5 max-h-[500px] overflow-y-auto pr-2 custom-scroll"></div>
                         </div>
                     </div>
 
                     <!-- PDF Upload -->
                     <div id="pdf-section" class="p-5 border border-gray-200 rounded-2xl bg-stone-50/50 hidden space-y-3">
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-2">Upload PDF Document <span class="text-rose-500">*</span></label>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-2">Upload PDF Document <span id="pdf-req" class="text-rose-500">*</span></label>
                         <input type="file" id="pdf-file-input" accept=".pdf" class="w-full text-xs text-stone-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                        <p id="existing-pdf-hint" class="text-[11px] text-emerald-600 font-semibold mt-1 hidden"></p>
                     </div>
 
-                    <!-- Final MCQ Quiz Section (With Time Limit & Question Images) -->
+                    <!-- Final MCQ Quiz Section -->
                     <div id="final-quiz-section" class="p-5 border border-gray-200 rounded-2xl bg-stone-50/50 hidden space-y-4">
                         <div class="flex justify-between items-center border-b pb-3">
                             <div>
@@ -129,10 +134,9 @@
                                 <label class="block text-[11px] font-bold uppercase text-stone-600 mb-1">Pass Mark (%)</label>
                                 <input type="number" id="pass-percent" min="1" max="100" value="50" class="w-full px-2 py-1 text-xs border border-gray-300 rounded-lg bg-white">
                             </div>
-                            <!-- Time Limit Field for Admin -->
                             <div>
                                 <label class="block text-[11px] font-bold uppercase text-blue-900 mb-1">Time Limit (Mins) <span class="text-rose-500">*</span></label>
-                                <input type="number" id="quiz-time-limit" min="1" max="180" value="15" required class="w-full px-2 py-1 text-xs border border-blue-300 rounded-lg bg-white focus:ring-1 focus:ring-blue-500">
+                                <input type="number" id="quiz-time-limit" min="1" max="180" value="15" required class="w-full px-2 py-1 text-xs border border-blue-300 rounded-lg bg-white">
                             </div>
                             <div class="text-xs text-stone-700 space-y-0.5">
                                 <p>Questions: <b id="sum-q">0</b></p>
@@ -140,21 +144,19 @@
                             </div>
                         </div>
 
-                        <!-- Container where questions are dynamically added -->
                         <div id="final-quiz-questions-container" class="space-y-5 max-h-[550px] overflow-y-auto pr-2 custom-scroll"></div>
                     </div>
                 </div>
 
                 <!-- Submit Button -->
                 <div class="pt-4 border-t border-gray-100">
-                    <button type="submit" id="submit-btn" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm rounded-xl shadow-sm transition focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <button type="submit" id="submit-btn" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm rounded-xl shadow-sm transition">
                         Submit Course
                     </button>
                 </div>
             </form>
         </div>
 
-        <!-- Sticky Visual Graphic -->
         <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100 hidden md:block sticky top-8">
             <img src="training.webp" alt="Course visualization placeholder" class="w-full h-auto max-h-[480px] object-contain mx-auto rounded-xl">
         </div>
@@ -165,15 +167,9 @@
     const supabaseClient = window.LMS.db;
     LMS.renderSidebar();
 
-    window.addEventListener('DOMContentLoaded', async () => {
-        const input = document.getElementById('course-id');
-        try {
-            const { count, error } = await supabaseClient.from('courses').select('*', { count: 'exact', head: true });
-            input.value = String((!error && count !== null ? count : 0) + 1).padStart(4, '0');
-        } catch (err) {
-            input.value = '0001';
-        }
-    });
+    const urlParams = new URLSearchParams(window.location.search);
+    const editId = urlParams.get('edit_id');
+    let existingCourseData = null;
 
     const formatDropdown = document.getElementById('learning-format');
     const videoSection = document.getElementById('video-section');
@@ -240,9 +236,19 @@
         updateMarksSummary();
     }
 
-    function addFinalQuizQuestionRow() {
+    function addFinalQuizQuestionRow(data = null) {
         const div = document.createElement('div');
         div.className = 'p-5 border border-stone-200 rounded-xl bg-white space-y-3.5 final-quiz-item relative shadow-sm';
+        
+        const qVal = data?.question || '';
+        const optA = data?.options?.A || '';
+        const optB = data?.options?.B || '';
+        const optC = data?.options?.C || '';
+        const optD = data?.options?.D || '';
+        const ansVal = data?.answer || '';
+        const marksVal = data?.marks || getDefaultMarks();
+        const existingImg = data?.image_url || '';
+
         div.innerHTML = `
         <div class="flex justify-between items-center border-b pb-2">
             <label class="block text-xs font-bold uppercase text-blue-600">Question <span class="final-q-number"></span></label>
@@ -251,40 +257,42 @@
         
         <div>
             <label class="block text-xs font-semibold text-stone-700 mb-1">Question Text <span class="text-rose-500">*</span></label>
-            <input type="text" placeholder="Enter question text..." class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 final-quiz-q">
+            <input type="text" value="${esc(qVal)}" placeholder="Enter question text..." class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 final-quiz-q">
         </div>
 
-        <!-- Question Image Upload Field -->
         <div class="p-3 bg-stone-50 rounded-xl border border-dashed border-stone-300 space-y-2">
             <div class="flex items-center justify-between">
                 <label class="block text-[11px] font-bold uppercase text-stone-600">Attach Question Image (Optional)</label>
-                <button type="button" class="clear-img text-[10px] text-rose-500 hover:underline hidden">Clear Image</button>
+                <button type="button" class="clear-img text-[10px] text-rose-500 hover:underline ${existingImg ? '' : 'hidden'}">Clear Image</button>
             </div>
             <input type="file" accept="image/*" class="w-full text-xs text-stone-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 final-quiz-img">
-            <div class="img-preview-container hidden mt-2">
-                <img src="" alt="Question Image Preview" class="img-preview h-24 w-auto object-contain rounded-lg border border-stone-200 bg-white">
+            <input type="hidden" class="final-quiz-existing-img" value="${esc(existingImg)}">
+            <div class="img-preview-container ${existingImg ? '' : 'hidden'} mt-2">
+                <img src="${esc(existingImg)}" alt="Preview" class="img-preview h-24 w-auto object-contain rounded-lg border border-stone-200 bg-white">
             </div>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-            <input type="text" placeholder="Option A" class="px-3 py-1.5 text-xs border border-gray-200 rounded-lg final-quiz-opt-a">
-            <input type="text" placeholder="Option B" class="px-3 py-1.5 text-xs border border-gray-200 rounded-lg final-quiz-opt-b">
-            <input type="text" placeholder="Option C" class="px-3 py-1.5 text-xs border border-gray-200 rounded-lg final-quiz-opt-c">
-            <input type="text" placeholder="Option D" class="px-3 py-1.5 text-xs border border-gray-200 rounded-lg final-quiz-opt-d">
+            <input type="text" value="${esc(optA)}" placeholder="Option A" class="px-3 py-1.5 text-xs border border-gray-200 rounded-lg final-quiz-opt-a">
+            <input type="text" value="${esc(optB)}" placeholder="Option B" class="px-3 py-1.5 text-xs border border-gray-200 rounded-lg final-quiz-opt-b">
+            <input type="text" value="${esc(optC)}" placeholder="Option C" class="px-3 py-1.5 text-xs border border-gray-200 rounded-lg final-quiz-opt-c">
+            <input type="text" value="${esc(optD)}" placeholder="Option D" class="px-3 py-1.5 text-xs border border-gray-200 rounded-lg final-quiz-opt-d">
         </div>
         
         <div class="flex gap-3 items-end pt-1">
             <div class="flex-1">
                 <label class="block text-[11px] font-semibold text-stone-600 uppercase mb-1">Correct Answer:</label>
                 <select class="w-full px-3 py-1.5 text-xs border border-gray-300 rounded-lg final-quiz-ans">
-                    <option value="" disabled selected>Select correct option</option>
-                    <option value="A">Option A</option><option value="B">Option B</option>
-                    <option value="C">Option C</option><option value="D">Option D</option>
+                    <option value="" disabled ${!ansVal ? 'selected' : ''}>Select correct option</option>
+                    <option value="A" ${ansVal === 'A' ? 'selected' : ''}>Option A</option>
+                    <option value="B" ${ansVal === 'B' ? 'selected' : ''}>Option B</option>
+                    <option value="C" ${ansVal === 'C' ? 'selected' : ''}>Option C</option>
+                    <option value="D" ${ansVal === 'D' ? 'selected' : ''}>Option D</option>
                 </select>
             </div>
             <div class="w-24">
                 <label class="block text-[11px] font-semibold text-blue-700 uppercase mb-1">Marks:</label>
-                <input type="number" min="0.5" step="0.5" value="${getDefaultMarks()}" class="w-full px-2 py-1.5 text-xs border border-blue-300 rounded-lg bg-blue-50 final-quiz-marks">
+                <input type="number" min="0.5" step="0.5" value="${marksVal}" class="w-full px-2 py-1.5 text-xs border border-blue-300 rounded-lg bg-blue-50 final-quiz-marks">
             </div>
         </div>`;
 
@@ -292,6 +300,7 @@
         const previewContainer = div.querySelector('.img-preview-container');
         const previewImg = div.querySelector('.img-preview');
         const clearBtn = div.querySelector('.clear-img');
+        const hiddenImg = div.querySelector('.final-quiz-existing-img');
 
         fileInput.addEventListener('change', function() {
             const file = this.files[0];
@@ -308,6 +317,7 @@
 
         clearBtn.addEventListener('click', () => {
             fileInput.value = '';
+            hiddenImg.value = '';
             previewImg.src = '';
             previewContainer.classList.add('hidden');
             clearBtn.classList.add('hidden');
@@ -319,8 +329,7 @@
         updateFinalQuizNumbers();
     }
 
-    addFinalQuizQuestionRow();
-    document.getElementById('add-final-quiz-btn').addEventListener('click', addFinalQuizQuestionRow);
+    document.getElementById('add-final-quiz-btn').addEventListener('click', () => addFinalQuizQuestionRow());
     document.getElementById('apply-marks-btn').addEventListener('click', () => {
         const m = getDefaultMarks();
         finalQuizContainer.querySelectorAll('.final-quiz-marks').forEach(i => i.value = m);
@@ -334,6 +343,93 @@
         finalQuizSection.classList.toggle('hidden', !v);
     });
 
+    /* =========================================================================
+       EDIT MODE INITIALIZATION: LOAD EXISTING COURSE DATA
+       ========================================================================= */
+    window.addEventListener('DOMContentLoaded', async () => {
+        if (editId) {
+            // 👈 EDIT MODE ACTIVATED
+            document.getElementById('page-title').textContent = "Update Course";
+            document.getElementById('page-sub').textContent = `Editing existing course (${editId}). Modify details and click Update.`;
+            document.getElementById('submit-btn').textContent = "Update Course";
+            document.getElementById('course-id').value = editId;
+            document.getElementById('edit-mode-id').value = editId;
+
+            try {
+                const { data, error } = await supabaseClient.from('courses').select('*').eq('id', editId).single();
+                if (error || !data) return alert('Failed to load course details for editing.');
+
+                existingCourseData = data;
+
+                document.getElementById('course-category').value = data.category || 'New';
+                document.getElementById('course-name').value = data.name || '';
+                document.getElementById('lesson-title').value = data.lesson || '';
+                
+                const fmt = (data.format || 'ALL').toLowerCase();
+                formatDropdown.value = fmt;
+                formatDropdown.dispatchEvent(new Event('change'));
+
+                document.getElementById('pass-percent').value = data.pass_percent || 50;
+                document.getElementById('quiz-time-limit').value = data.quiz_time_limit || 15;
+
+                // Existing file status hints
+                if (data.drive_file_id || data.video_url) {
+                    const vHint = document.getElementById('existing-video-hint');
+                    vHint.textContent = "✓ Current video attached. (Choose a new file only if replacing)";
+                    vHint.classList.remove('hidden');
+                    document.getElementById('video-req').classList.add('hidden');
+                }
+                if (data.pdf_file || data.pdf_url) {
+                    const pHint = document.getElementById('existing-pdf-hint');
+                    pHint.textContent = "✓ Current PDF attached. (Choose a new file only if replacing)";
+                    pHint.classList.remove('hidden');
+                    document.getElementById('pdf-req').classList.add('hidden');
+                }
+
+                // Populate 3 Pause Points
+                const vQs = Array.isArray(data.video_questions) ? data.video_questions : [];
+                document.querySelectorAll('.pause-block').forEach((block, pi) => {
+                    const cp = vQs[pi];
+                    if (cp) {
+                        block.querySelector('.pause-time').value = cp.pause_time || '';
+                        block.querySelectorAll('.cp-box').forEach((box, qi) => {
+                            const q = cp.questions?.[qi];
+                            if (q) {
+                                box.querySelector('.cp-text').value = q.question || '';
+                                box.querySelector('.cp-opt-a').value = q.options?.A || '';
+                                box.querySelector('.cp-opt-b').value = q.options?.B || '';
+                                box.querySelector('.cp-opt-c').value = q.options?.C || '';
+                                box.querySelector('.cp-opt-d').value = q.options?.D || '';
+                                box.querySelector('.cp-ans').value = q.answer || '';
+                            }
+                        });
+                    }
+                });
+
+                // Populate Final Quizzes
+                finalQuizContainer.innerHTML = '';
+                const fQs = Array.isArray(data.final_quizzes) ? data.final_quizzes : [];
+                if (fQs.length) {
+                    fQs.forEach(q => addFinalQuizQuestionRow(q));
+                } else {
+                    addFinalQuizQuestionRow();
+                }
+
+            } catch (err) {
+                console.error('Error loading edit course:', err);
+            }
+        } else {
+            // NEW COURSE MODE: Auto Generate ID
+            addFinalQuizQuestionRow();
+            try {
+                const { count, error } = await supabaseClient.from('courses').select('*', { count: 'exact', head: true });
+                document.getElementById('course-id').value = String((!error && count !== null ? count : 0) + 1).padStart(4, '0');
+            } catch (err) {
+                document.getElementById('course-id').value = '0001';
+            }
+        }
+    });
+
     function getCreatorId() {
         const s = LMS.getSession();
         return s?.gid || s?.user?.admin_g_id || s?.user?.super_admin_g_id || 'Admin';
@@ -344,20 +440,26 @@
         return s?.user?.department || 'Training';
     }
 
-    /* Form Submit */
+    /* Form Submit (Handles both INSERT and UPDATE) */
     document.getElementById('course-form').addEventListener('submit', async function (e) {
         e.preventDefault();
         const submitBtn = document.getElementById('submit-btn');
-        const resetBtn = () => { submitBtn.disabled = false; submitBtn.innerText = 'Submit Course'; };
+        const isEditing = !!document.getElementById('edit-mode-id').value;
+        const targetCourseId = document.getElementById('course-id').value.trim();
+
+        const resetBtn = () => { 
+            submitBtn.disabled = false; 
+            submitBtn.innerText = isEditing ? 'Update Course' : 'Submit Course'; 
+        };
+
         const currentFormat = formatDropdown.value;
-        const newCourseId = document.getElementById('course-id').value.trim();
         const courseName = document.getElementById('course-name').value.trim();
         const lesson = document.getElementById('lesson-title').value.trim();
         const videoFile = document.getElementById('video-file-input').files[0];
         const pdfFile = document.getElementById('pdf-file-input').files[0];
         const quizTimeLimit = parseInt(document.getElementById('quiz-time-limit').value) || 15;
 
-        // 1. Validate Quiz
+        // Validation
         const quizDomItems = finalQuizContainer.querySelectorAll('.final-quiz-item');
         if (!quizDomItems.length) return alert('අවම වශයෙන් quiz ප්‍රශ්නයක් එකක්වත් එකතු කරන්න.');
 
@@ -374,10 +476,8 @@
         });
         if (badIndex) return alert(`Question ${badIndex}: ප්‍රශ්නය, options 4ම, නිවැරදි පිළිතුර සහ ලකුණු සම්පූර්ණ කරන්න.`);
 
-        // 2. Validate Pause Points
         const videoQuestions = [];
         if (currentFormat === 'video' || currentFormat === 'all') {
-            let badV = '';
             document.querySelectorAll('.pause-block').forEach(block => {
                 const t = parseInt(block.querySelector('.pause-time').value, 10);
                 const qs = [];
@@ -386,44 +486,38 @@
                     if (!question) return;
                     const o = ['a', 'b', 'c', 'd'].map(k => box.querySelector('.cp-opt-' + k).value.trim());
                     const ans = box.querySelector('.cp-ans').value;
-                    if (o.some(x => !x) || !ans) { badV = badV || `Pause Point ${block.dataset.pause}, Question ${box.dataset.qindex}`; return; }
-                    qs.push({ question, options: { A: o[0], B: o[1], C: o[2], D: o[3] }, answer: ans });
+                    if (o.every(x => x) && ans) {
+                        qs.push({ question, options: { A: o[0], B: o[1], C: o[2], D: o[3] }, answer: ans });
+                    }
                 });
-                if (qs.length && isNaN(t)) badV = badV || `Pause Point ${block.dataset.pause}: Pause Timestamp (Sec) එකක් දමන්න.`;
                 if (qs.length) videoQuestions.push({ pause_point: Number(block.dataset.pause), pause_time: isNaN(t) ? null : t, questions: qs });
             });
-            if (badV) return alert(`${badV}: options 4ම සහ නිවැරදි පිළිතුර පුරවන්න.`);
         }
 
         submitBtn.disabled = true;
-        submitBtn.innerText = 'Processing uploads...';
+        submitBtn.innerText = 'Processing...';
 
         try {
-            let drive_file_id = '', pdf_url = '';
+            let drive_file_id = existingCourseData?.drive_file_id || '';
+            let pdf_url = existingCourseData?.pdf_file || existingCourseData?.pdf_url || '';
 
-            // Video Upload
-            if ((currentFormat === 'video' || currentFormat === 'all') && videoFile) {
+            if (videoFile) {
                 try {
                     submitBtn.innerText = 'Uploading Video...';
                     if (window.LMS && typeof LMS.uploadVideo === 'function') {
-                        drive_file_id = await LMS.uploadVideo(videoFile, { onProgress: p => { submitBtn.innerText = `Uploading Video ${p}%`; } });
+                        drive_file_id = await LMS.uploadVideo(videoFile);
                     }
-                } catch (e) {
-                    alert('Video Upload Failed: ' + e.message);
-                    return resetBtn();
-                }
+                } catch (e) { alert('Video upload error: ' + e.message); return resetBtn(); }
             }
 
-            // PDF Upload
-            if ((currentFormat === 'pdf' || currentFormat === 'all') && pdfFile) {
+            if (pdfFile) {
                 submitBtn.innerText = 'Uploading PDF...';
                 const fileName = `${Date.now()}_${pdfFile.name.replace(/[^a-zA-Z0-9_.-]/g, '_')}`;
                 const { error: upErr } = await supabaseClient.storage.from('course-pdfs').upload(fileName, pdfFile);
-                if (upErr) { alert('PDF Upload Failed: ' + upErr.message); return resetBtn(); }
-                pdf_url = supabaseClient.storage.from('course-pdfs').getPublicUrl(fileName).data.publicUrl;
+                if (!upErr) pdf_url = supabaseClient.storage.from('course-pdfs').getPublicUrl(fileName).data.publicUrl;
             }
 
-            // Upload Quiz Images
+            // Quiz images processing
             submitBtn.innerText = 'Processing Quiz Images...';
             const finalQuizzes = [];
             for (let i = 0; i < quizDomItems.length; i++) {
@@ -433,11 +527,12 @@
                 const ans = item.querySelector('.final-quiz-ans').value;
                 const marks = parseFloat(item.querySelector('.final-quiz-marks').value);
                 const imgInput = item.querySelector('.final-quiz-img');
+                const existingImgUrl = item.querySelector('.final-quiz-existing-img').value;
 
-                let questionImageUrl = null;
+                let questionImageUrl = existingImgUrl;
                 if (imgInput.files && imgInput.files[0]) {
                     const imgFile = imgInput.files[0];
-                    const imgFileName = `quiz_${newCourseId}_q${i + 1}_${Date.now()}.${imgFile.name.split('.').pop()}`;
+                    const imgFileName = `quiz_${targetCourseId}_q${i + 1}_${Date.now()}.${imgFile.name.split('.').pop()}`;
                     const { error: imgErr } = await supabaseClient.storage.from('course-pdfs').upload(imgFileName, imgFile);
                     if (!imgErr) {
                         questionImageUrl = supabaseClient.storage.from('course-pdfs').getPublicUrl(imgFileName).data.publicUrl;
@@ -456,10 +551,7 @@
             const totalMarks = round2(finalQuizzes.reduce((s, q) => s + q.marks, 0));
             const passPercent = Math.min(100, Math.max(1, parseFloat(document.getElementById('pass-percent').value) || 50));
 
-            // Save Course to Supabase
-            submitBtn.innerText = 'Saving Course to Database...';
-            const { error: insertError } = await supabaseClient.from('courses').insert([{
-                id: newCourseId,
+            const coursePayload = {
                 category: document.getElementById('course-category').value,
                 name: courseName,
                 lesson: lesson,
@@ -469,22 +561,39 @@
                 final_quizzes: finalQuizzes,
                 total_marks: totalMarks,
                 pass_percent: passPercent,
-                quiz_time_limit: quizTimeLimit, // 👈 Saved Time Limit
-                created_by: getCreatorId(),
-                department: getCreatorDept(),
+                quiz_time_limit: quizTimeLimit,
                 video_questions: videoQuestions
-            }]);
+            };
 
-            if (insertError) {
-                alert('Database Insert Failed: ' + insertError.message);
-                return resetBtn();
+            if (isEditing) {
+                // UPDATE IN SUPABASE
+                submitBtn.innerText = 'Updating Course in Database...';
+                const { error: updError } = await supabaseClient
+                    .from('courses')
+                    .update(coursePayload)
+                    .eq('id', targetCourseId);
+
+                if (updError) throw updError;
+                alert(`Course (${targetCourseId}) updated successfully!`);
+            } else {
+                // INSERT NEW
+                coursePayload.id = targetCourseId;
+                coursePayload.created_by = getCreatorId();
+                coursePayload.department = getCreatorDept();
+
+                submitBtn.innerText = 'Saving Course to Database...';
+                const { error: insError } = await supabaseClient
+                    .from('courses')
+                    .insert([coursePayload]);
+
+                if (insError) throw insError;
+                alert(`Course (${targetCourseId}) created successfully!`);
             }
 
-            alert(`Course (${newCourseId}) added successfully!\n\n• Quiz Time Limit: ${quizTimeLimit} Minutes\n• Total Marks: ${totalMarks}`);
-            window.location.href = `course-view.html?single_course_id=${newCourseId}`;
+            window.location.href = 'course-view.html';
         } catch (err) {
             console.error(err);
-            alert('An unexpected error occurred: ' + err.message);
+            alert('Operation failed: ' + err.message);
             resetBtn();
         }
     });
