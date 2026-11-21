@@ -369,6 +369,402 @@
                 }
             });
         }
+        applyTranslations();
+    }
+
+    /* ---------- Full-Page Sinhala Translator (Safe DOM + Dynamic Observer) ---------- */
+    const SI_EXACT = {
+        // Common & Titles
+        'gss lms': 'GSS LMS',
+        'welcome back': 'නැවත සාදරයෙන් පිළිගනිමු',
+        'welcome back,': 'නැවත සාදරයෙන් පිළිගනිමු,',
+        '• gss global system solution': '• GSS ග්ලෝබල් සිස්ටම් සොලියුෂන්',
+        'dashboard': 'උපකරණ පුවරුව',
+        'super admin': 'සුපිරි පරිපාලක',
+        'super admin dashboard': 'සුපිරි පරිපාලක උපකරණ පුවරුව',
+        'admin dashboard': 'පරිපාලක උපකරණ පුවරුව',
+        'qat dashboard': 'QAT උපකරණ පුවරුව',
+        'admin': 'පරිපාලක',
+        'qat': 'QAT',
+        'qat technician': 'QAT තාක්ෂණික ශිල්පී',
+        'status': 'තත්ත්වය',
+        'active': 'සක්‍රීයයි',
+        'inactive': 'අක්‍රීයයි',
+        'pending': 'පොරොත්තු',
+        'passed': 'සමත්',
+        'failed': 'අසමත්',
+        'completed': 'සම්පූර්ණයි',
+        'action': 'ක්‍රියාව',
+        'actions': 'ක්‍රියාමාර්ග',
+        'cancel': 'අවලංගු කරන්න',
+        'save': 'සුරකින්න',
+        'edit': 'සංස්කරණය',
+        'delete': 'මකන්න',
+        'reset': 'යළි සකසන්න',
+        'loading...': 'පූරණය වෙමින්...',
+
+        // Super Admin Dashboard
+        'handover role': 'තනතුර පවරන්න',
+        'change password': 'මුරපදය වෙනස් කරන්න',
+        'department courses': 'දෙපාර්තමේන්තු පාඨමාලා',
+        'department admins': 'දෙපාර්තමේන්තු පරිපාලකයින්',
+        'enrolled qats': 'ලියාපදිංචි QAT සාමාජිකයින්',
+        'view courses ›': 'පාඨමාලා බලන්න ›',
+        'view admins ›': 'පරිපාලකයින් බලන්න ›',
+        'view qats ›': 'QAT විස්තර බලන්න ›',
+        'view all': 'සියල්ල බලන්න',
+        'online now': 'දැන් සක්‍රීය අය (Online)',
+        'admins online': 'සක්‍රීය පරිපාලකයින්',
+        'qats online': 'සක්‍රීය QAT සාමාජිකයින්',
+        'all departments (general super admin)': 'සියලුම දෙපාර්තමේන්තු (සාමාන්‍ය සුපිරි පරිපාලක)',
+        'all departments / roles': 'සියලුම දෙපාර්තමේන්තු / තනතුරු',
+        'admins only': 'පරිපාලකයින් පමණි',
+        'qats only': 'QAT සාමාජිකයින් පමණි',
+        'connecting...': 'සම්බන්ධ වෙමින්...',
+        '● realtime live': '● සජීවීව සම්බන්ධයි',
+        '● realtime connecting...': '● සජීවීව සම්බන්ධ වෙමින්...',
+        'just now': 'දැන්',
+        'දැන් (just now)': 'දැන්',
+        'දැන් කිසිවෙකු online නෑ (no active users online)': 'දැන් කිසිවෙකු online නැත',
+        'දැන් කිසිවෙකු online නෑ (no active members online)': 'දැන් කිසිවෙකු online නැත',
+        'realtime: login වූ ගමන් පෙනේ, logout වූ ගමන් අයින් වේ': 'සජීවීව: Login වූ ගමන් පෙනේ, Logout වූ ගමන් ඉවත් වේ',
+        'loading online members...': 'සක්‍රීය සාමාජිකයින් පූරණය වෙමින්...',
+        'online since': 'සක්‍රීය වූ වේලාව',
+        'general super admin only': 'සාමාන්‍ය සුපිරි පරිපාලක සඳහා පමණි',
+        'course retake audit log (විශේෂ අවසර වාර්තාව)': 'පාඨමාලා Retake විශේෂ අවසර වාර්තාව',
+        'date / time': 'දිනය / වේලාව',
+        'department': 'දෙපාර්තමේන්තුව',
+        'granted by (super admin)': 'අවසර දුන් (සුපිරි පරිපාලක)',
+        'qat g id & name': 'QAT G ID සහ නම',
+        'course': 'පාඨමාලාව',
+        'loading audit logs...': 'Audit වාර්තා පූරණය වෙමින්...',
+        'no retake actions recorded yet.': 'තවමත් retake අවසර ලබාදීම් වාර්තා වී නොමැත.',
+        'failed to load audit logs.': 'Audit වාර්තා පූරණය කිරීම අසාර්ථක විය.',
+        'department admin accounts': 'දෙපාර්තමේන්තු පරිපාලක ගිණුම්',
+        'department qat accounts': 'දෙපාර්තමේන්තු QAT ගිණුම්',
+        'loading from database...': 'දත්ත ගබඩාවෙන් පූරණය වෙමින්...',
+        'loading candidates...': 'අපේක්ෂකයින් පූරණය වෙමින්...',
+        'action for outgoing account': 'ඉවත්වන ගිණුම සඳහා ක්‍රියාමාර්ගය',
+        'select successor (නව සුපිරි පරිපාලක)': 'නව සුපිරි පරිපාලක තෝරන්න',
+        'deactivate account (ගිණුම අක්‍රිය කරන්න / ඉවත් වන්න)': 'ගිණුම අක්‍රිය කරන්න / ඉවත් වන්න',
+        'demote to regular admin (සාමාන්‍ය admin කෙනෙකු ලෙස පවත්වාගන්න)': 'සාමාන්‍ය Admin කෙනෙකු ලෙස පවත්වාගන්න',
+        'confirm with your password': 'ඔබේ මුරපදයෙන් තහවුරු කරන්න',
+        'transfer ownership & logout': 'තනතුර පවරා ඉවත් වන්න',
+        'qat performance & retake management': 'QAT ප්‍රතිඵල සහ Retake කළමනාකරණය',
+        'review qat completion scores and manage course retake permissions.': 'QAT සාමාජිකයින්ගේ ලකුණු පරීක්ෂා කර නැවත පාඨමාලා හැදෑරීමේ (Retake) අවසර කළමනාකරණය කරන්න.',
+        'qat g id': 'QAT G ID',
+        'admin g id': 'Admin G ID',
+        'admin id': 'Admin ID',
+        'g id': 'G ID',
+        'gid': 'GID',
+        'course id': 'පාඨමාලා ID',
+        'all qat g ids': 'සියලුම QAT G ID',
+        'all admin g ids': 'සියලුම Admin G ID',
+        'all course ids': 'සියලුම පාඨමාලා ID',
+        'reset filters': 'පෙරහන් යළි සකසන්න',
+        'apply filter': 'පෙරහන යොදන්න',
+        'download excel': 'Excel බාගත කරන්න',
+        'course title': 'පාඨමාලාවේ නම',
+        'score (%)': 'ලකුණු (%)',
+        'retake action': 'RETAKE ක්‍රියාව',
+        'allow retake': 'Retake අවසර දෙන්න',
+        'retake allowed': 'Retake අවසර ලබා දී ඇත',
+        'no completion records found in this scope.': 'මෙම විෂය පථය තුළ සම්පූර්ණ කළ වාර්තා හමු නොවීය.',
+        'change super admin password': 'සුපිරි පරිපාලක මුරපදය වෙනස් කරන්න',
+        'current password': 'වත්මන් මුරපදය',
+        'new password (min 8 chars)': 'නව මුරපදය (අවම අක්ෂර 8)',
+        'new password': 'නව මුරපදය',
+        'confirm new password': 'නව මුරපදය තහවුරු කරන්න',
+        'enter current password': 'වත්මන් මුරපදය ඇතුළත් කරන්න',
+        'enter your current password': 'ඔබේ වත්මන් මුරපදය ඇතුළත් කරන්න',
+        'enter new password': 'නව මුරපදය ඇතුළත් කරන්න',
+        'update password': 'මුරපදය යාවත්කාලීන කරන්න',
+        'handover super admin role': 'සුපිරි පරිපාලක තනතුර පවරන්න',
+        'super admin role handover': 'සුපිරි පරිපාලක තනතුර පැවරීම',
+        'select a registered admin in your department scope to promote and transfer super admin credentials.': 'සුපිරි පරිපාලක තනතුර පැවරීමට ඔබේ දෙපාර්තමේන්තුවේ ලියාපදිංචි පරිපාලකයෙකු තෝරන්න.',
+        'target admin': 'පැවරිය යුතු පරිපාලක',
+        'select an admin': 'පරිපාලකයෙකු තෝරන්න',
+        'confirm your password': 'ඔබේ මුරපදය තහවුරු කරන්න',
+        'confirm handover': 'පැවරීම තහවුරු කරන්න',
+        'role': 'තනතුර',
+        'name': 'නම',
+        'email': 'විද්‍යුත් තැපෑල',
+
+        // Admin & QAT Dashboards
+        'my created courses': 'මම නිර්මාණය කළ පාඨමාලා',
+        'my enrolled qats': 'ලියාපදිංචි QAT සාමාජිකයින්',
+        'total completions': 'මුළු සම්පූර්ණ කිරීම්',
+        'average quiz score': 'සාමාන්‍ය Quiz ලකුණු',
+        'my courses status': 'මගේ පාඨමාලා තත්ත්වය',
+        '+ add new course': '+ නව පාඨමාලාවක් එක් කරන්න',
+        'course name': 'පාඨමාලාවේ නම',
+        'created date': 'නිර්මාණය කළ දිනය',
+        'my qats completed': 'සම්පූර්ණ කළ QAT ගණන',
+        'loading courses...': 'පාඨමාලා පූරණය වෙමින්...',
+        'my qats performance & scores': 'මගේ QAT සාමාජිකයින්ගේ ප්‍රතිඵල සහ ලකුණු',
+        'filter by qat g id': 'QAT G ID අනුව පෙරන්න',
+        'filter by course id': 'පාඨමාලා ID අනුව පෙරන්න',
+        'all my qat g ids': 'මගේ සියලුම QAT G ID',
+        'all my course ids': 'මගේ සියලුම පාඨමාලා ID',
+        'score': 'ලකුණු',
+        'result': 'ප්‍රතිඵලය',
+        'attempts': 'උත්සාහයන්',
+        'completed on': 'සම්පූර්ණ කළ දිනය',
+        'loading performance data...': 'ප්‍රතිඵල දත්ත පූරණය වෙමින්...',
+        'available courses': 'ඇති පාඨමාලා',
+        'average score': 'සාමාන්‍ය ලකුණු',
+        'my completed courses': 'මම සම්පූර්ණ කළ පාඨමාලා',
+        'go to courses': 'පාඨමාලා වෙත යන්න',
+        'no completed courses yet.': 'තවමත් සම්පූර්ණ කළ පාඨමාලා නොමැත.',
+
+        // Admin Register & Details
+        'admin register': 'පරිපාලක ලියාපදිංචිය',
+        'register a new department admin into the system with unique credentials.': 'අනන්‍ය තොරතුරු සහිතව නව දෙපාර්තමේන්තු පරිපාලකයෙකු පද්ධතියට ලියාපදිංචි කරන්න.',
+        'user name': 'පරිශීලක නාමය (Username)',
+        'admin name': 'පරිපාලකගේ නම',
+        'qat name': 'QAT නම',
+        'full name': 'සම්පූර්ණ නම',
+        'email address': 'විද්‍යුත් තැපැල් ලිපිනය',
+        'office mail address': 'කාර්යාල විද්‍යුත් තැපැල් ලිපිනය',
+        'contact number': 'දුරකථන අංකය',
+        'telephone number': 'දුරකථන අංකය',
+        'phone number': 'දුරකථන අංකය',
+        'contact': 'සම්බන්ධතා',
+        'company join date': 'සේවයට එක්වූ දිනය',
+        'join date': 'ලියාපදිංචි දිනය',
+        'password': 'මුරපදය',
+        'confirm password': 'මුරපදය තහවුරු කරන්න',
+        'register admin': 'පරිපාලක ලියාපදිංචි කරන්න',
+        'admin details management': 'පරිපාලක විස්තර කළමනාකරණය',
+        'manage admin details and course statistics in the system': 'පද්ධතියේ පරිපාලක විස්තර සහ පාඨමාලා දත්ත කළමනාකරණය කරන්න',
+        'add new admin': 'නව පරිපාලකයෙකු එක් කරන්න',
+        'total admins registered': 'ලියාපදිංචි මුළු පරිපාලකයින්',
+        'total courses created by admins': 'පරිපාලකයින් සෑදූ මුළු පාඨමාලා',
+        'registered admins list': 'ලියාපදිංචි පරිපාලක ලැයිස්තුව',
+        'courses created list': 'නිර්මාණය කළ පාඨමාලා ලැයිස්තුව',
+        'loading admins from database...': 'දත්ත ගබඩාවෙන් පරිපාලක විස්තර පූරණය වෙමින්...',
+        'no admins registered yet in database.': 'තවමත් පරිපාලකයින් ලියාපදිංචි වී නොමැත.',
+        'no courses available.': 'පාඨමාලා කිසිවක් නොමැත.',
+        'failed to load admin list.': 'පරිපාලක ලැයිස්තුව පූරණය අසාර්ථක විය.',
+
+        // QAT Details
+        'qat details management': 'QAT විස්තර කළමනාකරණය',
+        'manage qat details, account access, and course statistics': 'QAT විස්තර, ගිණුම් ප්‍රවේශය සහ පාඨමාලා සංඛ්‍යාලේඛන කළමනාකරණය කරන්න',
+        'add new qat': 'නව QAT කෙනෙකු එක් කරන්න',
+        'total qat registered': 'ලියාපදිංචි මුළු QAT ගණන',
+        'total completed courses': 'සම්පූර්ණ කළ මුළු පාඨමාලා',
+        'registered qat list': 'ලියාපදිංචි QAT ලැයිස්තුව',
+        'qat complete courses details': 'QAT සම්පූර්ණ කළ පාඨමාලා විස්තර',
+        'course starting date': 'ආරම්භ කළ දිනය',
+        'course complete date': 'සම්පූර්ණ කළ දිනය',
+        'loading qat details from supabase...': 'QAT විස්තර පූරණය වෙමින්...',
+        'no qats registered yet in database.': 'තවමත් QAT සාමාජිකයින් ලියාපදිංචි වී නොමැත.',
+        'loading completed courses...': 'සම්පූර්ණ කළ පාඨමාලා පූරණය වෙමින්...',
+        'no completed courses recorded yet.': 'තවමත් සම්පූර්ණ කළ පාඨමාලා වාර්තා වී නොමැත.',
+
+        // Course Add, View & Learning Flow
+        'add course': 'පාඨමාලාව එක් කරන්න',
+        'fill out the fields below to register a new course into the system.': 'නව පාඨමාලාවක් පද්ධතියට එක් කිරීමට පහත තොරතුරු සම්පූර්ණ කරන්න.',
+        'course category': 'පාඨමාලා ප්‍රවර්ගය',
+        'select category': 'ප්‍රවර්ගය තෝරන්න',
+        'lesson configuration': 'පාඩම් සැකසුම',
+        'lesson title': 'පාඩමේ නම',
+        'learning format': 'ඉගෙනුම් මාධ්‍යය',
+        'select format': 'මාධ්‍යය තෝරන්න',
+        'all (video + pdf)': 'සියල්ල (වීඩියෝ + PDF)',
+        'video only': 'වීඩියෝ පමණි',
+        'pdf only': 'PDF පමණි',
+        'upload video (mp4 / webm)': 'වීඩියෝව උඩුගත කරන්න (MP4 / WebM)',
+        'upload pdf document': 'PDF ලේඛනය උඩුගත කරන්න',
+        'configure 3 pause points (5 questions per pause)': 'නැවතුම් ස්ථාන 3 සකසන්න (එකකට ප්‍රශ්න 5 බැගින්)',
+        'final mcq assessment quiz': 'අවසාන MCQ ඇගයීම් ප්‍රශ්නාවලිය',
+        '+ add question': '+ ප්‍රශ්නයක් එක් කරන්න',
+        'pass mark (%)': 'සමත් වීමේ ලකුණු (%)',
+        'marks / question': 'ප්‍රශ්නයකට ලකුණු',
+        'apply all': 'සැමට යොදන්න',
+        'submit course': 'පාඨමාලාව සුරකින්න',
+        'select a course to view details and start learning.': 'විස්තර බලා ඉගෙනීම ආරම්භ කිරීමට පාඨමාලාවක් තෝරන්න.',
+        'copy shareable link for qat': 'QAT සඳහා Share Link එක පිටපත් කරන්න',
+        'no courses available for this department.': 'මෙම දෙපාර්තමේන්තුව සඳහා පාඨමාලා නොමැත.',
+        'start learning →': 'ඉගෙනීම අරඹන්න →',
+        'next →': 'ඊළඟ →',
+        '← back': '← ආපසු',
+        'submit quiz ✓': 'Quiz Submit කරන්න ✓',
+        'mark video watched ✓': 'වීඩියෝව නැරඹූ බව සලකුණු කරන්න ✓',
+        'watched ✓': 'නරඹා අවසන් ✓',
+        'video completed ✓': 'වීඩියෝව සම්පූර්ණයි ✓',
+        'final assessment quiz': 'අවසාන ඇගයීම් ප්‍රශ්නාවලිය',
+        'submit answer': 'පිළිතුර යවන්න',
+        'congratulations, you passed!': 'සුබ පැතුම්, ඔබ සමත් වුණා!',
+        'try again': 'නැවත උත්සාහ කරන්න',
+        'back to courses': 'පාඨමාලා වෙත ආපසු',
+        'go to dashboard': 'උපකරණ පුවරුවට යන්න',
+        'loading course...': 'පාඨමාලාව පූරණය වෙමින්...',
+
+        // Profile, Settings, Data Management
+        'profile': 'පැතිකඩ',
+        'profile picture': 'පැතිකඩ ඡායාරූපය',
+        'upload new picture': 'නව ඡායාරූපයක් උඩුගත කරන්න',
+        'date of birth': 'උපන් දිනය',
+        'nic': 'ජාතික හැඳුනුම්පත් අංකය',
+        'update profile': 'පැතිකඩ යාවත්කාලීන කරන්න',
+        'settings': 'සැකසුම්',
+        'privacy settings': 'පෞද්ගලිකත්ව සැකසුම්',
+        'show online status': 'Online තත්ත්වය පෙන්වන්න',
+        'public (everyone can see)': 'පොදු (සැමට පෙනේ)',
+        'private (only me)': 'පෞද්ගලික (මට පමණි)',
+        'help & support / feedback': 'සහය සහ ප්‍රතිපෝෂණ',
+        'report a bug / error': 'දෝෂයක් වාර්තා කරන්න',
+        'system feedback / suggestion': 'පද්ධති යෝජනා / අදහස්',
+        'support ticket (general help)': 'සහය ඉල්ලීම',
+        'data management': 'දත්ත කළමනාකරණය',
+        'backup database, bulk import data, and manage system logs': 'දත්ත ගබඩාව Backup කරන්න, CSV දත්ත ඇතුළත් කරන්න සහ System Logs කළමනාකරණය කරන්න',
+        'supabase connection status': 'Supabase සම්බන්ධතා තත්ත්වය',
+        'connected to supabase': 'Supabase වෙත සම්බන්ධයි',
+        'full database backup & restore': 'සම්පූර්ණ දත්ත Backup සහ Restore',
+        'download complete database backup or restore from a json file.': 'සම්පූර්ණ දත්ත ගබඩාව JSON ගොනුවක් ලෙස බාගත කිරීම හෝ යළි පිහිටුවීම.',
+        'bulk import data (csv upload to supabase)': 'දත්ත විශාල ප්‍රමාණයක් එක් කිරීම (CSV Upload)',
+        'select target table and upload a csv file to import records directly into supabase.': 'අදාළ Table එක තෝරා CSV ගොනුවක් Supabase වෙත උඩුගත කරන්න.',
+        'target table': 'අදාළ Table එක',
+        'select csv file': 'CSV ගොනුව තෝරන්න',
+        'system activity logs (audit trail)': 'පද්ධති ක්‍රියාකාරකම් වාර්තා (Audit Trail)',
+        'recent data management actions performed.': 'මෑතකදී සිදු කළ දත්ත කළමනාකරණ ක්‍රියාවන්.',
+        'clear logs': 'වාර්තා මකන්න',
+        'timestamp': 'වේලාව',
+        'user': 'පරිශීලක',
+        'details': 'විස්තර'
+    };
+
+    function translateString(raw) {
+        if (!raw || raw.length > 260) return raw;
+        const lead = raw.match(/^\s*/)[0];
+        const trail = raw.match(/\s*$/)[0];
+        const core = raw.trim().replace(/\s+/g, ' ');
+        if (!core) return raw;
+
+        const exact = SI_EXACT[core.toLowerCase()];
+        if (exact) return lead + exact + trail;
+
+        // Pattern translations for dynamic strings
+        if (/^Scope:\s*All Departments/i.test(core)) {
+            return lead + 'විෂය පථය: සියලුම දෙපාර්තමේන්තු (සාමාන්‍ය සුපිරි පරිපාලක)' + trail;
+        }
+        let m;
+        if ((m = core.match(/^Scope:\s*(.+?)\s*Department$/i))) {
+            return lead + `විෂය පථය: ${m[1]} දෙපාර්තමේන්තුව` + trail;
+        }
+        if ((m = core.match(/^Scope:\s*(.+)$/i))) {
+            return lead + `විෂය පථය: ${m[1]}` + trail;
+        }
+        if ((m = core.match(/^Department:\s*(.+)$/i))) {
+            return lead + `දෙපාර්තමේන්තුව: ${m[1]}` + trail;
+        }
+        if ((m = core.match(/^Welcome back,\s*(.+)$/i))) {
+            return lead + `නැවත සාදරයෙන් පිළිගනිමු, ${m[1]}` + trail;
+        }
+        if ((m = core.match(/^(\d+)\s+Completed$/i))) {
+            return lead + `${m[1]} සම්පූර්ණයි` + trail;
+        }
+        if ((m = core.match(/^(\d+)\s*min ago$/i))) {
+            return lead + `මිනිත්තු ${m[1]} කට පෙර` + trail;
+        }
+        if ((m = core.match(/^Step\s+(\d+)\s*\/\s*(\d+)$/i))) {
+            return lead + `පියවර ${m[1]} / ${m[2]}` + trail;
+        }
+        if ((m = core.match(/^⏱️\s*Time Left:\s*(.+)$/i))) {
+            return lead + `⏱️ ඉතිරි කාලය: ${m[1]}` + trail;
+        }
+        if ((m = core.match(/^Time Limit:\s*(.+)$/i))) {
+            return lead + `කාල සීමාව: ${m[1]}` + trail;
+        }
+        if ((m = core.match(/^Format:\s*(.+)$/i))) {
+            return lead + `මාධ්‍යය: ${m[1]}` + trail;
+        }
+        if ((m = core.match(/^Lesson:\s*(.+)$/i))) {
+            return lead + `පාඩම: ${m[1]}` + trail;
+        }
+        if ((m = core.match(/^Created by Admin:\s*(.+)$/i))) {
+            return lead + `නිර්මාණය කළ පරිපාලක: ${m[1]}` + trail;
+        }
+        if ((m = core.match(/^Pass Mark:\s*(.+)$/i))) {
+            return lead + `සමත් ලකුණු: ${m[1]}` + trail;
+        }
+        return raw;
+    }
+
+    let isTranslating = false;
+    let translationObserver = null;
+
+    function translateRoot(root) {
+        if (getLang() !== 'si' || !root) return;
+        isTranslating = true;
+        try {
+            if (document.title && / - GSS LMS$/i.test(document.title)) {
+                const base = document.title.replace(/ - GSS LMS$/i, '').trim().toLowerCase();
+                if (SI_EXACT[base]) document.title = `${SI_EXACT[base]} - GSS LMS`;
+            }
+
+            const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+                acceptNode(node) {
+                    const p = node.parentElement;
+                    if (!p) return NodeFilter.FILTER_REJECT;
+                    const tag = p.tagName;
+                    if (tag === 'SCRIPT' || tag === 'STYLE' || tag === 'NOSCRIPT' || tag === 'TEXTAREA' || tag === 'CODE') {
+                        return NodeFilter.FILTER_REJECT;
+                    }
+                    if (p.closest && p.closest('#sidebar-nav')) return NodeFilter.FILTER_REJECT;
+                    return node.nodeValue && node.nodeValue.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+                }
+            });
+
+            const nodes = [];
+            let cur;
+            while ((cur = walker.nextNode())) nodes.push(cur);
+            for (const n of nodes) {
+                const next = translateString(n.nodeValue);
+                if (next !== n.nodeValue) n.nodeValue = next;
+            }
+
+            if (root.querySelectorAll) {
+                root.querySelectorAll('input[placeholder], textarea[placeholder]').forEach(el => {
+                    const ph = el.getAttribute('placeholder');
+                    const next = translateString(ph);
+                    if (next !== ph) el.setAttribute('placeholder', next);
+                });
+            }
+        } finally {
+            isTranslating = false;
+        }
+    }
+
+    function applyTranslations() {
+        document.documentElement.lang = getLang();
+        if (getLang() !== 'si' || !document.body) return;
+
+        translateRoot(document.body);
+
+        if (!translationObserver && window.MutationObserver) {
+            let queued = false;
+            translationObserver = new MutationObserver(() => {
+                if (isTranslating || queued) return;
+                queued = true;
+                requestAnimationFrame(() => {
+                    queued = false;
+                    translateRoot(document.body);
+                });
+            });
+            translationObserver.observe(document.body, {
+                childList: true,
+                subtree: true,
+                characterData: true
+            });
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', applyTranslations);
+    } else {
+        applyTranslations();
     }
 
     const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -386,6 +782,7 @@
         stopPresence,
         kick,
         renderSidebar,
+        applyTranslations,
         t,
         getLang,
         esc,
