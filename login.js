@@ -5,6 +5,25 @@
     const $ = id => document.getElementById(id);
     const toggle = (el, show) => { if (el) el.classList.toggle('hidden', !show); };
     const isSafe = u => !!u && !/^[a-z][a-z0-9+.-]*:/i.test(u) && !u.startsWith('//');
+    const redirectParam = new URLSearchParams(location.search).get('redirect');
+
+    function targetFor(role) {
+        if (isSafe(redirectParam) && role === 'qat') return redirectParam;
+        if (isSafe(redirectParam) && redirectParam.toLowerCase().includes('course-learning-flow')) return redirectParam;
+        return LMS.HOME[role] || 'admin-dashboard.html';
+    }
+
+    function redirectIfLoggedIn() {
+        const s = window.LMS && LMS.getSession && LMS.getSession();
+        if (s) {
+            window.location.replace(targetFor(s.role));
+            return true;
+        }
+        return false;
+    }
+
+    window.addEventListener('pageshow', () => { redirectIfLoggedIn(); });
+    if (redirectIfLoggedIn()) return;
 
     $('login-btn')?.addEventListener('click', () => toggle($('login-modal'), true));
     $('close-login-modal')?.addEventListener('click', () => toggle($('login-modal'), false));
@@ -16,7 +35,6 @@
         if (e.target === $('signup-modal')) toggle($('signup-modal'), false);
     });
 
-    const redirectParam = new URLSearchParams(location.search).get('redirect');
     if (redirectParam !== null) {
         toggle($('login-modal'), true);
         const qatLink = $('signup-qat-link');
@@ -48,20 +66,14 @@
                 if (error) throw error;
                 if (ok === true) {
                     sessionStorage.setItem('lms_bootstrap', JSON.stringify({ u: identifier, p: password }));
-                    window.location.href = 'super-admin-register.html';
+                    window.location.replace('super-admin-register.html');
                     return;
                 }
                 throw new Error('Invalid username/email or password.');
             }
 
             const p = await LMS.signIn(identifier, password);
-            if (isSafe(redirectParam) && p.role === 'qat') {
-                window.location.href = redirectParam;
-            } else if (isSafe(redirectParam) && redirectParam.toLowerCase().includes('course-learning-flow')) {
-                window.location.href = redirectParam;
-            } else {
-                window.location.href = LMS.HOME[p.role] || 'admin-dashboard.html';
-            }
+            window.location.replace(targetFor(p.role));
         } catch (err) {
             alert(err.message || 'Login failed.');
             if (btn) {
