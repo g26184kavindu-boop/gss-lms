@@ -210,23 +210,34 @@
     function installHomeBackLock() {
         if (backLockInstalled) return;
         backLockInstalled = true;
-        const ensureLock = () => {
+
+        const pushInit = () => {
             if (!getSession()) return;
             try {
                 if (!history.state || !history.state.__lmsHomeLock) {
-                    history.pushState({ __lmsHomeLock: true }, '', location.href);
+                    history.pushState({ __lmsHomeLock: 'init' }, '', location.href);
                 }
             } catch (_) {}
         };
-        ensureLock();
-        ['pointerdown', 'keydown'].forEach(ev => {
-            window.addEventListener(ev, ensureLock, { once: true, capture: true });
+
+        const armLock = () => {
+            if (!getSession()) return;
+            try {
+                if (!history.state || history.state.__lmsHomeLock !== 'armed') {
+                    history.pushState({ __lmsHomeLock: 'armed' }, '', location.href);
+                }
+            } catch (_) {}
+        };
+
+        pushInit();
+        ['pointerdown', 'keydown', 'touchstart'].forEach(ev => {
+            window.addEventListener(ev, armLock, { capture: true, passive: true });
         });
         window.addEventListener('popstate', () => {
             if (!getSession()) return;
             try {
-                if (!history.state || !history.state.__lmsHomeLock) {
-                    history.pushState({ __lmsHomeLock: true }, '', location.href);
+                if (!history.state || history.state.__lmsHomeLock !== 'rearmed') {
+                    history.pushState({ __lmsHomeLock: 'rearmed' }, '', location.href);
                 }
             } catch (_) {}
         });
