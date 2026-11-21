@@ -43,10 +43,10 @@
             <form id="course-form" class="space-y-5">
                 <input type="hidden" id="edit-mode-id" value="">
 
-                <!-- Course ID -->
+                <!-- Course ID (Auto-Generated) -->
                 <div class="space-y-1.5">
                     <label class="block text-xs font-semibold uppercase tracking-wider text-stone-700">Course ID <span class="text-rose-500">*</span></label>
-                    <input type="text" id="course-id" required readonly class="w-full px-4 py-2.5 text-sm font-mono text-stone-600 bg-gray-100 border border-gray-300 rounded-xl focus:outline-none cursor-not-allowed">
+                    <input type="text" id="course-id" required readonly value="0001" class="w-full px-4 py-2.5 text-sm font-mono text-stone-700 bg-gray-100 border border-gray-300 rounded-xl focus:outline-none cursor-not-allowed font-bold">
                 </div>
 
                 <!-- Course Category -->
@@ -344,11 +344,42 @@
     });
 
     /* =========================================================================
-       EDIT MODE INITIALIZATION: LOAD EXISTING COURSE DATA
+       ROBUST COURSE ID GENERATOR (AUTO-INCREMENT & NEVER BLANK)
        ========================================================================= */
-    window.addEventListener('DOMContentLoaded', async () => {
+    async function generateNextCourseId() {
+        const input = document.getElementById('course-id');
+        if (!input) return;
+        
+        // 1. Immediate fallback so the box is NEVER blank!
+        input.value = '0001';
+
+        try {
+            const { data, error } = await supabaseClient.from('courses').select('id');
+            if (!error && data && data.length > 0) {
+                // Find highest numeric ID (e.g. 0001, 0002 -> 2)
+                const numericIds = data
+                    .map(c => parseInt(c.id, 10))
+                    .filter(n => !isNaN(n));
+
+                if (numericIds.length > 0) {
+                    const maxId = Math.max(...numericIds);
+                    input.value = String(maxId + 1).padStart(4, '0');
+                } else {
+                    input.value = String(data.length + 1).padStart(4, '0');
+                }
+            }
+        } catch (err) {
+            console.warn('ID generator notice:', err);
+            input.value = '0001';
+        }
+    }
+
+    /* =========================================================================
+       PAGE INITIALIZER (HANDLES EDIT MODE OR AUTO-GENERATED ID)
+       ========================================================================= */
+    async function initCoursePage() {
         if (editId) {
-            // 👈 EDIT MODE ACTIVATED
+            // EDIT MODE
             document.getElementById('page-title').textContent = "Update Course";
             document.getElementById('page-sub').textContent = `Editing existing course (${editId}). Modify details and click Update.`;
             document.getElementById('submit-btn').textContent = "Update Course";
@@ -372,7 +403,7 @@
                 document.getElementById('pass-percent').value = data.pass_percent || 50;
                 document.getElementById('quiz-time-limit').value = data.quiz_time_limit || 15;
 
-                // Existing file status hints
+                // Hints for existing files
                 if (data.drive_file_id || data.video_url) {
                     const vHint = document.getElementById('existing-video-hint');
                     vHint.textContent = "✓ Current video attached. (Choose a new file only if replacing)";
@@ -386,7 +417,7 @@
                     document.getElementById('pdf-req').classList.add('hidden');
                 }
 
-                // Populate 3 Pause Points
+                // Populate Pause Points
                 const vQs = Array.isArray(data.video_questions) ? data.video_questions : [];
                 document.querySelectorAll('.pause-block').forEach((block, pi) => {
                     const cp = vQs[pi];
@@ -419,16 +450,18 @@
                 console.error('Error loading edit course:', err);
             }
         } else {
-            // NEW COURSE MODE: Auto Generate ID
+            // NEW COURSE MODE
             addFinalQuizQuestionRow();
-            try {
-                const { count, error } = await supabaseClient.from('courses').select('*', { count: 'exact', head: true });
-                document.getElementById('course-id').value = String((!error && count !== null ? count : 0) + 1).padStart(4, '0');
-            } catch (err) {
-                document.getElementById('course-id').value = '0001';
-            }
+            await generateNextCourseId();
         }
-    });
+    }
+
+    // Run immediately if DOM is ready, or on event
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initCoursePage);
+    } else {
+        initCoursePage();
+    }
 
     function getCreatorId() {
         const s = LMS.getSession();
