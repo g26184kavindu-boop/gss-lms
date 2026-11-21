@@ -190,7 +190,7 @@
             Object.values(SESSION_KEYS).forEach(k => localStorage.removeItem(k));
             localStorage.removeItem('currentLmsUserRole');
             sessionStorage.removeItem('lms_online_since');
-            window.location.href = 'index.html';
+            window.location.replace('index.html');
         });
     }
 
@@ -199,20 +199,90 @@
         if (a && getSession()) { e.preventDefault(); logout(); }
     }, true);
 
-    /* ---------- Guard ---------- */
+    /* ---------- Guard & Back/Forward History Protection ---------- */
+    let guarded = false, guardAllowed = null, backLockInstalled = false;
+
+    function normalizeFile(pathname) {
+        const raw = (pathname || '').split('/').pop().toLowerCase() || 'index.html';
+        return raw && !raw.includes('.') ? `${raw}.html` : raw;
+    }
+
+    function installHomeBackLock() {
+        if (backLockInstalled) return;
+        backLockInstalled = true;
+        const ensureLock = () => {
+            if (!getSession()) return;
+            try {
+                if (!history.state || !history.state.__lmsHomeLock) {
+                    history.pushState({ __lmsHomeLock: true }, '', location.href);
+                }
+            } catch (_) {}
+        };
+        ensureLock();
+        ['pointerdown', 'keydown'].forEach(ev => {
+            window.addEventListener(ev, ensureLock, { once: true, capture: true });
+        });
+        window.addEventListener('popstate', () => {
+            if (!getSession()) return;
+            try {
+                if (!history.state || !history.state.__lmsHomeLock) {
+                    history.pushState({ __lmsHomeLock: true }, '', location.href);
+                }
+            } catch (_) {}
+        });
+    }
+
+    window.addEventListener('pageshow', e => {
+        if (!guarded) return;
+        const s = getSession();
+        const currentFile = normalizeFile(location.pathname);
+
+        if (!s) {
+            document.documentElement.style.visibility = 'hidden';
+            window.location.replace('index.html');
+            return;
+        }
+        const homeFile = (HOME[s.role] || '').toLowerCase();
+        const isOtherRoleHome = Object.values(HOME).some(h => h.toLowerCase() === currentFile) && currentFile !== homeFile;
+        if (isOtherRoleHome || (s.role !== 'super_admin' && guardAllowed && !guardAllowed.includes(s.role))) {
+            document.documentElement.style.visibility = 'hidden';
+            window.location.replace(HOME[s.role]);
+            return;
+        }
+        if (e.persisted) {
+            window.location.reload();
+            return;
+        }
+        if (currentFile === homeFile) {
+            installHomeBackLock();
+        }
+    });
+
     function guard(allowed) {
+        guarded = true;
+        guardAllowed = allowed || null;
         document.documentElement.style.visibility = 'hidden';
         const s = getSession();
+        const currentFile = normalizeFile(location.pathname);
         if (!s) {
             const rawFile = location.pathname.split('/').pop() || 'index.html';
-            const currentFile = rawFile && !rawFile.includes('.') ? `${rawFile}.html` : rawFile;
-            window.location.replace('index.html?redirect=' + encodeURIComponent(currentFile + location.search));
+            const targetFile = rawFile && !rawFile.includes('.') ? `${rawFile}.html` : rawFile;
+            window.location.replace('index.html?redirect=' + encodeURIComponent(targetFile + location.search));
+            return null;
+        }
+        const homeFile = (HOME[s.role] || '').toLowerCase();
+        const isOtherRoleHome = Object.values(HOME).some(h => h.toLowerCase() === currentFile) && currentFile !== homeFile;
+        if (isOtherRoleHome) {
+            window.location.replace(HOME[s.role]);
             return null;
         }
         if (s.role !== 'super_admin' && allowed && !allowed.includes(s.role)) {
             alert('මේ page එකට ඔබට අවසර නැහැ.');
             window.location.replace(HOME[s.role]);
             return null;
+        }
+        if (currentFile === homeFile) {
+            installHomeBackLock();
         }
         document.documentElement.style.visibility = 'visible';
         startPresence();
