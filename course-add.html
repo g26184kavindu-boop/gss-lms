@@ -43,7 +43,7 @@
             <form id="course-form" class="space-y-5">
                 <input type="hidden" id="edit-mode-id" value="">
 
-                <!-- Course ID (Auto-Generated) -->
+                <!-- Course ID -->
                 <div class="space-y-1.5">
                     <label class="block text-xs font-semibold uppercase tracking-wider text-stone-700">Course ID <span class="text-rose-500">*</span></label>
                     <input type="text" id="course-id" required readonly value="0001" class="w-full px-4 py-2.5 text-sm font-mono text-stone-700 bg-gray-100 border border-gray-300 rounded-xl focus:outline-none cursor-not-allowed font-bold">
@@ -118,7 +118,7 @@
                                 <h3 class="text-sm font-bold uppercase tracking-wider text-stone-800">Final MCQ Assessment Quiz <span class="text-rose-500">*</span></h3>
                                 <p class="text-xs text-stone-500">ප්‍රශ්නයට අදාළව පින්තූර (Images) එක් කළ හැක.</p>
                             </div>
-                            <button type="button" id="add-final-quiz-btn" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold transition shadow-sm">+ Add Question</button>
+                            <button type="button" id="add-final-quiz-btn" class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold transition shadow-sm">+ Add Question</button>
                         </div>
 
                         <!-- Marks & Quiz Time Limit Setting Box -->
@@ -144,6 +144,7 @@
                             </div>
                         </div>
 
+                        <!-- Dynamic Questions Container -->
                         <div id="final-quiz-questions-container" class="space-y-5 max-h-[550px] overflow-y-auto pr-2 custom-scroll"></div>
                     </div>
                 </div>
@@ -166,6 +167,10 @@
 <script>
     const supabaseClient = window.LMS.db;
     LMS.renderSidebar();
+
+    // 👈 IMPORTANT FIX: esc helper function defined first to prevent ReferenceError!
+    const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const round2 = n => Math.round(n * 100) / 100;
 
     const urlParams = new URLSearchParams(window.location.search);
     const editId = urlParams.get('edit_id');
@@ -209,34 +214,43 @@
             }
             html += `</div></div>`;
         }
-        document.getElementById('video-checkpoints-container').innerHTML = html;
+        const cpHolder = document.getElementById('video-checkpoints-container');
+        if (cpHolder) cpHolder.innerHTML = html;
     })();
 
     function getDefaultMarks() {
-        const v = parseFloat(document.getElementById('default-marks').value);
-        return v > 0 ? v : 1;
+        const el = document.getElementById('default-marks');
+        const v = el ? parseFloat(el.value) : 1;
+        return (v > 0) ? v : 1;
     }
-    const round2 = n => Math.round(n * 100) / 100;
 
     function updateMarksSummary() {
+        if (!finalQuizContainer) return;
         const items = finalQuizContainer.querySelectorAll('.final-quiz-item');
         let total = 0;
         items.forEach(it => {
-            const m = parseFloat(it.querySelector('.final-quiz-marks').value);
+            const mInput = it.querySelector('.final-quiz-marks');
+            const m = mInput ? parseFloat(mInput.value) : 0;
             if (m > 0) total += m;
         });
-        document.getElementById('sum-q').textContent = items.length;
-        document.getElementById('sum-total').textContent = round2(total);
+        const qEl = document.getElementById('sum-q');
+        const totEl = document.getElementById('sum-total');
+        if (qEl) qEl.textContent = items.length;
+        if (totEl) totEl.textContent = round2(total);
     }
 
     function updateFinalQuizNumbers() {
+        if (!finalQuizContainer) return;
         finalQuizContainer.querySelectorAll('.final-quiz-item').forEach((it, i) => {
-            it.querySelector('.final-q-number').innerText = i + 1;
+            const numEl = it.querySelector('.final-q-number');
+            if (numEl) numEl.innerText = i + 1;
         });
         updateMarksSummary();
     }
 
+    /* Robust Add Question Function (Fully Functional) */
     function addFinalQuizQuestionRow(data = null) {
+        if (!finalQuizContainer) return;
         const div = document.createElement('div');
         div.className = 'p-5 border border-stone-200 rounded-xl bg-white space-y-3.5 final-quiz-item relative shadow-sm';
         
@@ -325,42 +339,45 @@
 
         div.querySelector('.remove-q').addEventListener('click', () => { div.remove(); updateFinalQuizNumbers(); });
         div.querySelector('.final-quiz-marks').addEventListener('input', updateMarksSummary);
+        
         finalQuizContainer.appendChild(div);
         updateFinalQuizNumbers();
     }
 
-    document.getElementById('add-final-quiz-btn').addEventListener('click', () => addFinalQuizQuestionRow());
-    document.getElementById('apply-marks-btn').addEventListener('click', () => {
-        const m = getDefaultMarks();
-        finalQuizContainer.querySelectorAll('.final-quiz-marks').forEach(i => i.value = m);
-        updateMarksSummary();
-    });
+    // Attach Click Handler to + Add Question Button
+    const addQBtn = document.getElementById('add-final-quiz-btn');
+    if (addQBtn) {
+        addQBtn.addEventListener('click', () => addFinalQuizQuestionRow());
+    }
 
-    formatDropdown.addEventListener('change', function () {
-        const v = this.value;
-        videoSection.classList.toggle('hidden', !(v === 'all' || v === 'video'));
-        pdfSection.classList.toggle('hidden', !(v === 'all' || v === 'pdf'));
-        finalQuizSection.classList.toggle('hidden', !v);
-    });
+    const applyMarksBtn = document.getElementById('apply-marks-btn');
+    if (applyMarksBtn) {
+        applyMarksBtn.addEventListener('click', () => {
+            const m = getDefaultMarks();
+            finalQuizContainer.querySelectorAll('.final-quiz-marks').forEach(i => i.value = m);
+            updateMarksSummary();
+        });
+    }
 
-    /* =========================================================================
-       ROBUST COURSE ID GENERATOR (AUTO-INCREMENT & NEVER BLANK)
-       ========================================================================= */
+    if (formatDropdown) {
+        formatDropdown.addEventListener('change', function () {
+            const v = this.value;
+            if (videoSection) videoSection.classList.toggle('hidden', !(v === 'all' || v === 'video'));
+            if (pdfSection) pdfSection.classList.toggle('hidden', !(v === 'all' || v === 'pdf'));
+            if (finalQuizSection) finalQuizSection.classList.toggle('hidden', !v);
+        });
+    }
+
+    /* Auto Generate Next Course ID */
     async function generateNextCourseId() {
         const input = document.getElementById('course-id');
         if (!input) return;
-        
-        // 1. Immediate fallback so the box is NEVER blank!
-        input.value = '0001';
+        input.value = '0001'; // Safe default
 
         try {
             const { data, error } = await supabaseClient.from('courses').select('id');
             if (!error && data && data.length > 0) {
-                // Find highest numeric ID (e.g. 0001, 0002 -> 2)
-                const numericIds = data
-                    .map(c => parseInt(c.id, 10))
-                    .filter(n => !isNaN(n));
-
+                const numericIds = data.map(c => parseInt(c.id, 10)).filter(n => !isNaN(n));
                 if (numericIds.length > 0) {
                     const maxId = Math.max(...numericIds);
                     input.value = String(maxId + 1).padStart(4, '0');
@@ -374,9 +391,7 @@
         }
     }
 
-    /* =========================================================================
-       PAGE INITIALIZER (HANDLES EDIT MODE OR AUTO-GENERATED ID)
-       ========================================================================= */
+    /* Page Initialization */
     async function initCoursePage() {
         if (editId) {
             // EDIT MODE
@@ -397,24 +412,29 @@
                 document.getElementById('lesson-title').value = data.lesson || '';
                 
                 const fmt = (data.format || 'ALL').toLowerCase();
-                formatDropdown.value = fmt;
-                formatDropdown.dispatchEvent(new Event('change'));
+                if (formatDropdown) {
+                    formatDropdown.value = fmt;
+                    formatDropdown.dispatchEvent(new Event('change'));
+                }
 
                 document.getElementById('pass-percent').value = data.pass_percent || 50;
                 document.getElementById('quiz-time-limit').value = data.quiz_time_limit || 15;
 
-                // Hints for existing files
                 if (data.drive_file_id || data.video_url) {
                     const vHint = document.getElementById('existing-video-hint');
-                    vHint.textContent = "✓ Current video attached. (Choose a new file only if replacing)";
-                    vHint.classList.remove('hidden');
-                    document.getElementById('video-req').classList.add('hidden');
+                    if (vHint) {
+                        vHint.textContent = "✓ Current video attached. (Choose a new file only if replacing)";
+                        vHint.classList.remove('hidden');
+                    }
+                    document.getElementById('video-req')?.classList.add('hidden');
                 }
                 if (data.pdf_file || data.pdf_url) {
                     const pHint = document.getElementById('existing-pdf-hint');
-                    pHint.textContent = "✓ Current PDF attached. (Choose a new file only if replacing)";
-                    pHint.classList.remove('hidden');
-                    document.getElementById('pdf-req').classList.add('hidden');
+                    if (pHint) {
+                        pHint.textContent = "✓ Current PDF attached. (Choose a new file only if replacing)";
+                        pHint.classList.remove('hidden');
+                    }
+                    document.getElementById('pdf-req')?.classList.add('hidden');
                 }
 
                 // Populate Pause Points
@@ -437,7 +457,7 @@
                     }
                 });
 
-                // Populate Final Quizzes
+                // Populate Quizzes
                 finalQuizContainer.innerHTML = '';
                 const fQs = Array.isArray(data.final_quizzes) ? data.final_quizzes : [];
                 if (fQs.length) {
@@ -451,12 +471,12 @@
             }
         } else {
             // NEW COURSE MODE
-            addFinalQuizQuestionRow();
+            finalQuizContainer.innerHTML = '';
+            addFinalQuizQuestionRow(); // Add first question row
             await generateNextCourseId();
         }
     }
 
-    // Run immediately if DOM is ready, or on event
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initCoursePage);
     } else {
@@ -599,7 +619,6 @@
             };
 
             if (isEditing) {
-                // UPDATE IN SUPABASE
                 submitBtn.innerText = 'Updating Course in Database...';
                 const { error: updError } = await supabaseClient
                     .from('courses')
@@ -609,7 +628,6 @@
                 if (updError) throw updError;
                 alert(`Course (${targetCourseId}) updated successfully!`);
             } else {
-                // INSERT NEW
                 coursePayload.id = targetCourseId;
                 coursePayload.created_by = getCreatorId();
                 coursePayload.department = getCreatorDept();
