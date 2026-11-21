@@ -3,7 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GSS LMS</title>
+    <title>GSS LMS – Global System Solution</title>
+    <meta name="description" content="Global System Solution Learning Management System (GSS LMS) – Official training portal for QAT, Admin, and Super Admin courses, videos, and assessments.">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://gss-lms.pages.dev/">
+    <meta property="og:site_name" content="GSS LMS">
+    <meta property="og:title" content="GSS LMS – Global System Solution">
+    <meta property="og:description" content="Global System Solution Learning Management System (GSS LMS) – Official training portal for QAT, Admin, and Super Admin courses, videos, and assessments.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://gss-lms.pages.dev/">
+    <meta property="og:image" content="https://gss-lms.pages.dev/gsspicture.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="GSS LMS – Global System Solution">
+    <meta name="twitter:description" content="Global System Solution Learning Management System (GSS LMS) – Official training portal for QAT, Admin, and Super Admin courses, videos, and assessments.">
+    <meta name="twitter:image" content="https://gss-lms.pages.dev/gsspicture.jpg">
+    <link rel="icon" type="image/jpeg" sizes="599x599" href="/gsspicture.jpg">
+    <link rel="shortcut icon" type="image/jpeg" href="/gsspicture.jpg">
+    <link rel="apple-touch-icon" sizes="599x599" href="/gsspicture.jpg">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "GSS LMS",
+      "alternateName": ["GSS", "Global System Solution LMS"],
+      "url": "https://gss-lms.pages.dev/"
+    }
+    </script>
 
     <!-- ========================================================
          INSTANT SESSION GUARD (Back ගියද Login පෙන්වීම 100% වළක්වයි)
@@ -18,7 +43,6 @@
                 if (sa && sa.user_name && sa.bootstrap !== true) target = 'super-admin-dashboard.html';
                 else if (ad) target = 'admin-dashboard.html';
                 else if (qt) target = 'qat-dashboard.html';
-
                 const hasRedirect = new URLSearchParams(window.location.search).get('redirect');
                 // User දැනටමත් Login වී ඇත්නම් පිටුව පෙන්වීමටත් පෙර Dashboard එකට හරවා යවයි
                 if (target && !hasRedirect) {
@@ -53,7 +77,6 @@
 <div id="login-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
     <div class="bg-white p-6 rounded-xl shadow-lg max-w-sm w-full text-center relative">
         <h3 class="text-xl font-bold text-gray-800 mb-4">Admin / QAT Login</h3>
-
         <form id="login-form" class="space-y-4 text-left">
             <div>
                 <label class="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1">Username / Email / ID</label>
@@ -65,7 +88,6 @@
             </div>
             <button type="submit" id="login-submit-btn" class="w-full py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition">Login</button>
         </form>
-
         <div class="mt-4 flex items-center justify-center space-x-2">
             <span class="text-gray-400 text-xs">OR</span>
         </div>
@@ -80,7 +102,6 @@
                 Continue with Google
             </a>
         </div>
-
         <button id="close-login-modal" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-xl font-bold">&times;</button>
     </div>
 </div>
@@ -99,22 +120,18 @@
 <script src="lms-core.js"></script>
 <script src="lms-auth.js"></script>
 <script src="login.js"></script>
-
 <script>
     (function() {
         const urlParams = new URLSearchParams(window.location.search);
         const redirectUrl = urlParams.get('redirect');
-
         if (redirectUrl) {
             const loginModal = document.getElementById('login-modal');
             if (loginModal) loginModal.classList.remove('hidden');
-
             const qatLink = document.getElementById('signup-qat-link');
             if (qatLink) {
                 qatLink.href = `qat-register.html?redirect=${encodeURIComponent(redirectUrl)}`;
             }
         }
-
         // BFCache Protection: Browser එකේ Back / Forward එබූ සැණින් පරීක්ෂා කිරීම
         window.addEventListener('pageshow', function(event) {
             try {
@@ -125,29 +142,23 @@
                 if (sa && sa.user_name && sa.bootstrap !== true) target = 'super-admin-dashboard.html';
                 else if (ad) target = 'admin-dashboard.html';
                 else if (qt) target = 'qat-dashboard.html';
-
                 if (target && !redirectUrl) {
                     window.location.replace(target);
                 }
             } catch(e) {}
         });
-
         // Login Handler (Uses window.location.replace to eliminate Login page from Back History)
         const loginForm = document.getElementById('login-form');
         if (loginForm) {
             loginForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
                 e.stopImmediatePropagation();
-
                 const u = document.getElementById('login-username').value.trim();
                 const p = document.getElementById('login-password').value.trim();
                 const btn = document.getElementById('login-submit-btn');
-
                 if (btn) { btn.disabled = true; btn.innerText = 'Verifying...'; }
-
                 try {
                     const { role } = await LMS.signIn(u, p);
-                    
                     // 👈 replace() භාවිතය නිසා Browser Back එබූ විට Login එකට ඒම ස්ථිරවම වැළැක්වේ!
                     if (redirectUrl && role === 'qat') {
                         window.location.replace(decodeURIComponent(redirectUrl));
@@ -162,6 +173,5 @@
         }
     })();
 </script>
-
 </body>
 </html>
