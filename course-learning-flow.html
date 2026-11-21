@@ -246,18 +246,63 @@
         show();
     }
 
+    function renderIframeFallback(box, iframeSrc) {
+        box.innerHTML = `<iframe title="Course Video" src="${esc(iframeSrc)}" class="w-full h-full border-0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+        const statusEl = document.getElementById('video-status-text');
+        if (statusEl) {
+            statusEl.innerHTML = `<button type="button" id="mark-watched-btn" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold transition">Mark Video Watched &check;</button>`;
+            document.getElementById('mark-watched-btn').addEventListener('click', function () {
+                videoEnded = true;
+                this.textContent = 'Watched ✓';
+                this.disabled = true;
+                this.className = 'px-3 py-1 bg-emerald-100 text-emerald-700 rounded-lg text-xs font-semibold';
+            });
+        }
+    }
+
+    function extractIframeUrl(data) {
+        if (data.youtube_video_id && !data.video_url) {
+            return `https://www.youtube.com/embed/${encodeURIComponent(data.youtube_video_id)}?rel=0`;
+        }
+        if (!data.video_url && data.drive_file_id) {
+            return `https://drive.google.com/file/d/${encodeURIComponent(data.drive_file_id)}/preview`;
+        }
+        const url = String(data.video_url || '').trim();
+        const driveMatch = url.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:.*&)?id=)([a-zA-Z0-9_-]+)/);
+        if (driveMatch) {
+            return `https://drive.google.com/file/d/${encodeURIComponent(driveMatch[1])}/preview`;
+        }
+        const ytMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{6,})/);
+        if (ytMatch) {
+            return `https://www.youtube.com/embed/${encodeURIComponent(ytMatch[1])}?rel=0`;
+        }
+        return null;
+    }
+
     function setupVideo(data) {
         const box = document.getElementById('video-box');
         checkpoints = videoQs.filter(p => p.pause_time != null).sort((a, b) => a.pause_time - b.pause_time);
 
-        const src = data.video_url || (data.drive_file_id ? `https://drive.google.com/file/d/${data.drive_file_id}/preview` : '');
-        if (!src && !data.youtube_video_id) { box.textContent = 'වීඩියෝවක් අමුණා නැත.'; return; }
+        const iframeSrc = extractIframeUrl(data);
+        if (iframeSrc) {
+            renderIframeFallback(box, iframeSrc);
+            return;
+        }
+
+        const src = data.video_url || '';
+        if (!src) { box.textContent = 'වීඩියෝවක් අමුණා නැත.'; return; }
 
         box.innerHTML = `
             <video id="player" class="w-full h-full" controls controlsList="nodownload" playsinline src="${esc(src)}"></video>
             <div id="cp-overlay" class="hidden absolute inset-0 bg-white/95 backdrop-blur-sm z-30 overflow-y-auto p-6 flex flex-col justify-center"></div>
         `;
         const v = document.getElementById('player');
+
+        v.addEventListener('error', () => {
+            if (data.drive_file_id) {
+                renderIframeFallback(box, `https://drive.google.com/file/d/${encodeURIComponent(data.drive_file_id)}/preview`);
+            }
+        });
 
         v.addEventListener('timeupdate', () => {
             checkpoints.forEach((cp, ci) => {
@@ -269,7 +314,11 @@
 
         v.addEventListener('ended', () => {
             const allPassed = checkpoints.every(c => c.passed);
-            if (allPassed) videoEnded = true;
+            if (allPassed) {
+                videoEnded = true;
+                const statusEl = document.getElementById('video-status-text');
+                if (statusEl) statusEl.textContent = 'Video Completed ✓';
+            }
         });
     }
 
