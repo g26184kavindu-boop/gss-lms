@@ -16,6 +16,7 @@
     function redirectIfLoggedIn() {
         const s = window.LMS && LMS.getSession && LMS.getSession();
         if (s) {
+            document.documentElement.style.visibility = 'hidden';
             window.location.replace(targetFor(s.role));
             return true;
         }
@@ -73,7 +74,7 @@
             }
 
             const p = await LMS.signIn(identifier, password);
-            window.location.replace(targetFor(p.role));
+            window.location.href = targetFor(p.role);
         } catch (err) {
             alert(err.message || 'Login failed.');
             if (btn) {
