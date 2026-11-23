@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Details - GSS LMS</title>
+    <title>Department Head &amp; Trainer Details - GSS LMS</title>
     <!-- 1. CDN Libraries loaded first (Web Standard) -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -30,7 +30,7 @@
 </head>
 <body class="bg-gray-50 font-sans flex h-screen overflow-hidden">
 
-<!-- Sidebar Section -->
+<!-- Dynamic Sidebar -->
 <aside class="fixed left-0 top-0 h-screen bg-white shadow-xl z-50 w-20 hover:w-64 transition-all duration-300 ease-in-out flex flex-col justify-between py-6 px-4 group border-r border-gray-100 flex-shrink-0">
     <div class="space-y-8 flex flex-col h-full overflow-hidden">
         <div class="flex items-center space-x-3 overflow-hidden flex-shrink-0">
@@ -50,11 +50,11 @@
         <!-- Header Section -->
         <div class="flex flex-col md:flex-row justify-between items-center mb-8 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
             <div>
-                <h1 class="text-2xl font-bold text-gray-800">Admin Details Management</h1>
-                <p class="text-sm text-gray-500 mt-1" id="page-scope-desc">Manage Department Super Admins and Admins in the system</p>
+                <h1 class="text-2xl font-bold text-gray-800">Department Head &amp; Trainer Details</h1>
+                <p class="text-sm text-gray-500 mt-1" id="page-scope-desc">Manage Department Heads and Trainers in the system</p>
             </div>
             <button onclick="openAddModal()" class="mt-4 md:mt-0 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition shadow-sm">
-                + Add New Admin
+                + Add Head / Trainer
             </button>
         </div>
 
@@ -62,7 +62,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
                 <div>
-                    <p class="text-sm font-medium text-gray-500">Total Administrators</p>
+                    <p class="text-sm font-medium text-gray-500">Total Heads &amp; Trainers</p>
                     <h3 id="total-admins-count" class="text-3xl font-bold text-blue-600 mt-2">0</h3>
                 </div>
                 <div class="p-4 bg-blue-50 rounded-full text-blue-600">
@@ -80,14 +80,14 @@
             </div>
         </div>
 
-        <!-- Admin Table Card -->
+        <!-- Registered Department Heads & Trainers Table Card -->
         <div class="bg-white shadow-sm rounded-2xl overflow-hidden border border-gray-100 mb-8">
             <div class="px-6 py-4 border-b border-gray-100 flex flex-col sm:flex-row justify-between sm:items-center gap-3">
-                <h3 class="text-lg font-bold text-gray-800">Registered Administrators List</h3>
+                <h3 class="text-lg font-bold text-gray-800">Registered Department Heads &amp; Trainers</h3>
                 <div class="flex items-center gap-2">
-                    <button id="filter-tab-all" onclick="filterStaffTable('all')" class="px-3 py-1 text-xs font-semibold rounded-lg bg-blue-50 text-blue-600 transition">All</button>
-                    <button id="filter-tab-sa" onclick="filterStaffTable('sa')" class="px-3 py-1 text-xs font-semibold rounded-lg text-stone-600 hover:bg-stone-100 transition">Dept Super Admins</button>
-                    <button id="filter-tab-adm" onclick="filterStaffTable('adm')" class="px-3 py-1 text-xs font-semibold rounded-lg text-stone-600 hover:bg-stone-100 transition">Admins</button>
+                    <button id="filter-tab-all" onclick="filterStaffTable('all')" class="px-3 py-1 text-xs font-semibold rounded-lg bg-blue-50 text-blue-600 transition">All Staff</button>
+                    <button id="filter-tab-sa" onclick="filterStaffTable('sa')" class="px-3 py-1 text-xs font-semibold rounded-lg text-stone-600 hover:bg-stone-100 transition">Department Heads</button>
+                    <button id="filter-tab-adm" onclick="filterStaffTable('adm')" class="px-3 py-1 text-xs font-semibold rounded-lg text-stone-600 hover:bg-stone-100 transition">Trainers</button>
                 </div>
             </div>
             <div class="overflow-x-auto">
@@ -122,7 +122,7 @@
                     <tr class="bg-gray-50 text-gray-600 uppercase text-xs tracking-wider">
                         <th scope="col" class="py-3 px-6">Course ID</th>
                         <th scope="col" class="py-3 px-6">Course Name</th>
-                        <th scope="col" class="py-3 px-6">Created By (Admin GID)</th>
+                        <th scope="col" class="py-3 px-6">Created By (Trainer GID)</th>
                         <th scope="col" class="py-3 px-6">Learning Format</th>
                     </tr>
                     </thead>
@@ -135,13 +135,13 @@
     </div>
 </main>
 
-<!-- Modal for Adding / Editing Administrator -->
+<!-- Modal for Adding / Editing Head & Trainer -->
 <div id="admin-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
     <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl max-h-[85vh] overflow-y-auto custom-scroll">
-        <h2 id="modal-title" class="text-xl font-bold text-gray-800 mb-4 sticky top-0 bg-white py-2 z-10">Add New Admin</h2>
+        <h2 id="modal-title" class="text-xl font-bold text-gray-800 mb-4 sticky top-0 bg-white py-2 z-10">Add Head / Trainer</h2>
         <form id="admin-form" class="space-y-4">
             <input type="hidden" id="edit-original-gid" value="">
-            <input type="hidden" id="edit-target-table" value="admins"> <!-- 'admins' or 'super_admin' -->
+            <input type="hidden" id="edit-target-table" value="admins">
 
             <div class="form-row space-y-1.5">
                 <label for="admin-user-name" class="block text-xs font-semibold uppercase tracking-wider text-stone-700">User Name <span class="text-rose-500">*</span></label>
@@ -155,7 +155,7 @@
 
             <div class="form-row space-y-1.5">
                 <label for="admin-id" class="block text-xs font-semibold uppercase tracking-wider text-stone-700">
-                    Administrator G ID <span class="text-rose-500">*</span>
+                    G ID <span class="text-rose-500">*</span>
                 </label>
                 <input
                         type="text"
@@ -180,8 +180,8 @@
             <div class="form-row space-y-1.5">
                 <label for="admin-role" class="block text-xs font-semibold uppercase tracking-wider text-stone-700">Role <span class="text-rose-500">*</span></label>
                 <select id="admin-role" required class="w-full px-4 py-2.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="Admin">Department Admin</option>
-                    <option value="Super Admin">Department Super Admin</option>
+                    <option value="Admin">Trainer</option>
+                    <option value="Super Admin">Department Head</option>
                 </select>
             </div>
 
@@ -256,7 +256,7 @@
     const supabaseClient = window.LMS.db;
     const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
-    let loadedAllStaff = []; // Stores both Department Super Admins & Admins
+    let loadedAllStaff = [];
     let currentStaffFilter = 'all';
 
     const session = LMS.getSession();
@@ -285,7 +285,7 @@
                 <tr class="hover:bg-gray-50/70 transition text-sm text-stone-700">
                     <td class="py-3 px-6 font-mono text-xs font-semibold text-blue-600">${esc(course.id || '-')}</td>
                     <td class="py-3 px-6 font-medium text-stone-900">${esc(course.name || 'Unnamed Course')}</td>
-                    <td class="py-3 px-6 font-mono text-xs text-stone-600">${esc(course.created_by || 'Admin')}</td>
+                    <td class="py-3 px-6 font-mono text-xs text-stone-600">${esc(course.created_by || 'Trainer')}</td>
                     <td class="py-3 px-6 text-stone-600">${esc(course.format || 'ALL')}</td>
                 </tr>
             `).join('');
@@ -294,7 +294,7 @@
         }
     }
 
-    // 2. Fetch Both Department Super Admins & Admins
+    // 2. Fetch Both Department Heads & Trainers
     async function updateDashboard() {
         const adminTableBody = document.getElementById('admin-table-body');
         const totalAdminsElem = document.getElementById('total-admins-count');
@@ -303,7 +303,6 @@
         adminTableBody.innerHTML = `<tr><td colspan="8" class="py-6 text-center text-gray-400">Loading administrators from database...</td></tr>`;
 
         try {
-            // General Super Admin sees ALL Department Super Admins and Admins!
             const [saRes, admRes] = await Promise.all([
                 supabaseClient.from('super_admin').select('*'),
                 supabaseClient.from('admins').select('*')
@@ -313,7 +312,7 @@
             const allAdmins = admRes.data || [];
             let staffList = [];
 
-            // Add Department Super Admins (exclude General Super Admin from being edited/deleted here)
+            // Add Department Heads (exclude General Admin from being deleted/edited here)
             allSuperAdmins.forEach(sa => {
                 if (sa.department !== 'General') {
                     staffList.push({
@@ -323,14 +322,14 @@
                         user_name: sa.user_name,
                         email: sa.biz_mail || '-',
                         contact: sa.contact || '-',
-                        role: 'Super Admin',
+                        role: 'Department Head',
                         department: sa.department || 'General',
                         status: sa.status || 'Active'
                     });
                 }
             });
 
-            // Add Department Admins
+            // Add Trainers
             allAdmins.forEach(adm => {
                 staffList.push({
                     table: 'admins',
@@ -339,13 +338,13 @@
                     user_name: adm.user_name,
                     email: adm.email || '-',
                     contact: adm.contact || '-',
-                    role: 'Admin',
+                    role: 'Trainer',
                     department: adm.department || 'Training',
                     status: adm.status || 'Active'
                 });
             });
 
-            // If logged in as Department Super Admin, filter only their department staff
+            // If Department Head is logged in, filter only their department staff
             if (!isGeneralSuperAdmin && session?.role === 'super_admin') {
                 staffList = staffList.filter(s => (s.department || '').toLowerCase() === loggedAdminDept.toLowerCase());
             }
@@ -380,11 +379,11 @@
         if (!tbody) return;
 
         let filtered = loadedAllStaff;
-        if (currentStaffFilter === 'sa') filtered = loadedAllStaff.filter(s => s.role === 'Super Admin');
-        if (currentStaffFilter === 'adm') filtered = loadedAllStaff.filter(s => s.role === 'Admin');
+        if (currentStaffFilter === 'sa') filtered = loadedAllStaff.filter(s => s.role === 'Department Head');
+        if (currentStaffFilter === 'adm') filtered = loadedAllStaff.filter(s => s.role === 'Trainer');
 
         if (!filtered.length) {
-            tbody.innerHTML = `<tr><td colspan="8" class="py-6 text-center text-stone-400 text-sm">No administrators found.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="8" class="py-6 text-center text-stone-400 text-sm">No records found.</td></tr>`;
             return;
         }
 
@@ -394,9 +393,10 @@
                 ? `<span class="px-2.5 py-1 text-xs font-semibold bg-red-100 text-red-800 rounded-full">Disabled</span>`
                 : `<span class="px-2.5 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded-full">Active</span>`;
 
-            const roleBadge = member.role === 'Super Admin'
-                ? `<span class="px-2.5 py-1 text-xs font-semibold bg-purple-100 text-purple-800 rounded-full">Super Admin</span>`
-                : `<span class="px-2.5 py-1 text-xs font-semibold bg-blue-100 text-blue-800 rounded-full">Admin</span>`;
+            // Updated Role Badges: Department Head (Purple) vs Trainer (Blue)
+            const roleBadge = member.role === 'Department Head'
+                ? `<span class="px-2.5 py-1 text-xs font-semibold bg-purple-100 text-purple-800 rounded-full">Department Head</span>`
+                : `<span class="px-2.5 py-1 text-xs font-semibold bg-blue-100 text-blue-800 rounded-full">Trainer</span>`;
 
             const toggleLabel = isInactive ? 'Activate' : 'Disable';
             const toggleColor = isInactive ? 'text-emerald-700 bg-emerald-50 hover:bg-emerald-100' : 'text-amber-700 bg-amber-50 hover:bg-amber-100';
@@ -420,9 +420,8 @@
         }).join('');
     }
 
-    /* Modal Handlers */
     function openAddModal() {
-        document.getElementById('modal-title').innerText = "Add New Administrator";
+        document.getElementById('modal-title').innerText = "Add New Head / Trainer";
         document.getElementById('admin-form').reset();
         document.getElementById('edit-original-gid').value = "";
         document.getElementById('edit-target-table').value = "admins";
@@ -441,7 +440,6 @@
         document.getElementById('admin-modal').classList.add('hidden');
     }
 
-    /* 3. EDIT MEMBER (General Super Admin can edit Super Admins & Admins) */
     function editMember(gid) {
         const member = loadedAllStaff.find(m => String(m.gid).trim() === String(gid).trim());
         if (!member) return alert("Member details not found.");
@@ -459,7 +457,7 @@
         document.getElementById('admin-email').value = member.email || '';
         document.getElementById('admin-tel').value = member.contact || '';
         document.getElementById('admin-dept').value = member.department || 'Training';
-        document.getElementById('admin-role').value = member.role;
+        document.getElementById('admin-role').value = member.role === 'Department Head' ? 'Super Admin' : 'Admin';
 
         document.getElementById('admin-password').value = '';
         document.getElementById('admin-password').required = false;
@@ -470,7 +468,6 @@
         document.getElementById('admin-modal').classList.remove('hidden');
     }
 
-    /* 4. FORM SUBMIT: INSERT OR UPDATE (Super Admin & Admin tables handled seamlessly) */
     document.getElementById('admin-form').addEventListener('submit', async function(e) {
         e.preventDefault();
 
@@ -499,7 +496,6 @@
 
         try {
             if (isEditing) {
-                // UPDATE
                 if (targetTable === 'super_admin') {
                     const updateData = {
                         user_name: document.getElementById('admin-user-name').value.trim(),
@@ -525,9 +521,8 @@
                     const { error } = await supabaseClient.from('admins').update(updateData).eq('admin_g_id', originalGid);
                     if (error) throw error;
                 }
-                alert('Administrator details updated successfully!');
+                alert('Details updated successfully!');
             } else {
-                // INSERT NEW (Role based table routing)
                 const newGid = document.getElementById('admin-id').value.trim();
                 const newUsername = document.getElementById('admin-user-name').value.trim();
                 const newName = document.getElementById('admin-name').value.trim();
@@ -535,7 +530,6 @@
 
                 if (!password) throw new Error("Password is required for new registration.");
 
-                // Cross-Table Uniqueness Verification
                 const [admCheck, qatCheck, saCheck] = await Promise.all([
                     supabaseClient.from('admins').select('id').or(`admin_g_id.ilike.${newGid},user_name.ilike.${newUsername},email.ilike.${email}`),
                     supabaseClient.from('qats').select('id').or(`qat_g_id.ilike.${newGid},user_name.ilike.${newUsername},email.ilike.${email}`),
@@ -574,7 +568,7 @@
                     }]);
                     if (error) throw error;
                 }
-                alert(`${selectedRole} added successfully!`);
+                alert(`${selectedRole === 'Super Admin' ? 'Department Head' : 'Trainer'} added successfully!`);
             }
 
             closeAddModal();
@@ -587,7 +581,6 @@
         }
     });
 
-    /* 5. TOGGLE STATUS: Realtime Kick Out */
     async function toggleMemberStatus(gid, currentStatus, table) {
         const isCurrentlyDisabled = String(currentStatus).toLowerCase() === 'disabled';
         const newStatus = isCurrentlyDisabled ? 'Active' : 'Disabled';
@@ -615,7 +608,6 @@
         }
     }
 
-    /* 6. DELETE MEMBER: General Super Admin Master Action */
     async function deleteMember(gid, name, table) {
         if (!confirm(`Are you sure you want to permanently delete: ${name} (${gid}) from the system? This cannot be undone.`)) return;
 
