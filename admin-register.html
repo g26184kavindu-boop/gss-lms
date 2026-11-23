@@ -3,12 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Register - GSS LMS</title>
+    <title>Trainer Register - GSS LMS</title>
+    <!-- 1. CDN Libraries loaded first (Web Standard) -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- 2. Core App Logic -->
     <script src="lms-core.js"></script>
     <script src="lms-auth.js"></script>
     <script>LMS.guard(['admin', 'super_admin']);</script>
-    <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .custom-scroll::-webkit-scrollbar { width: 5px; }
         .custom-scroll::-webkit-scrollbar-track { background: transparent; }
@@ -18,6 +20,7 @@
 
 <body class="bg-gray-50 font-sans flex h-screen overflow-hidden">
 
+<!-- Dynamic Sidebar -->
 <aside class="fixed left-0 top-0 h-screen bg-white shadow-xl z-50 w-20 hover:w-64 transition-all duration-300 ease-in-out flex flex-col justify-between py-6 px-4 group border-r border-gray-100 flex-shrink-0">
     <div class="space-y-8 flex flex-col h-full overflow-hidden">
         <div class="flex items-center space-x-3 overflow-hidden flex-shrink-0">
@@ -31,8 +34,8 @@
 
 <div class="flex-1 ml-20 p-8 h-full overflow-y-auto">
     <main class="max-w-xl mx-auto bg-white p-8 rounded-2xl shadow-sm border border-gray-100 mb-8">
-        <h1 class="text-3xl font-semibold text-stone-950 tracking-tight mb-2">Admin Register</h1>
-        <p class="text-stone-600 text-sm mb-6">Register a new Department Admin into the system with unique credentials.</p>
+        <h1 class="text-3xl font-semibold text-stone-950 tracking-tight mb-2">Trainer Register</h1>
+        <p class="text-stone-600 text-sm mb-6">Register a new Department Trainer into the system with unique credentials.</p>
 
         <form id="admin-register-form" class="space-y-4">
             <div>
@@ -41,12 +44,12 @@
             </div>
 
             <div>
-                <label for="admin-id" class="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1">Admin G ID <span class="text-rose-500">*</span></label>
+                <label for="admin-id" class="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1">Trainer G ID <span class="text-rose-500">*</span></label>
                 <input type="text" id="admin-id" placeholder="e.g. G26184" required class="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
             </div>
 
             <div>
-                <label for="admin-name" class="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1">Admin Name <span class="text-rose-500">*</span></label>
+                <label for="admin-name" class="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1">Trainer Name <span class="text-rose-500">*</span></label>
                 <input type="text" id="admin-name" placeholder="Enter full name" required class="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
             </div>
 
@@ -90,7 +93,7 @@
 
             <div class="pt-3">
                 <button type="submit" id="register-btn" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm rounded-xl shadow-sm transition">
-                    Register Admin
+                    Register Trainer
                 </button>
             </div>
         </form>
@@ -99,19 +102,17 @@
 
 <script>
     const supabaseClient = window.LMS.db;
-    const esc = LMS.esc;
-    const qv = LMS.postgrestVal;
 
+    // Load available departments dynamically
     async function loadDepts() {
         try {
             const { data } = await supabaseClient.from('departments').select('name');
             if (data && data.length) {
                 const sel = document.getElementById('admin-dept');
-                sel.innerHTML = '<option value="" disabled selected>Select Department</option>' +
-                    data.filter(d => d.name && d.name.toLowerCase() !== 'general')
-                        .map(d => `<option value="${esc(d.name)}">${esc(d.name)} Department</option>`).join('');
+                sel.innerHTML = '<option value="" disabled selected>Select Department</option>' + 
+                    data.map(d => `<option value="${d.name}">${d.name} Department</option>`).join('');
             }
-        } catch (_) {}
+        } catch(e) {}
     }
 
     document.addEventListener("DOMContentLoaded", function() {
@@ -145,21 +146,22 @@
             registerBtn.disabled = true;
 
             try {
+                // Cross-Table Uniqueness Verification
                 const [admCheck, qatCheck, saCheck] = await Promise.all([
-                    supabaseClient.from('admins').select('id').or(`admin_g_id.ilike.${qv(gid)},user_name.ilike.${qv(username)},email.ilike.${qv(email)}`),
-                    supabaseClient.from('qats').select('id').or(`qat_g_id.ilike.${qv(gid)},user_name.ilike.${qv(username)},email.ilike.${qv(email)}`),
-                    supabaseClient.from('super_admin').select('id').or(`super_admin_g_id.ilike.${qv(gid)},user_name.ilike.${qv(username)},biz_mail.ilike.${qv(email)}`)
+                    supabaseClient.from('admins').select('admin_g_id').or(`admin_g_id.ilike.${gid},user_name.ilike.${username},email.ilike.${email}`),
+                    supabaseClient.from('qats').select('qat_g_id').or(`qat_g_id.ilike.${gid},user_name.ilike.${username},email.ilike.${email}`),
+                    supabaseClient.from('super_admin').select('super_admin_g_id').or(`super_admin_g_id.ilike.${gid},user_name.ilike.${username},biz_mail.ilike.${email}`)
                 ]);
 
                 if ((admCheck.data?.length > 0) || (qatCheck.data?.length > 0) || (saCheck.data?.length > 0)) {
-                    registerBtn.innerText = "Register Admin";
+                    registerBtn.innerText = "Register Trainer";
                     registerBtn.disabled = false;
                     return alert(`මෙම G ID (${gid}), Username (${username}) හෝ Email ලිපිනය පද්ධතියේ වෙනත් අයෙකු විසින් දැනටමත් භාවිත කර ඇත!`);
                 }
 
                 registerBtn.innerText = "Registering...";
 
-                const newAdmin = {
+                const newTrainer = {
                     user_name: username,
                     admin_g_id: gid,
                     admin_name: document.getElementById('admin-name').value.trim(),
@@ -172,15 +174,15 @@
                     status: 'Active'
                 };
 
-                const { error } = await supabaseClient.from('admins').insert([newAdmin]);
+                const { error } = await supabaseClient.from('admins').insert([newTrainer]);
                 if (error) throw error;
 
-                alert(`Admin (${dept} Department) Registered Successfully!`);
+                alert(`Trainer (${dept} Department) Registered Successfully!`);
                 form.reset();
                 window.location.href = 'admin-details.html';
             } catch (err) {
                 alert('Database Error: ' + err.message);
-                registerBtn.innerText = "Register Admin";
+                registerBtn.innerText = "Register Trainer";
                 registerBtn.disabled = false;
             }
         });
