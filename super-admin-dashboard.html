@@ -3,12 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Super Admin Dashboard - GSS LMS</title>
-    <!-- 1. CDN Libraries loaded first (Web Standard) -->
+    <title>General Admin &amp; Department Head Dashboard - GSS LMS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <!-- 2. Core App Logic -->
     <script src="lms-core.js"></script>
     <script>LMS.guard(['super_admin']);</script>
     <style>
@@ -19,7 +17,6 @@
 </head>
 <body class="bg-gray-50 font-sans flex h-screen overflow-hidden">
 
-<!-- Dynamic Sidebar -->
 <aside class="fixed left-0 top-0 h-screen bg-white shadow-xl z-50 w-20 hover:w-64 transition-all duration-300 ease-in-out flex flex-col justify-between py-6 px-4 group border-r border-gray-100 flex-shrink-0">
     <div class="space-y-8 flex flex-col h-full overflow-hidden">
         <div class="flex items-center space-x-3 overflow-hidden flex-shrink-0">
@@ -34,14 +31,14 @@
 <div class="flex-1 ml-20 p-8 overflow-y-auto h-full space-y-8">
     <header class="flex flex-col md:flex-row justify-between md:items-center gap-4">
         <div>
-            <h1 class="text-3xl font-bold text-stone-900">Super Admin Dashboard</h1>
+            <h1 id="dashboard-main-title" class="text-3xl font-bold text-stone-900">Head Dashboard</h1>
             <div class="flex items-center gap-2 mt-1">
-                <span id="super-dept-badge" class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-purple-100 text-purple-800 border border-purple-200">Scope: General</span>
+                <span id="super-dept-badge" class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-purple-100 text-purple-800 border border-purple-200">Scope: General Admin</span>
                 <span class="text-stone-400 text-xs">• GSS Global System Solution</span>
             </div>
         </div>
         <div class="flex flex-wrap items-center gap-3">
-            <p class="text-stone-500 text-sm">Welcome back, <span id="welcome-name" class="font-bold text-stone-800">Super Admin</span></p>
+            <p class="text-stone-500 text-sm">Welcome back, <span id="welcome-name" class="font-bold text-stone-800">Administrator</span></p>
             
             <button onclick="openHandoverModal()" class="inline-flex items-center space-x-1.5 px-3 py-1.5 text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg transition shadow-sm">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
@@ -77,12 +74,12 @@
                     <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                 </div>
                 <div>
-                    <p class="text-xs font-semibold uppercase tracking-wider text-stone-500">Department Admins</p>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-stone-500">Department Trainers</p>
                     <h3 id="total-admins-count" class="text-3xl font-extrabold text-stone-900 mt-1">0</h3>
                 </div>
             </div>
             <div class="mt-4 pt-3 border-t border-gray-100 flex justify-end">
-                <a href="admin-details.html" class="text-xs font-semibold text-emerald-600 hover:text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-lg transition">View Admins &rsaquo;</a>
+                <a href="admin-details.html" class="text-xs font-semibold text-emerald-600 hover:text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-lg transition">View Trainers &rsaquo;</a>
             </div>
         </div>
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
@@ -101,9 +98,7 @@
         </div>
     </div>
 
-    <!-- =========================================================================
-         ONLINE NOW SECTION (REAL-TIME LIVE TRACKING RESTORED)
-         ========================================================================= -->
+    <!-- Online Now -->
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
         <div class="flex justify-between items-center mb-4">
             <div class="flex items-center space-x-2">
@@ -114,7 +109,7 @@
         </div>
         <div class="grid grid-cols-2 gap-4 mb-4">
             <div class="p-4 bg-emerald-50 rounded-xl">
-                <p class="text-xs font-semibold uppercase tracking-wider text-emerald-700">Admins Online</p>
+                <p class="text-xs font-semibold uppercase tracking-wider text-emerald-700">Trainers Online</p>
                 <p id="online-admins" class="text-3xl font-extrabold text-emerald-700">0</p>
             </div>
             <div class="p-4 bg-amber-50 rounded-xl">
@@ -140,19 +135,19 @@
         </div>
     </div>
 
-    <!-- General Super Admin Exclusive: Retake Audit Log Section -->
+    <!-- General Admin Exclusive: Retake Audit Log -->
     <div id="general-retake-audit-section" class="hidden bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-4">
         <div class="flex justify-between items-center border-b pb-3">
             <div>
                 <h3 class="text-lg font-bold text-stone-900">Course Retake Audit Log (විශේෂ අවසර වාර්තාව)</h3>
-                <p class="text-xs text-stone-500">Department Super Admin වරුන් විසින් QAT ලාට Course Retake කිරීමට ලබා දුන් සියලු අවසරයන්.</p>
+                <p class="text-xs text-stone-500">Department Head වරුන් විසින් QAT ලාට Course Retake කිරීමට ලබා දුන් සියලු අවසරයන්.</p>
             </div>
-            <span class="px-2.5 py-1 text-xs font-semibold bg-purple-50 text-purple-700 rounded-full border border-purple-200">General Super Admin Only</span>
+            <span class="px-2.5 py-1 text-xs font-semibold bg-purple-50 text-purple-700 rounded-full border border-purple-200">General Admin Only</span>
         </div>
         <div class="overflow-x-auto max-h-60 custom-scroll">
             <table class="w-full text-left text-sm">
                 <thead><tr class="border-b text-stone-400 text-xs uppercase tracking-wider">
-                    <th class="pb-2">Date / Time</th><th class="pb-2">Department</th><th class="pb-2">Granted By (Super Admin)</th><th class="pb-2">QAT G ID &amp; Name</th><th class="pb-2">Course</th>
+                    <th class="pb-2">Date / Time</th><th class="pb-2">Department</th><th class="pb-2">Granted By (Department Head)</th><th class="pb-2">QAT G ID &amp; Name</th><th class="pb-2">Course</th>
                 </tr></thead>
                 <tbody id="retake-audit-tbody" class="divide-y divide-gray-50">
                     <tr><td colspan="5" class="py-4 text-center text-stone-400 text-xs">Loading audit logs...</td></tr>
@@ -161,20 +156,20 @@
         </div>
     </div>
 
-    <!-- Active Admin Accounts -->
+    <!-- Active Trainers Accounts -->
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
         <div class="flex justify-between items-center mb-4">
             <div class="flex items-center space-x-2">
-                <h3 class="text-lg font-bold text-stone-900">Department Admin Accounts</h3>
-                <span id="active-admin-count" class="px-2.5 py-0.5 text-xs font-semibold bg-emerald-50 text-emerald-600 rounded-full">0</span>
+                <h3 class="text-lg font-bold text-stone-900">Department Trainer Accounts</h3>
+                <span id="active-admin-count" class="px-2 py-0.5 text-xs font-semibold bg-emerald-50 text-emerald-600 rounded-full">0</span>
             </div>
             <a href="admin-details.html" class="text-sm font-semibold text-blue-600 hover:underline">View All</a>
         </div>
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse table-fixed">
                 <thead><tr class="border-b border-gray-100 text-stone-400 text-xs uppercase tracking-wider">
-                    <th class="pb-3 font-semibold w-1/4">Admin ID</th>
-                    <th class="pb-3 font-semibold w-1/3">Admin Name</th>
+                    <th class="pb-3 font-semibold w-1/4">Trainer ID</th>
+                    <th class="pb-3 font-semibold w-1/3">Trainer Name</th>
                     <th class="pb-3 font-semibold w-1/4">Department</th>
                     <th class="pb-3 font-semibold w-1/6">Status</th>
                 </tr></thead>
@@ -190,7 +185,7 @@
         <div class="flex justify-between items-center mb-4">
             <div class="flex items-center space-x-2">
                 <h3 class="text-lg font-bold text-stone-900">Department QAT Accounts</h3>
-                <span id="active-qat-count" class="px-2.5 py-0.5 text-xs font-semibold bg-amber-50 text-amber-600 rounded-full">0</span>
+                <span id="active-qat-count" class="px-2 py-0.5 text-xs font-semibold bg-amber-50 text-amber-600 rounded-full">0</span>
             </div>
             <a href="qat-details.html" class="text-sm font-semibold text-blue-600 hover:underline">View All</a>
         </div>
@@ -209,7 +204,7 @@
         </div>
     </div>
 
-    <!-- QAT Performance & Score Details (With Allow Retake Action) -->
+    <!-- QAT Performance & Retake Management -->
     <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-6">
         <div>
             <h2 class="text-xl font-bold text-stone-900">QAT Performance &amp; Retake Management</h2>
@@ -221,8 +216,8 @@
                 <select id="super-filter-qat-gid" class="w-full border border-stone-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"><option value="">All QAT G IDs</option></select>
             </div>
             <div>
-                <label class="block text-xs font-semibold text-stone-700 mb-1">Admin G ID</label>
-                <select id="super-filter-admin-gid" class="w-full border border-stone-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"><option value="">All Admin G IDs</option></select>
+                <label class="block text-xs font-semibold text-stone-700 mb-1">Trainer G ID</label>
+                <select id="super-filter-admin-gid" class="w-full border border-stone-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"><option value="">All Trainer G IDs</option></select>
             </div>
             <div>
                 <label class="block text-xs font-semibold text-stone-700 mb-1">Course ID</label>
@@ -250,17 +245,17 @@
     </div>
 </div>
 
-<!-- Handover Modal -->
+<!-- Role Handover Modal -->
 <div id="handover-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center hidden z-[70] p-4">
     <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-2xl max-w-lg w-full relative space-y-5">
         <div class="border-b pb-3">
-            <h3 class="text-xl font-bold text-stone-900">Super Admin Role Handover</h3>
-            <p id="handover-subtitle" class="text-xs text-stone-500 mt-1">තම තනතුර සහ සම්පූර්ණ බලතල වෙනත් සුදුසු නිලධාරියෙකුට පැවරීම.</p>
+            <h3 class="text-xl font-bold text-stone-900">Head Role Handover</h3>
+            <p id="handover-subtitle" class="text-xs text-stone-500 mt-1">General Admin හෝ Department Head තනතුර වෙනත් සුදුසු නිලධාරියෙකුට පැවරීම.</p>
         </div>
 
         <form id="handover-form" class="space-y-4">
             <div>
-                <label class="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1">Select Successor (නව සුපිරි පරිපාලක) <span class="text-rose-500">*</span></label>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1">Select Successor (නව ප්‍රධානියා) <span class="text-rose-500">*</span></label>
                 <select id="handover-target-select" required class="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white">
                     <option value="" disabled selected>පැවරිය යුතු පුද්ගලයා තෝරන්න</option>
                 </select>
@@ -270,7 +265,7 @@
                 <label class="block text-xs font-semibold uppercase tracking-wider text-stone-700 mb-1">Action for Outgoing Account <span class="text-rose-500">*</span></label>
                 <select id="handover-outgoing-action" required class="w-full px-4 py-2.5 text-sm border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white">
                     <option value="deactivate">Deactivate Account (ගිණුම අක්‍රිය කරන්න / ඉවත් වන්න)</option>
-                    <option value="demote">Demote to Regular Admin (සාමාන්‍ය Admin කෙනෙකු ලෙස පවත්වාගන්න)</option>
+                    <option value="demote">Demote to Trainer (පුහුණුකරු තනතුරට මාරු කරන්න)</option>
                 </select>
             </div>
 
@@ -333,20 +328,22 @@
             loggedSuperAdminDept = currentSessionUser?.department || 'General';
 
             const badge = document.getElementById('super-dept-badge');
+            const mainTitle = document.getElementById('dashboard-main-title');
             if (badge) {
                 if (loggedSuperAdminDept === 'General' || loggedSuperAdminDept === 'All') {
-                    badge.textContent = 'Scope: All Departments (General Super Admin)';
+                    badge.textContent = 'Scope: All Departments (General Admin)';
                     badge.className = 'px-2.5 py-0.5 text-xs font-semibold rounded-full bg-purple-100 text-purple-800 border border-purple-200';
+                    if (mainTitle) mainTitle.textContent = "General Admin Dashboard";
                     document.getElementById('general-retake-audit-section').classList.remove('hidden');
                     loadRetakeAuditLogs();
                 } else {
-                    badge.textContent = `Scope: ${loggedSuperAdminDept} Department`;
+                    badge.textContent = `Scope: ${loggedSuperAdminDept} Department Head`;
                     badge.className = 'px-2.5 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 border border-blue-200';
+                    if (mainTitle) mainTitle.textContent = `${loggedSuperAdminDept} Head Dashboard`;
                 }
             }
         } catch (e) { console.warn(e); }
 
-        // Start online watch
         if (window.loadOnline) loadOnline();
         await fetchSuperAdminDataFromDB();
     });
@@ -374,7 +371,6 @@
             const qRes = await supabaseClient.from('qats').select('*');
             globalQatsData = qRes.data || [];
 
-            // Completed courses
             const courseIds = new Set(globalCoursesData.map(c => String(c.id)));
             const ccRes = await supabaseClient.from('qat_completed_courses').select('*');
             const allCc = ccRes.data || [];
@@ -385,7 +381,6 @@
                 globalCompletedData = allCc;
             }
 
-            // Summary counters
             const cCount = document.getElementById('total-courses-count'); if (cCount) cCount.textContent = globalCoursesData.length;
             const aCount = document.getElementById('total-admins-count'); if (aCount) aCount.textContent = globalAdminsData.length;
             const qCount = document.getElementById('total-qats-count'); if (qCount) qCount.textContent = globalQatsData.length;
@@ -406,7 +401,7 @@
         if (!tbody) return;
 
         if (!globalAdminsData || globalAdminsData.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-stone-400 text-sm">කිසිදු Admin ගිණුමක් හමු නොවීය (No admin accounts found)</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-stone-400 text-sm">කිසිදු Trainer ගිණුමක් හමු නොවීය (No trainer accounts found)</td></tr>`;
             return;
         }
 
@@ -469,7 +464,7 @@
     }
 
     async function grantRetakeAccess(recordId, qatGid, qatName, courseId, courseName) {
-        if (!confirm(`QAT (${qatName} - ${qatGid}) ට මෙම Course (${courseId}) එක නැවත (Retake) කිරීමට අවසර දීමට ඔබට සහතිකද?\n\nමෙම ක්‍රියාව General Super Admin ගේ Audit වාර්තාවේ සටහන් වේ.`)) return;
+        if (!confirm(`QAT (${qatName} - ${qatGid}) ට මෙම Course (${courseId}) එක නැවත (Retake) කිරීමට අවසර දීමට ඔබට සහතිකද?\n\nමෙම ක්‍රියාව General Admin ගේ Audit වාර්තාවේ සටහන් වේ.`)) return;
 
         try {
             const { error: updErr } = await supabaseClient
@@ -480,8 +475,8 @@
             if (updErr) throw updErr;
 
             await supabaseClient.from('retake_audit_logs').insert([{
-                super_admin_gid: currentSessionUser?.super_admin_g_id || currentSessionUser?.gid || 'SA',
-                super_admin_name: currentSessionUser?.super_admin_name || currentSessionUser?.name || 'Super Admin',
+                super_admin_gid: currentSessionUser?.super_admin_g_id || currentSessionUser?.gid || 'Head',
+                super_admin_name: currentSessionUser?.super_admin_name || currentSessionUser?.name || 'Department Head',
                 department: loggedSuperAdminDept,
                 qat_gid: qatGid,
                 qat_name: qatName,
@@ -489,7 +484,7 @@
                 course_name: courseName
             }]);
 
-            alert(`QAT (${qatGid}) ට Course එක නැවත හැදෑරීමට සාර්ථකව අවසර ලබා දුන්නා! General Super Admin ට Audit Log එකක් නිකුත් විය.`);
+            alert(`QAT (${qatGid}) ට Course එක නැවත හැදෑරීමට සාර්ථකව අවසර ලබා දුන්නා! General Admin ට Audit Log එකක් නිකුත් විය.`);
             await fetchSuperAdminDataFromDB();
         } catch (e) {
             alert('Retake grant error: ' + e.message);
@@ -530,7 +525,7 @@
         const cSel = document.getElementById('super-filter-course-id');
 
         qSel.innerHTML = '<option value="">All QAT G IDs</option>' + [...new Set(globalCompletedData.map(q => q.gid))].map(id => `<option value="${esc(id)}">${esc(id)}</option>`).join('');
-        aSel.innerHTML = '<option value="">All Admin G IDs</option>' + [...new Set(globalAdminsData.map(a => a.admin_g_id))].map(id => `<option value="${esc(id)}">${esc(id)}</option>`).join('');
+        aSel.innerHTML = '<option value="">All Trainer G IDs</option>' + [...new Set(globalAdminsData.map(a => a.admin_g_id))].map(id => `<option value="${esc(id)}">${esc(id)}</option>`).join('');
         cSel.innerHTML = '<option value="">All Course IDs</option>' + [...new Set(globalCoursesData.map(c => c.id))].map(id => `<option value="${esc(id)}">${esc(id)}</option>`).join('');
     }
 
@@ -568,7 +563,6 @@
         XLSX.writeFile(wb, 'QAT_Scores.xlsx');
     }
 
-    /* Handover Functions */
     async function openHandoverModal() {
         const modal = document.getElementById('handover-modal');
         const select = document.getElementById('handover-target-select');
@@ -581,21 +575,21 @@
 
         try {
             if (loggedSuperAdminDept === 'General' || loggedSuperAdminDept === 'All') {
-                subtitle.textContent = 'ඔබ Main General Super Admin බැවින්, ඕනෑම Department Super Admin කෙනෙකුට හෝ Admin කෙනෙකුට පූර්ණ General හිමිකාරිත්වය පැවරිය හැක.';
+                subtitle.textContent = 'ඔබ Main General Admin බැවින්, ඕනෑම Department Head කෙනෙකුට හෝ Trainer කෙනෙකුට පූර්ණ General Admin හිමිකාරිත්වය පැවරිය හැක.';
                 const [saRes, admRes] = await Promise.all([
                     supabaseClient.from('super_admin').select('super_admin_g_id, super_admin_name, department').neq('department', 'General'),
                     supabaseClient.from('admins').select('admin_g_id, admin_name, department, email').eq('status', 'Active')
                 ]);
-                let optHtml = '<option value="" disabled selected>පැවරිය යුතු නිලධාරියා තෝරන්න</option><optgroup label="Department Super Admins">';
-                (saRes.data || []).forEach(sa => { optHtml += `<option value="sa_${sa.super_admin_g_id}">${esc(sa.super_admin_name)} (${sa.super_admin_g_id}) - ${sa.department} Super Admin</option>`; });
-                optHtml += '</optgroup><optgroup label="Active Admins">';
-                (admRes.data || []).forEach(adm => { optHtml += `<option value="adm_${adm.admin_g_id}">${esc(adm.admin_name)} (${adm.admin_g_id}) - ${adm.department} Admin</option>`; });
+                let optHtml = '<option value="" disabled selected>පැවරිය යුතු නිලධාරියා තෝරන්න</option><optgroup label="Department Heads">';
+                (saRes.data || []).forEach(sa => { optHtml += `<option value="sa_${sa.super_admin_g_id}">${esc(sa.super_admin_name)} (${sa.super_admin_g_id}) - ${sa.department} Head</option>`; });
+                optHtml += '</optgroup><optgroup label="Active Trainers">';
+                (admRes.data || []).forEach(adm => { optHtml += `<option value="adm_${adm.admin_g_id}">${esc(adm.admin_name)} (${adm.admin_g_id}) - ${adm.department} Trainer</option>`; });
                 optHtml += '</optgroup>';
                 select.innerHTML = optHtml;
             } else {
-                subtitle.textContent = `ඔබ ${loggedSuperAdminDept} Department Super Admin බැවින්, ඔබේ Department එකේ Admin කෙනෙකුට මෙම තනතුර පැවරිය හැක.`;
+                subtitle.textContent = `ඔබ ${loggedSuperAdminDept} Department Head බැවින්, ඔබේ Department එකේ Trainer කෙනෙකුට මෙම තනතුර පැවරිය හැක.`;
                 const { data: deptAdmins } = await supabaseClient.from('admins').select('admin_g_id, admin_name, email').eq('department', loggedSuperAdminDept).eq('status', 'Active');
-                let optHtml = '<option value="" disabled selected>ඔබේ Department එකේ Admin කෙනෙකු තෝරන්න</option>';
+                let optHtml = '<option value="" disabled selected>ඔබේ Department එකේ Trainer කෙනෙකු තෝරන්න</option>';
                 (deptAdmins || []).forEach(adm => { optHtml += `<option value="adm_${adm.admin_g_id}">${esc(adm.admin_name)} (${adm.admin_g_id})</option>`; });
                 select.innerHTML = optHtml;
             }
@@ -616,7 +610,7 @@
         err.classList.add('hidden');
 
         if (!targetVal) return alert('කරුණාකර පුද්ගලයෙකු තෝරන්න.');
-        if (!confirm('ඔබේ Super Admin තනතුර සහ බලතල මෙම පුද්ගලයාට පැවරීමට ඔබට විශ්වාසද?')) return;
+        if (!confirm('ඔබේ තනතුර සහ බලතල මෙම පුද්ගලයාට පැවරීමට ඔබට විශ්වාසද?')) return;
 
         btn.disabled = true;
         btn.innerText = 'Verifying Password...';
@@ -660,7 +654,7 @@
                 await supabaseClient.from('super_admin').update({ department: 'Retired' }).eq('user_name', currentSessionUser.user_name);
             }
 
-            alert('Super Admin තනතුර සාර්ථකව පවරන ලදී!');
+            alert('තනතුර සාර්ථකව පවරන ලදී!');
             LMS.logout();
         } catch (ex) {
             err.textContent = 'Handover Error: ' + ex.message;
@@ -674,7 +668,6 @@
     function closePwModal() { document.getElementById('pw-modal').classList.add('hidden'); document.getElementById('pw-modal').classList.remove('flex'); }
 </script>
 
-<!-- Online Watcher Script (Crucial for Realtime Online Display) -->
 <script src="online-watch.js"></script>
 </body>
 </html>
