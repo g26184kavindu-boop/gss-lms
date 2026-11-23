@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Dashboard - GSS LMS</title>
+  <title>Trainer Dashboard - GSS LMS</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -13,7 +13,6 @@
 </head>
 <body class="bg-gray-50 font-sans flex h-screen overflow-hidden">
 
-<!-- Dynamic Sidebar -->
 <aside class="fixed left-0 top-0 h-screen bg-white shadow-xl z-50 w-20 hover:w-64 transition-all duration-300 flex flex-col justify-between py-6 px-4 group border-r border-gray-100 flex-shrink-0">
   <div class="space-y-8 flex flex-col h-full overflow-hidden">
     <div class="flex items-center space-x-3 overflow-hidden flex-shrink-0">
@@ -28,16 +27,15 @@
 <div class="flex-1 ml-20 p-8 overflow-y-auto h-full space-y-8">
   <header class="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
     <div>
-      <h1 class="text-3xl font-bold text-stone-900">Admin Dashboard</h1>
+      <h1 class="text-3xl font-bold text-stone-900">Trainer Dashboard</h1>
       <div class="flex items-center gap-2 mt-1">
         <span id="admin-dept-badge" class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 border border-blue-200">Department: Training</span>
         <span class="text-stone-400 text-xs font-mono" id="admin-gid-badge"></span>
       </div>
     </div>
-    <p class="text-stone-500 text-sm"><span id="welcome-label"></span>, <span id="welcome-name" class="font-bold text-stone-800"></span></p>
+    <p class="text-stone-500 text-sm"><span id="welcome-label"></span>, <span id="welcome-name" class="font-bold text-stone-800"></span> (Trainer)</p>
   </header>
 
-  <!-- Summary Cards -->
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" id="cards"></div>
 
   <!-- Course Status Section -->
@@ -74,8 +72,8 @@
         <p class="text-stone-500 text-sm">ඔබගේ Course Links හරහා සම්බන්ධ වූ QAT ලාගේ ලකුණු විස්තර.</p>
       </div>
       <div class="flex items-center gap-2">
-        <button type="button" onclick="resetFilters()" class="px-3 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-600 text-xs font-semibold rounded-xl transition">Reset</button>
-        <button type="button" onclick="exportToExcel()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl shadow-sm transition">Download Excel</button>
+        <button onclick="resetFilters()" class="px-3 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-600 text-xs font-semibold rounded-xl transition">Reset</button>
+        <button onclick="exportToExcel()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl shadow-sm transition">Download Excel</button>
       </div>
     </div>
 
@@ -116,24 +114,22 @@
 </div>
 
 <script>
-  const S = LMS.getSession(), esc = LMS.esc, db = LMS.db, qv = LMS.postgrestVal;
+  const S = LMS.getSession(), esc = LMS.esc, db = LMS.db;
   const myGid = S?.gid || S?.user?.admin_g_id || '';
   const myDept = S?.user?.department || 'Training';
 
-  let courses = [], qats = [], done = [], attempts = [], filteredPerfRows = [];
+  let courses = [], qats = [], done = [], attempts = [];
 
-  if (S) {
-    document.getElementById('welcome-label').textContent = LMS.t('welcome');
-    document.getElementById('welcome-name').textContent = S?.name || 'Admin';
+  document.getElementById('welcome-label').textContent = LMS.t('welcome');
+  document.getElementById('welcome-name').textContent = S?.name || 'Trainer';
 
-    const deptBadge = document.getElementById('admin-dept-badge');
-    if (deptBadge) deptBadge.textContent = `Department: ${myDept}`;
+  const deptBadge = document.getElementById('admin-dept-badge');
+  if (deptBadge) deptBadge.textContent = `Department: ${myDept}`;
 
-    const gidBadge = document.getElementById('admin-gid-badge');
-    if (gidBadge && myGid) gidBadge.textContent = `• ID: ${myGid}`;
+  const gidBadge = document.getElementById('admin-gid-badge');
+  if (gidBadge && myGid) gidBadge.textContent = `• Trainer ID: ${myGid}`;
 
-    LMS.renderSidebar();
-  }
+  LMS.renderSidebar();
 
   const pctOf = r => {
     const sc = Number(r.score), tot = Number(r.total_marks);
@@ -144,43 +140,31 @@
   const empty = (n, m) => `<tr><td colspan="${n}" class="py-6 text-center text-stone-400 text-sm">${m}</td></tr>`;
 
   async function load() {
-    if (!S) return;
     const get = async (q, label) => {
       try {
         const r = await q;
         if (r.error) { console.warn(label, r.error.message); return []; }
         return r.data || [];
       } catch (err) {
-        console.warn(label, err.message);
         return [];
       }
     };
 
     try {
       courses = await get(
-              db.from('courses')
-                      .select('id, name, created_by, created_at, department')
-                      .eq('created_by', myGid),
-              'courses'
+        db.from('courses').select('id, name, created_by, created_at, department').eq('created_by', myGid),
+        'courses'
       );
 
       const myCourseIds = courses.map(c => String(c.id)).filter(Boolean);
 
       if (myCourseIds.length > 0 && myGid) {
-        const quotedIds = myCourseIds.map(qv).join(',');
         done = await get(
-                db.from('qat_completed_courses')
-                        .select('*')
-                        .or(`admin_g_id.eq.${qv(myGid)},course_id.in.(${quotedIds})`),
-                'completed'
+          db.from('qat_completed_courses').select('*').or(`admin_g_id.eq.${myGid},course_id.in.(${myCourseIds.join(',')})`),
+          'completed'
         );
       } else if (myGid) {
-        done = await get(
-                db.from('qat_completed_courses')
-                        .select('*')
-                        .eq('admin_g_id', myGid),
-                'completed'
-        );
+        done = await get(db.from('qat_completed_courses').select('*').eq('admin_g_id', myGid), 'completed');
       } else {
         done = [];
       }
@@ -188,19 +172,15 @@
       const allQatsData = await get(db.from('qats').select('*'), 'qats');
       const completedQatGids = new Set(done.map(d => String(d.gid)));
       qats = allQatsData.filter(q =>
-              String(q.registered_via_admin) === String(myGid) || completedQatGids.has(String(q.qat_g_id))
+        String(q.registered_via_admin) === String(myGid) || completedQatGids.has(String(q.qat_g_id))
       );
 
       if (myCourseIds.length > 0) {
-        attempts = await get(
-                db.from('qat_quiz_attempts')
-                        .select('gid, course_id, passed')
-                        .in('course_id', myCourseIds),
-                'attempts'
-        );
+        attempts = await get(db.from('qat_quiz_attempts').select('gid, course_id, passed').in('course_id', myCourseIds), 'attempts');
       } else {
         attempts = [];
       }
+
     } catch (e) {
       console.error('Data loading error:', e);
     } finally {
@@ -223,10 +203,10 @@
     const cardsEl = document.getElementById('cards');
     if (cardsEl) {
       cardsEl.innerHTML =
-              card('My Created Courses', courses.length, 'text-blue-600') +
-              card('My Enrolled QATs', activeQats.length, 'text-amber-600') +
-              card('Total Completions', done.length, 'text-emerald-600') +
-              card('Average Quiz Score', avg, 'text-purple-600');
+        card('My Created Courses', courses.length, 'text-blue-600') +
+        card('My Enrolled QATs', activeQats.length, 'text-amber-600') +
+        card('Total Completions', done.length, 'text-emerald-600') +
+        card('Average Quiz Score', avg, 'text-purple-600');
     }
 
     const courseTbody = document.getElementById('course-tbody');
@@ -240,7 +220,7 @@
           <td class="py-3 text-xs text-stone-500">${esc(createdDate)}</td>
           <td class="py-3">${badge(`${n} Completed`, n ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-100 text-stone-500')}</td>
         `);
-      }).join('') : empty(4, 'ඔබ තවමත් පාඨමාලා (Courses) සාදා නැත. Add Course වෙත ගොස් නව Course එකක් සාදන්න.');
+      }).join('') : empty(4, 'ඔබ තවමත් පාඨමාලා සාදා නැත. Add Course වෙත ගොස් නව Course එකක් සාදන්න.');
     }
 
     const fill = (id, label, vals) => {
@@ -265,7 +245,6 @@
     const fc = fcEl ? fcEl.value.trim() : '';
 
     const rows = done.filter(d => (!fq || String(d.gid) === fq) && (!fc || String(d.course_id) === fc));
-    filteredPerfRows = rows;
 
     const perfTbody = document.getElementById('perf-tbody');
     if (!perfTbody) return;
@@ -274,10 +253,10 @@
       const p = pctOf(r);
       const n = attempts.filter(a => String(a.gid) === String(r.gid) && String(a.course_id) === String(r.course_id)).length;
       const res = r.passed === true
-              ? badge('Passed', 'bg-emerald-50 text-emerald-600')
-              : r.passed === false
-                      ? badge('Failed', 'bg-rose-50 text-rose-600')
-                      : '-';
+        ? badge('Passed', 'bg-emerald-50 text-emerald-600')
+        : r.passed === false
+          ? badge('Failed', 'bg-rose-50 text-rose-600')
+          : '-';
 
       return row(`
         <td class="p-3">
@@ -304,9 +283,8 @@
   }
 
   function exportToExcel() {
-    const list = filteredPerfRows.length ? filteredPerfRows : done;
-    if (!list.length) return alert('No performance records available to export.');
-    const rows = list.map(r => ({
+    if (!done.length) return alert('No performance records available to export.');
+    const rows = done.map(r => ({
       'QAT G ID': r.gid,
       'QAT Name': r.qat_name || 'QAT',
       'Course ID': r.course_id,
@@ -319,11 +297,14 @@
 
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), 'My_QAT_Scores');
-    XLSX.writeFile(wb, `Admin_${myGid}_QAT_Scores.xlsx`);
+    XLSX.writeFile(wb, `Trainer_${myGid}_QAT_Scores.xlsx`);
   }
 
-  document.getElementById('f-qat')?.addEventListener('change', renderPerf);
-  document.getElementById('f-course')?.addEventListener('change', renderPerf);
+  const fqEl = document.getElementById('f-qat');
+  if (fqEl) fqEl.addEventListener('change', renderPerf);
+
+  const fcEl = document.getElementById('f-course');
+  if (fcEl) fcEl.addEventListener('change', renderPerf);
 
   load();
 </script>
