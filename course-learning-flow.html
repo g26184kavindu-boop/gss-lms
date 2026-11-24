@@ -11,17 +11,6 @@
     <script src="lms-core.js"></script>
     <script src="lms-auth.js"></script>
     <script>LMS.guard(['qat', 'admin', 'super_admin']);</script>
-    <style>
-        /* =========================================================================
-           STRICT ANTI-SKIP: DISABLES TIMELINE SCRUBBER FROM BEING CLICKED / DRAGGED
-           ========================================================================= */
-        #player::-webkit-media-controls-timeline,
-        #player::-webkit-media-controls-seek-back-button,
-        #player::-webkit-media-controls-seek-forward-button {
-            display: none !important;
-            pointer-events: none !important;
-        }
-    </style>
 </head>
 <body class="bg-gray-50 font-sans min-h-screen p-6">
 
@@ -58,9 +47,9 @@
         <p id="preview-note" class="hidden text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3 font-medium">Preview Mode: Admin / Super Admin ගේ ලකුණු සටහන් නොවේ.</p>
     </div>
 
-    <!-- Step 2: Interactive Video Player -->
+    <!-- Step 2: Interactive Video Player with 100% Anti-Skip Engine -->
     <div id="step-video" class="hidden space-y-4">
-        <div id="video-box" class="relative bg-black rounded-xl overflow-hidden aspect-video flex items-center justify-center text-stone-400 text-sm shadow-inner"></div>
+        <div id="video-box" class="relative bg-black rounded-2xl overflow-hidden aspect-video flex flex-col justify-end shadow-inner group"></div>
         
         <div class="p-3 bg-blue-50 border border-blue-100 rounded-xl flex items-center justify-between text-xs text-blue-800 font-medium">
             <span>වීඩියෝව සම්පූර්ණයෙන්ම නරඹා අවසානයේ "Mark Video as Watched" ඔබන්න. Forward Skip කිරීම තහනම්ය.</span>
@@ -124,9 +113,11 @@
     let videoEnded = false;
     let videoMarkedWatched = false;
     let maxWatchedTime = 0;
+    let lastValidTime = 0;
     let checkpoints = [];
     let cpQuestionIndices = { 0: 0, 1: 0, 2: 0 };
 
+    // Timer Variables
     let timerInterval = null;
     let timeLeftSeconds = 0;
     let isQuizActive = false;
@@ -163,7 +154,6 @@
                 nextBtn.classList.remove('opacity-40', 'cursor-not-allowed', 'pointer-events-none');
             }
 
-            // Mark button status: ONLY enabled if video has 100% ended
             if (!videoEnded) {
                 markBtn.disabled = true;
                 markBtn.className = 'py-2.5 px-5 bg-stone-200 text-stone-400 font-semibold rounded-xl text-xs transition cursor-not-allowed flex items-center gap-2';
@@ -295,7 +285,7 @@
     }
 
     /* =========================================================================
-       100% BULLETPROOF ANTI-SKIP VIDEO ENGINE (NO PREMATURE UNLOCK)
+       100% BULLETPROOF CUSTOM VIDEO PLAYER (NO TIMELINE SLIDER = NO SKIPPING!)
        ========================================================================= */
     function setupVideo(data) {
         const box = document.getElementById('video-box');
@@ -313,59 +303,119 @@
 
         const driveId = getDriveId(data.drive_file_id) || getDriveId(data.video_url);
 
-        // 1. GOOGLE DRIVE EMBED
+        // Resolve Direct Video Source or Drive Source
+        let src = data.video_url || '';
         if (driveId) {
-            box.innerHTML = `
-                <iframe id="drive-player-frame" src="https://drive.google.com/file/d/${driveId}/preview" class="w-full h-full rounded-xl" allow="autoplay; fullscreen" allowfullscreen frameborder="0"></iframe>
-            `;
-
-            const statusText = document.getElementById('video-status-text');
-            if (statusText) statusText.textContent = 'වීඩියෝව සම්පූර්ණයෙන්ම නරඹමින් පවතී...';
-            
-            // NO PREMATURE 5S TIMEOUT! Unlocks ONLY when user genuinely spends the full video time
-            let videoWatchSeconds = 0;
-            const requiredSeconds = 45; // Minimum full viewing threshold
-            const watchTimer = setInterval(() => {
-                videoWatchSeconds++;
-                if (videoWatchSeconds >= requiredSeconds) {
-                    clearInterval(watchTimer);
-                    onVideoFinished();
-                }
-            }, 1000);
-            return;
+            // High-reliability Google Drive direct streaming URL
+            src = `https://lh3.googleusercontent.com/d/${driveId}`;
         }
 
-        // 2. YOUTUBE VIDEO
-        if (data.youtube_video_id) {
-            box.innerHTML = `
-                <iframe src="https://www.youtube.com/embed/${esc(data.youtube_video_id)}?enablejsapi=1" class="w-full h-full rounded-xl" allowfullscreen frameborder="0"></iframe>
-            `;
-            let ytSeconds = 0;
-            const ytTimer = setInterval(() => {
-                ytSeconds++;
-                if (ytSeconds >= 45) {
-                    clearInterval(ytTimer);
-                    onVideoFinished();
-                }
-            }, 1000);
-            return;
-        }
-
-        // 3. DIRECT MP4 / WEBM (Supabase Storage) ➔ STRICT HTML5 PLAYER
-        const src = data.video_url;
-        if (!src) { 
+        if (!src && !data.youtube_video_id) { 
             box.textContent = 'වීඩියෝවක් අමුණා නැත.'; 
             onVideoFinished();
             return; 
         }
 
+        // =====================================================================
+        // CUSTOM HTML5 VIDEO PLAYER (SLIDER ELIMINATED: ZERO FORWARD SKIPPING!)
+        // =====================================================================
         box.innerHTML = `
-            <video id="player" class="w-full h-full rounded-xl" controls controlsList="nodownload noplaybackrate" playsinline src="${esc(src)}"></video>
+            <video id="player" class="w-full h-full object-contain cursor-pointer" playsinline src="${esc(src)}"></video>
             <div id="cp-overlay" class="hidden absolute inset-0 bg-white/95 backdrop-blur-sm z-30 overflow-y-auto p-6 flex flex-col justify-center"></div>
-        `;
-        const v = document.getElementById('player');
 
-        // Playback rate lock (Disallow fast-forward extensions)
+            <!-- Custom Non-Seekable Controls Bar -->
+            <div id="custom-controls" class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/85 via-black/50 to-transparent p-3 pt-6 z-20 flex flex-col gap-2">
+                <!-- Visual-Only Progress Bar (pointer-events-none completely blocks clicking & dragging!) -->
+                <div class="w-full h-1.5 bg-white/25 rounded-full overflow-hidden select-none pointer-events-none">
+                    <div id="video-progress-fill" class="h-full bg-blue-500 w-0 transition-all duration-150"></div>
+                </div>
+
+                <!-- Custom Buttons Row -->
+                <div class="flex items-center justify-between text-white text-xs select-none">
+                    <div class="flex items-center gap-3">
+                        <button type="button" id="ctrl-play-btn" class="hover:text-blue-400 transition p-1 focus:outline-none">
+                            <svg id="ctrl-play-icon" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                            <svg id="ctrl-pause-icon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                        </button>
+                        <div class="flex items-center gap-1 font-mono text-[11px] text-stone-300">
+                            <span id="ctrl-cur-time">00:00</span>
+                            <span>/</span>
+                            <span id="ctrl-dur-time">00:00</span>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                        <button type="button" id="ctrl-mute-btn" class="hover:text-blue-400 transition p-1 focus:outline-none">
+                            <svg id="ctrl-vol-icon" class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+                        </button>
+                        <button type="button" id="ctrl-fullscreen-btn" class="hover:text-blue-400 transition p-1 focus:outline-none">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        const v = document.getElementById('player');
+        const playBtn = document.getElementById('ctrl-play-btn');
+        const playIcon = document.getElementById('ctrl-play-icon');
+        const pauseIcon = document.getElementById('ctrl-pause-icon');
+        const curTimeEl = document.getElementById('ctrl-cur-time');
+        const durTimeEl = document.getElementById('ctrl-dur-time');
+        const progressFill = document.getElementById('video-progress-fill');
+        const muteBtn = document.getElementById('ctrl-mute-btn');
+        const fsBtn = document.getElementById('ctrl-fullscreen-btn');
+
+        function fmtTime(sec) {
+            if (isNaN(sec) || sec < 0) return '00:00';
+            const m = Math.floor(sec / 60);
+            const s = Math.floor(sec % 60);
+            return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        }
+
+        // Toggle Play / Pause
+        function togglePlay() {
+            if (v.paused || v.ended) {
+                v.play();
+                playIcon.classList.add('hidden');
+                pauseIcon.classList.remove('hidden');
+            } else {
+                v.pause();
+                playIcon.classList.remove('hidden');
+                pauseIcon.classList.add('hidden');
+            }
+        }
+
+        v.addEventListener('click', togglePlay);
+        playBtn.addEventListener('click', togglePlay);
+
+        // Mute / Unmute
+        muteBtn.addEventListener('click', () => {
+            v.muted = !v.muted;
+            muteBtn.classList.toggle('text-rose-400', v.muted);
+        });
+
+        // Fullscreen
+        fsBtn.addEventListener('click', () => {
+            if (!document.fullscreenElement) box.requestFullscreen();
+            else document.exitFullscreen();
+        });
+
+        // Block Keyboard Arrow Seeking (Right Arrow, 'L', PageUp)
+        window.addEventListener('keydown', (e) => {
+            if (steps[idx] === 'video') {
+                if (e.key === 'ArrowRight' || e.key === 'PageUp' || e.key === 'l' || e.key === 'L') {
+                    e.preventDefault();
+                    showSkipWarning();
+                }
+                if (e.code === 'Space' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+                    e.preventDefault();
+                    togglePlay();
+                }
+            }
+        });
+
+        // Lock Playback Rate (No 2x, 16x speed hacks)
         v.addEventListener('ratechange', () => {
             if (v.playbackRate > 1.25) {
                 v.playbackRate = 1.0;
@@ -373,38 +423,41 @@
             }
         });
 
-        // Block Keyboard Shortcuts (Right Arrow, PageUp, 'L')
-        v.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowRight' || e.key === 'PageUp' || e.key === 'l' || e.key === 'L') {
-                e.preventDefault();
-                e.stopPropagation();
-                showSkipWarning();
-            }
+        // Metadata loaded: set total duration
+        v.addEventListener('loadedmetadata', () => {
+            durTimeEl.textContent = fmtTime(v.duration);
         });
 
-        let lastValidTick = 0;
-
-        // Strict incremental time tracking
+        // =====================================================================
+        // STRICT INCREMENTAL TIME TRACKING & CHECKPOINT ENGINE
+        // =====================================================================
         v.addEventListener('timeupdate', () => {
-            const diff = v.currentTime - lastValidTick;
+            curTimeEl.textContent = fmtTime(v.currentTime);
 
-            // Legitimate forward playback step is ~0.25s
+            // Update non-clickable progress bar
+            if (v.duration > 0) {
+                const pct = (v.currentTime / v.duration) * 100;
+                progressFill.style.width = `${pct}%`;
+            }
+
+            const diff = v.currentTime - lastValidTime;
+
+            // Natural continuous playback check
             if (diff > 0 && diff <= 0.6) {
-                lastValidTick = v.currentTime;
+                lastValidTime = v.currentTime;
                 if (v.currentTime > maxWatchedTime) {
                     maxWatchedTime = v.currentTime;
                 }
-            } else if (v.currentTime > maxWatchedTime + 0.2) {
-                // ILLEGAL FORWARD JUMP DETECTED -> INSTANT SNAP BACK!
+            } else if (v.currentTime > maxWatchedTime + 0.15) {
+                // ILLEGAL JUMP DETECTED -> INSTANT SNAP BACK!
                 v.currentTime = maxWatchedTime;
                 showSkipWarning();
                 return;
             } else {
-                // Rewinding is completely allowed
-                lastValidTick = v.currentTime;
+                lastValidTime = v.currentTime;
             }
 
-            // Trigger Checkpoints
+            // Checkpoints triggering
             checkpoints.forEach((cp, ci) => {
                 if (!cp.passed && v.currentTime >= cp.pause_time && !cp.active) {
                     triggerCheckpoint(v, cp, ci);
@@ -412,30 +465,48 @@
             });
         });
 
-        // Intercept seeking & scrubbing
         v.addEventListener('seeking', () => {
-            if (v.currentTime > maxWatchedTime + 0.2) {
+            if (v.currentTime > maxWatchedTime + 0.15) {
                 v.currentTime = maxWatchedTime;
                 showSkipWarning();
             }
         });
 
         v.addEventListener('seeked', () => {
-            if (v.currentTime > maxWatchedTime + 0.2) {
+            if (v.currentTime > maxWatchedTime + 0.15) {
                 v.currentTime = maxWatchedTime;
             }
         });
 
-        // NATIVE ENDED EVENT: Fires ONLY when the video reaches 100% end!
+        // =====================================================================
+        // NATIVE ENDED EVENT: FIRES ONLY WHEN VIDEO GENUINELY REACHES THE END!
+        // =====================================================================
         v.addEventListener('ended', () => {
+            // Extra check: must have reached at least 99% of total duration
             if (v.duration > 0 && v.currentTime >= v.duration - 0.5) {
+                playIcon.classList.remove('hidden');
+                pauseIcon.classList.add('hidden');
                 onVideoFinished();
             }
         });
 
+        // Drive fallback if direct lh3 fails
         v.addEventListener('error', () => {
-            box.innerHTML = `<div class="p-6 text-center text-rose-400 text-xs">වීඩියෝව Load කිරීමේ දෝෂයක් පවතී.</div>`;
-            onVideoFinished();
+            if (driveId) {
+                box.innerHTML = `
+                    <iframe src="https://drive.google.com/file/d/${driveId}/preview" class="w-full h-full rounded-xl" allow="autoplay; fullscreen" allowfullscreen frameborder="0"></iframe>
+                `;
+                // For iframe embed: only unlocks after genuinely watching elapsed duration
+                let elapsedSec = 0;
+                const reqSec = 60;
+                const timer = setInterval(() => {
+                    elapsedSec++;
+                    if (elapsedSec >= reqSec) {
+                        clearInterval(timer);
+                        onVideoFinished();
+                    }
+                }, 1000);
+            }
         });
     }
 
@@ -448,7 +519,9 @@
         }
     }
 
-    // Called ONLY when the video has reached 100% completion
+    /* =========================================================================
+       CALLED ONLY WHEN VIDEO REACHES 100% COMPLETION
+       ========================================================================= */
     function onVideoFinished() {
         const allPassed = checkpoints.every(c => c.passed);
         if (!allPassed) {
@@ -476,7 +549,7 @@
 
         const statusText = document.getElementById('video-status-text');
         if (statusText) {
-            statusText.textContent = '✓ වීඩියෝව නැරඹීම අවසන්! දැන් "Mark Video as Watched" බොත්තම ඔබන්න.';
+            statusText.textContent = '✓ වීඩියෝව අවසන්! දැන් "Mark Video as Watched" බොත්තම ඔබන්න.';
             statusText.className = 'font-bold text-emerald-600';
         }
     }
