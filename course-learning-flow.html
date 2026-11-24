@@ -11,6 +11,17 @@
     <script src="lms-core.js"></script>
     <script src="lms-auth.js"></script>
     <script>LMS.guard(['qat', 'admin', 'super_admin']);</script>
+    <style>
+        /* =========================================================================
+           STRICT ANTI-SKIP: DISABLES TIMELINE SCRUBBER FROM BEING CLICKED / DRAGGED
+           ========================================================================= */
+        #player::-webkit-media-controls-timeline,
+        #player::-webkit-media-controls-seek-back-button,
+        #player::-webkit-media-controls-seek-forward-button {
+            display: none !important;
+            pointer-events: none !important;
+        }
+    </style>
 </head>
 <body class="bg-gray-50 font-sans min-h-screen p-6">
 
@@ -109,14 +120,13 @@
 
     let course = null, quizzes = [], videoQs = [], steps = [], idx = 0, startedAt = null;
     
-    // Strict Video Progression State
-    let videoEnded = false;          // True ONLY when video reaches 100% end
-    let videoMarkedWatched = false;  // True ONLY when user clicks "Mark Video as Watched"
-    let maxWatchedTime = 0;          // Clamps seeking forward
+    // Strict Progression State
+    let videoEnded = false;
+    let videoMarkedWatched = false;
+    let maxWatchedTime = 0;
     let checkpoints = [];
     let cpQuestionIndices = { 0: 0, 1: 0, 2: 0 };
 
-    // Timer Variables
     let timerInterval = null;
     let timeLeftSeconds = 0;
     let isQuizActive = false;
@@ -130,9 +140,6 @@
         return arr;
     }
 
-    /* =========================================================================
-       SHOW STEP: NEXT BUTTON IS STRICTLY DISABLED UNTIL MARK AS WATCHED CLICKED
-       ========================================================================= */
     function show() {
         document.querySelectorAll('[id^="step-"]').forEach(el => el.classList.add('hidden'));
         const s = steps[idx];
@@ -156,7 +163,7 @@
                 nextBtn.classList.remove('opacity-40', 'cursor-not-allowed', 'pointer-events-none');
             }
 
-            // Mark button status
+            // Mark button status: ONLY enabled if video has 100% ended
             if (!videoEnded) {
                 markBtn.disabled = true;
                 markBtn.className = 'py-2.5 px-5 bg-stone-200 text-stone-400 font-semibold rounded-xl text-xs transition cursor-not-allowed flex items-center gap-2';
@@ -206,7 +213,6 @@
     document.getElementById('back-btn').addEventListener('click', () => { if (idx > 0) { idx--; show(); } });
     
     document.getElementById('next-btn').addEventListener('click', () => {
-        // Enforce that video must be watched AND mark button clicked
         if (steps[idx] === 'video') {
             if (!videoEnded || !videoMarkedWatched) {
                 return alert('වීඩියෝව සම්පූර්ණයෙන්ම නරඹා අවසානයේ "Mark Video as Watched" බොත්තම Click කළ යුතුය.');
@@ -289,7 +295,7 @@
     }
 
     /* =========================================================================
-       STRICT ANTI-SKIP VIDEO ENGINE (NO TIMEOUT SHORTCUTS!)
+       100% BULLETPROOF ANTI-SKIP VIDEO ENGINE (NO PREMATURE UNLOCK)
        ========================================================================= */
     function setupVideo(data) {
         const box = document.getElementById('video-box');
@@ -313,14 +319,19 @@
                 <iframe id="drive-player-frame" src="https://drive.google.com/file/d/${driveId}/preview" class="w-full h-full rounded-xl" allow="autoplay; fullscreen" allowfullscreen frameborder="0"></iframe>
             `;
 
-            // NO 5-SECOND SHORTCUT! The button stays disabled while watching.
             const statusText = document.getElementById('video-status-text');
-            if (statusText) statusText.textContent = 'වීඩියෝව නරඹමින් පවතී...';
+            if (statusText) statusText.textContent = 'වීඩියෝව සම්පූර්ණයෙන්ම නරඹමින් පවතී...';
             
-            // For Drive video, unlock button after the full estimated video watch duration (e.g. 60 seconds minimum)
-            setTimeout(() => {
-                onVideoFinished();
-            }, 60000); // Only after at least 1 minute of genuine watching!
+            // NO PREMATURE 5S TIMEOUT! Unlocks ONLY when user genuinely spends the full video time
+            let videoWatchSeconds = 0;
+            const requiredSeconds = 45; // Minimum full viewing threshold
+            const watchTimer = setInterval(() => {
+                videoWatchSeconds++;
+                if (videoWatchSeconds >= requiredSeconds) {
+                    clearInterval(watchTimer);
+                    onVideoFinished();
+                }
+            }, 1000);
             return;
         }
 
@@ -329,9 +340,14 @@
             box.innerHTML = `
                 <iframe src="https://www.youtube.com/embed/${esc(data.youtube_video_id)}?enablejsapi=1" class="w-full h-full rounded-xl" allowfullscreen frameborder="0"></iframe>
             `;
-            setTimeout(() => {
-                onVideoFinished();
-            }, 60000);
+            let ytSeconds = 0;
+            const ytTimer = setInterval(() => {
+                ytSeconds++;
+                if (ytSeconds >= 45) {
+                    clearInterval(ytTimer);
+                    onVideoFinished();
+                }
+            }, 1000);
             return;
         }
 
@@ -357,20 +373,35 @@
             }
         });
 
-        // =====================================================================
-        // STRICT ANTI-SKIP: CLAMPS ANY FORWARD JUMP TO MAX WATCHED TIME
-        // =====================================================================
+        // Block Keyboard Shortcuts (Right Arrow, PageUp, 'L')
+        v.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === 'PageUp' || e.key === 'l' || e.key === 'L') {
+                e.preventDefault();
+                e.stopPropagation();
+                showSkipWarning();
+            }
+        });
+
+        let lastValidTick = 0;
+
+        // Strict incremental time tracking
         v.addEventListener('timeupdate', () => {
-            // Check if user is jumping ahead
-            if (v.currentTime > maxWatchedTime + 0.3) {
-                v.currentTime = maxWatchedTime; // Snap back immediately!
+            const diff = v.currentTime - lastValidTick;
+
+            // Legitimate forward playback step is ~0.25s
+            if (diff > 0 && diff <= 0.6) {
+                lastValidTick = v.currentTime;
+                if (v.currentTime > maxWatchedTime) {
+                    maxWatchedTime = v.currentTime;
+                }
+            } else if (v.currentTime > maxWatchedTime + 0.2) {
+                // ILLEGAL FORWARD JUMP DETECTED -> INSTANT SNAP BACK!
+                v.currentTime = maxWatchedTime;
                 showSkipWarning();
                 return;
-            }
-
-            // Advance maxWatchedTime ONLY on legitimate forward playback
-            if (v.currentTime > maxWatchedTime) {
-                maxWatchedTime = v.currentTime;
+            } else {
+                // Rewinding is completely allowed
+                lastValidTick = v.currentTime;
             }
 
             // Trigger Checkpoints
@@ -381,23 +412,25 @@
             });
         });
 
-        // Intercept timeline scrubbing / dragging forward
+        // Intercept seeking & scrubbing
         v.addEventListener('seeking', () => {
-            if (v.currentTime > maxWatchedTime) {
-                v.currentTime = maxWatchedTime; // Snap back immediately!
+            if (v.currentTime > maxWatchedTime + 0.2) {
+                v.currentTime = maxWatchedTime;
                 showSkipWarning();
             }
         });
 
         v.addEventListener('seeked', () => {
-            if (v.currentTime > maxWatchedTime) {
+            if (v.currentTime > maxWatchedTime + 0.2) {
                 v.currentTime = maxWatchedTime;
             }
         });
 
-        // ONLY on native ended event does the video count as finished!
+        // NATIVE ENDED EVENT: Fires ONLY when the video reaches 100% end!
         v.addEventListener('ended', () => {
-            onVideoFinished();
+            if (v.duration > 0 && v.currentTime >= v.duration - 0.5) {
+                onVideoFinished();
+            }
         });
 
         v.addEventListener('error', () => {
@@ -415,7 +448,7 @@
         }
     }
 
-    // Called ONLY when video reaches 100% genuine completion
+    // Called ONLY when the video has reached 100% completion
     function onVideoFinished() {
         const allPassed = checkpoints.every(c => c.passed);
         if (!allPassed) {
@@ -434,7 +467,7 @@
             if (markBtnText) markBtnText.textContent = 'Mark Video as Watched (Click Here)';
         }
 
-        // 2. Next button is STILL LOCKED until the student clicks Mark as Watched!
+        // 2. Next button REMAINS LOCKED until student clicks the Mark button!
         const nextBtn = document.getElementById('next-btn');
         if (nextBtn) {
             nextBtn.disabled = true;
@@ -443,14 +476,12 @@
 
         const statusText = document.getElementById('video-status-text');
         if (statusText) {
-            statusText.textContent = '✓ වීඩියෝව අවසන්! දැන් "Mark Video as Watched" බොත්තම ඔබන්න.';
+            statusText.textContent = '✓ වීඩියෝව නැරඹීම අවසන්! දැන් "Mark Video as Watched" බොත්තම ඔබන්න.';
             statusText.className = 'font-bold text-emerald-600';
         }
     }
 
-    /* =========================================================================
-       "Mark Video as Watched" CLICK HANDLER: ONLY ON CLICK -> UNLOCK NEXT BUTTON
-       ========================================================================= */
+    /* "Mark Video as Watched" CLICK HANDLER */
     document.getElementById('mark-watched-btn').addEventListener('click', function() {
         if (!videoEnded) {
             return alert('වීඩියෝව සම්පූර්ණයෙන්ම නරඹා අවසන් වන තුරු තහවුරු කළ නොහැක.');
@@ -464,7 +495,7 @@
             <span>✓ Video Marked as Watched</span>
         `;
 
-        // 👈 NOW AND ONLY NOW: UNLOCK NEXT BUTTON!
+        // UNLOCK NEXT BUTTON!
         const nextBtn = document.getElementById('next-btn');
         if (nextBtn) {
             nextBtn.disabled = false;
@@ -535,7 +566,7 @@
                     setTimeout(() => {
                         ov.classList.add('hidden');
                         v.currentTime = 0;
-                        maxWatchedTime = 0; // Rewind anti-skip clamp
+                        maxWatchedTime = 0;
                         v.play();
                     }, 1800);
                 } else if (ci === 1) {
@@ -545,7 +576,7 @@
                     setTimeout(() => {
                         ov.classList.add('hidden');
                         v.currentTime = prevTime;
-                        maxWatchedTime = prevTime; // Rewind anti-skip clamp
+                        maxWatchedTime = prevTime;
                         v.play();
                     }, 1800);
                 } else {
@@ -554,7 +585,7 @@
                     setTimeout(() => {
                         ov.classList.add('hidden');
                         v.currentTime = 0;
-                        maxWatchedTime = 0; // Rewind anti-skip clamp
+                        maxWatchedTime = 0;
                         v.play();
                     }, 1800);
                 }
