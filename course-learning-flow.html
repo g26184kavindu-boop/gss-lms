@@ -4,11 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Course Learning Flow - GSS LMS</title>
+    <!-- 1. CDN Libraries loaded first (Web Standard) -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- 2. Core App Logic -->
     <script src="lms-core.js"></script>
     <script src="lms-auth.js"></script>
     <script>LMS.guard(['qat', 'admin', 'super_admin']);</script>
-    <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50 font-sans min-h-screen p-6">
 
@@ -45,16 +47,16 @@
         <p id="preview-note" class="hidden text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3 font-medium">Preview Mode: Admin / Super Admin ගේ ලකුණු සටහන් නොවේ.</p>
     </div>
 
-    <!-- Step 2: Interactive Video with Mastery Pause Rewind & Anti-Skip Engine -->
+    <!-- Step 2: Interactive Video Player (Supports Google Drive & Direct MP4) -->
     <div id="step-video" class="hidden space-y-4">
         <div id="video-box" class="relative bg-black rounded-xl overflow-hidden aspect-video flex items-center justify-center text-stone-400 text-sm shadow-inner"></div>
         
         <div class="p-3 bg-blue-50 border border-blue-100 rounded-xl flex items-center justify-between text-xs text-blue-800 font-medium">
-            <span>වීඩියෝව අතරමගදී ප්‍රශ්න අසනු ලැබේ. Forward Skip කිරීම තහනම් කර ඇත.</span>
+            <span>වීඩියෝව සම්පූර්ණයෙන්ම නරඹා අවසානයේ "Mark Video as Watched" ඔබන්න.</span>
             <span id="video-status-text" class="font-bold"></span>
         </div>
 
-        <!-- Mandatory "Mark Video as Watched" Button (Unlocks ONLY when video naturally ends) -->
+        <!-- Mandatory "Mark Video as Watched" Button -->
         <div class="flex justify-end pt-1">
             <button type="button" id="mark-watched-btn" disabled class="py-2.5 px-5 bg-stone-200 text-stone-400 font-semibold rounded-xl text-xs transition cursor-not-allowed flex items-center gap-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
@@ -107,12 +109,11 @@
 
     let course = null, quizzes = [], videoQs = [], steps = [], idx = 0, startedAt = null;
     let videoEnded = false;
-    let videoMarkedWatched = false; // 👈 Tracks if QAT confirmed watching
-    let maxWatchedTime = 0;         // 👈 Anti-skip tracker (highest legitimate playback timestamp)
+    let videoMarkedWatched = false;
+    let maxWatchedTime = 0;
     let checkpoints = [];
     let cpQuestionIndices = { 0: 0, 1: 0, 2: 0 };
 
-    // Timer Variables
     let timerInterval = null;
     let timeLeftSeconds = 0;
     let isQuizActive = false;
@@ -138,7 +139,7 @@
 
         const nextBtn = document.getElementById('next-btn');
 
-        // STRICT LOCK: On video step, Next button is DISABLED until video watched and button clicked!
+        // Video Step: Disable Next button until marked as watched
         if (s === 'video' && canSave && (course.video_url || course.drive_file_id || course.youtube_video_id)) {
             if (!videoMarkedWatched) {
                 nextBtn.disabled = true;
@@ -152,7 +153,6 @@
             nextBtn.classList.remove('opacity-40', 'cursor-not-allowed');
         }
 
-        // Start Quiz Countdown Timer
         if (s === 'final-quiz' && !isQuizActive) {
             isQuizActive = true;
             startQuizTimer(course.quiz_time_limit || 15);
@@ -171,7 +171,7 @@
             if (timeLeftSeconds <= 0) {
                 clearInterval(timerInterval);
                 timerEl.textContent = '⏱️ Time Expired!';
-                alert('⏳ කාල සීමාව අවසන් විය! (Time is up!) ඔබ තෝරාගත් පිළිතුරු ස්වයංක්‍රීයව Submit වේ.');
+                alert('⏳ කාල සීමාව අවසන් විය! ඔබ තෝරාගත් පිළිතුරු ස්වයංක්‍රීයව Submit වේ.');
                 submitQuiz(true);
                 return;
             }
@@ -190,10 +190,9 @@
     document.getElementById('back-btn').addEventListener('click', () => { if (idx > 0) { idx--; show(); } });
     
     document.getElementById('next-btn').addEventListener('click', () => {
-        // Enforce video watched check
         if (steps[idx] === 'video' && canSave && (course.video_url || course.drive_file_id || course.youtube_video_id)) {
             if (!videoEnded || !videoMarkedWatched) {
-                return alert('වීඩියෝව සම්පූර්ණයෙන් නරඹා අවසන් වී, ප්‍රශ්න වලට පිළිතුරු දී "Mark Video as Watched" බොත්තම Click කළ යුතුය.');
+                return alert('වීඩියෝව නරඹා "Mark Video as Watched" බොත්තම ඔබන්න.');
             }
         }
         if (steps[idx] === 'final-quiz') return submitQuiz(false);
@@ -215,7 +214,7 @@
             if (doneRecord && doneRecord.passed === true) {
                 if (!doneRecord.retake_allowed) {
                     document.getElementById('title').textContent = doneRecord.course_name || 'Course Completed';
-                    document.getElementById('retake-blocked-msg').innerHTML = `ඔබ <b>${doneRecord.complete_date || 'මීට පෙර'}</b> දින ලකුණු <b>${doneRecord.score || 0} / ${doneRecord.total_marks || 0}</b> ක් ලබාගනිමින් මෙම පාඨමාලාව සාර්ථකව සම්පූර්ණ කර ඇත. නැවත හැදෑරීම සඳහා ඔබගේ දෙපාර්තමේන්තුවේ Super Admin ගේ අවසරය අවශ්‍ය වේ.`;
+                    document.getElementById('retake-blocked-msg').innerHTML = `ඔබ <b>${doneRecord.complete_date || 'මීට පෙර'}</b> දින ලකුණු <b>${doneRecord.score || 0} / ${doneRecord.total_marks || 0}</b> ක් ලබාගනිමින් මෙම පාඨමාලාව සාර්ථකව සම්පූර්ණ කර ඇත.`;
                     document.getElementById('retake-blocked-box').classList.remove('hidden');
                     document.getElementById('nav').classList.add('hidden');
                     return;
@@ -245,7 +244,7 @@
         steps.push('final-quiz', 'result');
 
         const assignedDept = deptFromUrl || course.department || 'Training';
-        const assignedAdmin = refAdminFromUrl || course.created_by || 'Admin';
+        const assignedAdmin = refAdminFromUrl || course.created_by || 'Trainer';
 
         document.getElementById('badge').textContent = `Format: ${f} | ${assignedDept} Dept`;
         document.getElementById('title').textContent = data.name || 'Unnamed Course';
@@ -273,28 +272,73 @@
     }
 
     /* =========================================================================
-       INTERACTIVE VIDEO ENGINE: ANTI-SKIP LOCK & REWIND CONTROLLER
+       SMART VIDEO LOADER (CRITICAL FIX FOR GOOGLE DRIVE BLACK SCREEN)
        ========================================================================= */
     function setupVideo(data) {
         const box = document.getElementById('video-box');
         checkpoints = videoQs.filter(p => p.pause_time != null).sort((a, b) => a.pause_time - b.pause_time);
 
-        const src = data.video_url || (data.drive_file_id ? `https://drive.google.com/file/d/${data.drive_file_id}/preview` : '');
-        if (!src && !data.youtube_video_id) { 
+        // Helper to extract Google Drive File ID
+        function getDriveId(val) {
+            if (!val) return '';
+            const m = String(val).match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
+            if (m) return m[1];
+            const m2 = String(val).match(/id=([a-zA-Z0-9_-]+)/);
+            if (m2) return m2[1];
+            if (/^[a-zA-Z0-9_-]{20,}$/.test(String(val).trim())) return String(val).trim();
+            return '';
+        }
+
+        const driveId = getDriveId(data.drive_file_id) || getDriveId(data.video_url);
+
+        // 1. GOOGLE DRIVE VIDEO ➔ Plays cleanly via Embed Player (Never fails or turns black!)
+        if (driveId) {
+            box.innerHTML = `
+                <iframe src="https://drive.google.com/file/d/${driveId}/preview" class="w-full h-full rounded-xl" allow="autoplay; fullscreen" allowfullscreen frameborder="0"></iframe>
+            `;
+
+            // Enable "Mark Video as Watched"
+            const markBtn = document.getElementById('mark-watched-btn');
+            const markBtnText = document.getElementById('mark-watched-btn-text');
+            if (markBtn) {
+                markBtn.disabled = false;
+                markBtn.className = 'py-2.5 px-5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl text-xs transition shadow-sm flex items-center gap-2 cursor-pointer animate-pulse';
+                if (markBtnText) markBtnText.textContent = 'Mark Video as Watched (Click after watching)';
+            }
+            videoEnded = true;
+            return;
+        }
+
+        // 2. YOUTUBE VIDEO
+        if (data.youtube_video_id) {
+            box.innerHTML = `
+                <iframe src="https://www.youtube.com/embed/${esc(data.youtube_video_id)}?enablejsapi=1" class="w-full h-full rounded-xl" allowfullscreen frameborder="0"></iframe>
+            `;
+            videoEnded = true;
+            const markBtn = document.getElementById('mark-watched-btn');
+            if (markBtn) {
+                markBtn.disabled = false;
+                markBtn.className = 'py-2.5 px-5 bg-emerald-600 text-white font-semibold rounded-xl text-xs cursor-pointer';
+            }
+            return;
+        }
+
+        // 3. DIRECT MP4 / WEBM (Supabase Storage) ➔ Plays in HTML5 Video Tag with Pause Points
+        const src = data.video_url;
+        if (!src) { 
             box.textContent = 'වීඩියෝවක් අමුණා නැත.'; 
             videoEnded = true; 
             videoMarkedWatched = true;
             return; 
         }
 
-        // controlsList="nodownload noplaybackrate" prevents downloading and speed alterations
         box.innerHTML = `
-            <video id="player" class="w-full h-full" controls controlsList="nodownload noplaybackrate" playsinline src="${esc(src)}"></video>
+            <video id="player" class="w-full h-full rounded-xl" controls controlsList="nodownload noplaybackrate" playsinline src="${esc(src)}"></video>
             <div id="cp-overlay" class="hidden absolute inset-0 bg-white/95 backdrop-blur-sm z-30 overflow-y-auto p-6 flex flex-col justify-center"></div>
         `;
         const v = document.getElementById('player');
 
-        // 1. Strict Playback Rate Lockdown (Disallow Fast-Forward Extensions)
+        // Playback rate lock
         v.addEventListener('ratechange', () => {
             if (canSave && v.playbackRate > 1.25) {
                 v.playbackRate = 1.0;
@@ -302,16 +346,13 @@
             }
         });
 
-        // 2. Strict Anti-Skip Forward Protection
+        // Anti-skip time tracking
         v.addEventListener('timeupdate', () => {
             if (!v.seeking) {
-                // Legitimate continuous playback progress
                 if (v.currentTime > maxWatchedTime && v.currentTime - maxWatchedTime < 2) {
                     maxWatchedTime = v.currentTime;
                 }
             }
-
-            // Trigger pause points
             checkpoints.forEach((cp, ci) => {
                 if (!cp.passed && v.currentTime >= cp.pause_time && !cp.active) {
                     triggerCheckpoint(v, cp, ci);
@@ -319,11 +360,11 @@
             });
         });
 
-        // 3. Prevent Dragging / Seeking Forward past legitimate watched timestamp
+        // Snap back if user tries to skip forward
         v.addEventListener('seeking', () => {
             if (canSave) {
                 if (v.currentTime > maxWatchedTime + 0.5) {
-                    v.currentTime = maxWatchedTime; // Snap back immediately!
+                    v.currentTime = maxWatchedTime;
                     const statusText = document.getElementById('video-status-text');
                     if (statusText) {
                         statusText.textContent = '⚠️ Forward Skip තහනම්! වීඩියෝව සම්පූර්ණයෙන්ම නැරඹිය යුතුය.';
@@ -334,31 +375,37 @@
             }
         });
 
-        // 4. Video Ended Listener (All checkpoints must be cleared)
         v.addEventListener('ended', () => {
             const allPassed = checkpoints.every(c => c.passed);
             if (allPassed) {
                 videoEnded = true;
                 const markBtn = document.getElementById('mark-watched-btn');
                 const markBtnText = document.getElementById('mark-watched-btn-text');
-                
-                // UNLOCK "Mark Video as Watched" button
                 if (markBtn) {
                     markBtn.disabled = false;
                     markBtn.className = 'py-2.5 px-5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl text-xs transition shadow-sm flex items-center gap-2 cursor-pointer animate-bounce';
                     if (markBtnText) markBtnText.textContent = 'Mark Video as Watched (Click Here)';
                 }
+            }
+        });
 
-                const statusText = document.getElementById('video-status-text');
-                if (statusText) {
-                    statusText.textContent = '✓ වීඩියෝව සම්පූර්ණයි! "Mark Video as Watched" බොත්තම ඔබන්න.';
-                    statusText.className = 'font-bold text-emerald-600';
-                }
+        // Fallback error handler
+        v.addEventListener('error', () => {
+            box.innerHTML = `
+                <div class="text-center p-6 space-y-2 text-stone-300">
+                    <p class="text-xs text-rose-400">වීඩියෝව Load කිරීමේ ගැටලුවක් පවතී. කරුණාකර වීඩියෝ සබැඳිය පරීක්ෂා කරන්න.</p>
+                </div>
+            `;
+            videoEnded = true;
+            const markBtn = document.getElementById('mark-watched-btn');
+            if (markBtn) {
+                markBtn.disabled = false;
+                markBtn.className = 'py-2.5 px-5 bg-emerald-600 text-white rounded-xl text-xs cursor-pointer';
             }
         });
     }
 
-    // "Mark Video as Watched" Button Click Handler
+    // Mark as Watched Button Listener
     document.getElementById('mark-watched-btn').addEventListener('click', function() {
         if (!videoEnded) return;
 
@@ -436,34 +483,31 @@
                 cp.active = false;
 
                 if (ci === 0) {
-                    // Checkpoint 1 failed -> Rewind to start, reset maxWatchedTime
                     fb.textContent = '✗ වැරදියි! වීඩියෝව නැවත මුල සිට ආරම්භ වේ.';
                     fb.className = 'text-xs font-bold text-rose-600';
                     setTimeout(() => {
                         ov.classList.add('hidden');
                         v.currentTime = 0;
-                        maxWatchedTime = 0; // Rewind lock
+                        maxWatchedTime = 0;
                         v.play();
                     }, 1800);
                 } else if (ci === 1) {
-                    // Checkpoint 2 failed -> Rewind to Checkpoint 1 pause time
                     const prevTime = checkpoints[0]?.pause_time || 0;
                     fb.textContent = '✗ වැරදියි! වීඩියෝව පළමු Checkpoint එකෙන් නැවත ධාවනය වේ.';
                     fb.className = 'text-xs font-bold text-rose-600';
                     setTimeout(() => {
                         ov.classList.add('hidden');
                         v.currentTime = prevTime;
-                        maxWatchedTime = prevTime; // Rewind lock
+                        maxWatchedTime = prevTime;
                         v.play();
                     }, 1800);
                 } else {
-                    // Checkpoint 3 (End) failed -> Rewind to start
                     fb.textContent = '✗ වැරදියි! සම්පූර්ණ වීඩියෝව නැවත මුල සිට නැරඹිය යුතුය.';
                     fb.className = 'text-xs font-bold text-rose-600';
                     setTimeout(() => {
                         ov.classList.add('hidden');
                         v.currentTime = 0;
-                        maxWatchedTime = 0; // Rewind lock
+                        maxWatchedTime = 0;
                         v.play();
                     }, 1800);
                 }
