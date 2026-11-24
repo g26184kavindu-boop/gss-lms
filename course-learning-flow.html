@@ -116,6 +116,7 @@
     let lastValidTime = 0;
     let checkpoints = [];
     let cpQuestionIndices = { 0: 0, 1: 0, 2: 0 };
+    let videoKeyHandler = null;
 
     // Timer Variables
     let timerInterval = null;
@@ -134,6 +135,10 @@
     function show() {
         document.querySelectorAll('[id^="step-"]').forEach(el => el.classList.add('hidden'));
         const s = steps[idx];
+        if (s !== 'video') {
+            const p = document.getElementById('player');
+            if (p && !p.paused) try { p.pause(); } catch (e) {}
+        }
         document.getElementById('step-' + s).classList.remove('hidden');
         const last = s === 'result';
         document.getElementById('nav').classList.toggle('hidden', last);
@@ -285,10 +290,14 @@
     }
 
     /* =========================================================================
-       100% BULLETPROOF CUSTOM VIDEO PLAYER (NO TIMELINE SLIDER = NO SKIPPING!)
+       100% BULLETPROOF CUSTOM VIDEO PLAYER (NO SEEK BAR = NO SKIPPING!)
        ========================================================================= */
     function setupVideo(data) {
         const box = document.getElementById('video-box');
+        if (videoKeyHandler) {
+            window.removeEventListener('keydown', videoKeyHandler, true);
+            videoKeyHandler = null;
+        }
         checkpoints = videoQs.filter(p => p.pause_time != null).sort((a, b) => a.pause_time - b.pause_time);
 
         function getDriveId(val) {
@@ -301,155 +310,212 @@
             return '';
         }
 
-        const driveId = getDriveId(data.drive_file_id) || getDriveId(data.video_url);
+        const rawDriveId = getDriveId(data.drive_file_id) || getDriveId(data.video_url);
+        const driveId = (rawDriveId && !String(rawDriveId).startsWith('drv_')) ? rawDriveId : '';
+        const driveApiKey = (window.LMS?.config && window.LMS.config.driveApiKey) || '';
 
-        // Resolve Direct Video Source or Drive Source
-        let src = data.video_url || '';
+        // Direct MP4 / Cloud Storage URL or Google Drive API stream
+        let src = '';
         if (driveId) {
-            // High-reliability Google Drive direct streaming URL
-            src = `https://lh3.googleusercontent.com/d/${driveId}`;
+            if (driveApiKey) {
+                src = `https://www.googleapis.com/drive/v3/files/${driveId}?alt=media&key=${encodeURIComponent(driveApiKey)}`;
+            } else if (data.video_url && !/drive\.google\.com/i.test(data.video_url)) {
+                src = data.video_url;
+            }
+        } else if (data.video_url) {
+            src = data.video_url;
         }
 
-        if (!src && !data.youtube_video_id) { 
-            box.textContent = 'වීඩියෝවක් අමුණා නැත.'; 
+        function renderDriveFallback() {
+            box.innerHTML = `
+                <iframe src="https://drive.google.com/file/d/${driveId}/preview" class="w-full h-full rounded-xl" allow="autoplay; fullscreen" allowfullscreen frameborder="0"></iframe>
+                <div class="absolute top-0 right-0 w-14 h-14 z-20" title="Pop-out disabled"></div>
+            `;
+            let elapsedSec = 0;
+            const reqSec = 60;
+            const timer = setInterval(() => {
+                elapsedSec++;
+                if (elapsedSec >= reqSec) {
+                    clearInterval(timer);
+                    onVideoFinished();
+                }
+            }, 1000);
+        }
+
+        if (!src && !driveId && !data.youtube_video_id) {
+            box.textContent = 'වීඩියෝවක් අමුණා නැත.';
             onVideoFinished();
-            return; 
+            return;
+        }
+
+        if (!src && driveId) {
+            renderDriveFallback();
+            return;
         }
 
         // =====================================================================
-        // CUSTOM HTML5 VIDEO PLAYER (SLIDER ELIMINATED: ZERO FORWARD SKIPPING!)
+        // CUSTOM HTML5 VIDEO PLAYER (NO SEEK BAR: PLAY/PAUSE, VOLUME, FULLSCREEN ONLY)
         // =====================================================================
         box.innerHTML = `
-            <video id="player" class="w-full h-full object-contain cursor-pointer" playsinline src="${esc(src)}"></video>
+            <video id="player" class="w-full h-full object-contain cursor-pointer" playsinline disablePictureInPicture controlsList="nodownload noplaybackrate" preload="metadata" src="${esc(src)}"></video>
+            <div id="v-center-play" class="absolute inset-0 flex items-center justify-center bg-black/30 cursor-pointer transition-opacity z-[15]">
+                <div class="w-16 h-16 rounded-full bg-blue-600/90 hover:bg-blue-600 text-white flex items-center justify-center shadow-lg transition transform hover:scale-105">
+                    <svg class="w-8 h-8 ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                </div>
+            </div>
             <div id="cp-overlay" class="hidden absolute inset-0 bg-white/95 backdrop-blur-sm z-30 overflow-y-auto p-6 flex flex-col justify-center"></div>
 
-            <!-- Custom Non-Seekable Controls Bar -->
-            <div id="custom-controls" class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/85 via-black/50 to-transparent p-3 pt-6 z-20 flex flex-col gap-2">
-                <!-- Visual-Only Progress Bar (pointer-events-none completely blocks clicking & dragging!) -->
-                <div class="w-full h-1.5 bg-white/25 rounded-full overflow-hidden select-none pointer-events-none">
-                    <div id="video-progress-fill" class="h-full bg-blue-500 w-0 transition-all duration-150"></div>
+            <!-- Custom Controls Bar (No Seek Bar) -->
+            <div id="custom-controls" class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent px-4 py-3 z-20 flex items-center justify-between text-white text-xs select-none">
+                <div class="flex items-center gap-3">
+                    <button type="button" id="ctrl-play-btn" title="Play / Pause" class="hover:text-blue-400 transition p-1.5 rounded-lg hover:bg-white/10 focus:outline-none">
+                        <svg id="ctrl-play-icon" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                        <svg id="ctrl-pause-icon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                    </button>
+                    <div class="flex items-center gap-1 font-mono text-[11px] text-stone-200 tabular-nums">
+                        <span id="ctrl-cur-time">00:00</span>
+                        <span>/</span>
+                        <span id="ctrl-dur-time">00:00</span>
+                    </div>
                 </div>
 
-                <!-- Custom Buttons Row -->
-                <div class="flex items-center justify-between text-white text-xs select-none">
-                    <div class="flex items-center gap-3">
-                        <button type="button" id="ctrl-play-btn" class="hover:text-blue-400 transition p-1 focus:outline-none">
-                            <svg id="ctrl-play-icon" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                            <svg id="ctrl-pause-icon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-                        </button>
-                        <div class="flex items-center gap-1 font-mono text-[11px] text-stone-300">
-                            <span id="ctrl-cur-time">00:00</span>
-                            <span>/</span>
-                            <span id="ctrl-dur-time">00:00</span>
-                        </div>
-                    </div>
-
-                    <div class="flex items-center gap-3">
-                        <button type="button" id="ctrl-mute-btn" class="hover:text-blue-400 transition p-1 focus:outline-none">
+                <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-1.5">
+                        <button type="button" id="ctrl-mute-btn" title="Mute / Unmute" class="hover:text-blue-400 transition p-1.5 rounded-lg hover:bg-white/10 focus:outline-none">
                             <svg id="ctrl-vol-icon" class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
                         </button>
-                        <button type="button" id="ctrl-fullscreen-btn" class="hover:text-blue-400 transition p-1 focus:outline-none">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
-                        </button>
+                        <input type="range" id="ctrl-vol-range" min="0" max="1" step="0.05" value="1" class="w-16 sm:w-20 accent-blue-500 cursor-pointer h-1.5" aria-label="Volume">
                     </div>
+                    <button type="button" id="ctrl-fullscreen-btn" title="Fullscreen" class="hover:text-blue-400 transition p-1.5 rounded-lg hover:bg-white/10 focus:outline-none">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+                    </button>
                 </div>
             </div>
         `;
 
         const v = document.getElementById('player');
+        const centerPlay = document.getElementById('v-center-play');
         const playBtn = document.getElementById('ctrl-play-btn');
         const playIcon = document.getElementById('ctrl-play-icon');
         const pauseIcon = document.getElementById('ctrl-pause-icon');
         const curTimeEl = document.getElementById('ctrl-cur-time');
         const durTimeEl = document.getElementById('ctrl-dur-time');
-        const progressFill = document.getElementById('video-progress-fill');
         const muteBtn = document.getElementById('ctrl-mute-btn');
+        const volIcon = document.getElementById('ctrl-vol-icon');
+        const volRange = document.getElementById('ctrl-vol-range');
         const fsBtn = document.getElementById('ctrl-fullscreen-btn');
 
         function fmtTime(sec) {
             if (isNaN(sec) || sec < 0) return '00:00';
-            const m = Math.floor(sec / 60);
-            const s = Math.floor(sec % 60);
-            return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+            sec = Math.floor(sec);
+            const h = Math.floor(sec / 3600);
+            const m = Math.floor((sec % 3600) / 60);
+            const s = sec % 60;
+            return h > 0
+                ? `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+                : `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
         }
 
-        // Toggle Play / Pause
+        function syncPlayUI() {
+            const paused = v.paused || v.ended;
+            playIcon.classList.toggle('hidden', !paused);
+            pauseIcon.classList.toggle('hidden', paused);
+            centerPlay.classList.toggle('opacity-0', !paused);
+            centerPlay.classList.toggle('pointer-events-none', !paused);
+        }
+
+        function syncVolUI() {
+            const muted = v.muted || v.volume === 0;
+            muteBtn.classList.toggle('text-rose-400', muted);
+            volIcon.innerHTML = muted
+                ? '<path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>'
+                : '<path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>';
+        }
+
         function togglePlay() {
-            if (v.paused || v.ended) {
-                v.play();
-                playIcon.classList.add('hidden');
-                pauseIcon.classList.remove('hidden');
-            } else {
-                v.pause();
-                playIcon.classList.remove('hidden');
-                pauseIcon.classList.add('hidden');
-            }
+            const ov = document.getElementById('cp-overlay');
+            if (ov && !ov.classList.contains('hidden')) return;
+            if (v.paused || v.ended) v.play().catch(() => {});
+            else v.pause();
         }
 
+        v.addEventListener('play', syncPlayUI);
+        v.addEventListener('pause', syncPlayUI);
         v.addEventListener('click', togglePlay);
+        centerPlay.addEventListener('click', togglePlay);
         playBtn.addEventListener('click', togglePlay);
+        v.addEventListener('dblclick', e => e.preventDefault());
+        v.addEventListener('contextmenu', e => e.preventDefault());
 
-        // Mute / Unmute
         muteBtn.addEventListener('click', () => {
             v.muted = !v.muted;
-            muteBtn.classList.toggle('text-rose-400', v.muted);
+            volRange.value = v.muted ? 0 : (v.volume || 1);
+            syncVolUI();
         });
 
-        // Fullscreen
+        volRange.addEventListener('input', e => {
+            const val = parseFloat(e.target.value);
+            v.volume = val;
+            v.muted = val === 0;
+            syncVolUI();
+        });
+
         fsBtn.addEventListener('click', () => {
-            if (!document.fullscreenElement) box.requestFullscreen();
-            else document.exitFullscreen();
+            if (!document.fullscreenElement) box.requestFullscreen().catch(() => {});
+            else document.exitFullscreen().catch(() => {});
         });
 
-        // Block Keyboard Arrow Seeking (Right Arrow, 'L', PageUp)
-        window.addEventListener('keydown', (e) => {
-            if (steps[idx] === 'video') {
-                if (e.key === 'ArrowRight' || e.key === 'PageUp' || e.key === 'l' || e.key === 'L') {
-                    e.preventDefault();
-                    showSkipWarning();
-                }
-                if (e.code === 'Space' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
-                    e.preventDefault();
-                    togglePlay();
-                }
+        // Block Keyboard Arrow Keys, J/K/L, PageUp/Down, Home/End, 0-9, Speed keys (< >)
+        videoKeyHandler = (e) => {
+            if (steps[idx] !== 'video') return;
+            const tag = e.target && e.target.tagName;
+            if (tag === 'INPUT' && e.target.type !== 'range') return;
+            if (tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+            const blockedCodes = [
+                'ArrowRight', 'ArrowLeft', 'ArrowUp', 'ArrowDown',
+                'PageUp', 'PageDown', 'Home', 'End',
+                'KeyL', 'KeyJ', 'KeyK', 'Period', 'Comma'
+            ];
+            const isDigit = /^Digit[0-9]$/.test(e.code) || /^Numpad[0-9]$/.test(e.code);
+
+            if (blockedCodes.includes(e.code) || isDigit) {
+                e.preventDefault();
+                e.stopPropagation();
+                showSkipWarning();
+            } else if (e.code === 'Space') {
+                e.preventDefault();
+                togglePlay();
             }
-        });
+        };
+        window.addEventListener('keydown', videoKeyHandler, true);
 
-        // Lock Playback Rate (No 2x, 16x speed hacks)
+        // Strictly Lock Playback Rate to 1.0x (Blocks 1.5x, 2x, etc.)
         v.addEventListener('ratechange', () => {
-            if (v.playbackRate > 1.25) {
+            if (v.playbackRate !== 1 || v.defaultPlaybackRate !== 1) {
                 v.playbackRate = 1.0;
+                v.defaultPlaybackRate = 1.0;
                 alert('වීඩියෝව වේගවත් කර (Fast Forward) නැරඹීම තහනම් කර ඇත.');
             }
         });
 
-        // Metadata loaded: set total duration
         v.addEventListener('loadedmetadata', () => {
             durTimeEl.textContent = fmtTime(v.duration);
         });
 
-        // =====================================================================
-        // STRICT INCREMENTAL TIME TRACKING & CHECKPOINT ENGINE
-        // =====================================================================
+        // Strict Incremental Time Tracking & Checkpoint Engine
         v.addEventListener('timeupdate', () => {
+            if (v.playbackRate !== 1) v.playbackRate = 1.0;
             curTimeEl.textContent = fmtTime(v.currentTime);
-
-            // Update non-clickable progress bar
-            if (v.duration > 0) {
-                const pct = (v.currentTime / v.duration) * 100;
-                progressFill.style.width = `${pct}%`;
-            }
 
             const diff = v.currentTime - lastValidTime;
 
-            // Natural continuous playback check
-            if (diff > 0 && diff <= 0.6) {
+            if (!v.seeking && diff > 0 && diff <= 1.5) {
                 lastValidTime = v.currentTime;
                 if (v.currentTime > maxWatchedTime) {
                     maxWatchedTime = v.currentTime;
                 }
-            } else if (v.currentTime > maxWatchedTime + 0.15) {
-                // ILLEGAL JUMP DETECTED -> INSTANT SNAP BACK!
+            } else if (v.currentTime > maxWatchedTime + 1.5) {
                 v.currentTime = maxWatchedTime;
                 showSkipWarning();
                 return;
@@ -457,56 +523,49 @@
                 lastValidTime = v.currentTime;
             }
 
-            // Checkpoints triggering
-            checkpoints.forEach((cp, ci) => {
+            // Trigger Checkpoints & prevent skipping past unpassed checkpoints
+            for (let ci = 0; ci < checkpoints.length; ci++) {
+                const cp = checkpoints[ci];
                 if (!cp.passed && v.currentTime >= cp.pause_time && !cp.active) {
                     triggerCheckpoint(v, cp, ci);
+                    break;
                 }
-            });
+            }
         });
 
         v.addEventListener('seeking', () => {
-            if (v.currentTime > maxWatchedTime + 0.15) {
+            if (v.currentTime > maxWatchedTime + 0.3) {
                 v.currentTime = maxWatchedTime;
                 showSkipWarning();
+                return;
+            }
+            const pendingCp = checkpoints.find(cp => !cp.passed);
+            if (pendingCp && v.currentTime > pendingCp.pause_time) {
+                v.currentTime = Math.max(pendingCp.pause_time - 0.1, 0);
             }
         });
 
         v.addEventListener('seeked', () => {
-            if (v.currentTime > maxWatchedTime + 0.15) {
+            if (v.currentTime > maxWatchedTime + 0.3) {
                 v.currentTime = maxWatchedTime;
             }
         });
 
-        // =====================================================================
-        // NATIVE ENDED EVENT: FIRES ONLY WHEN VIDEO GENUINELY REACHES THE END!
-        // =====================================================================
         v.addEventListener('ended', () => {
-            // Extra check: must have reached at least 99% of total duration
+            syncPlayUI();
+            if (v.duration > 0 && maxWatchedTime < v.duration - 2) {
+                v.currentTime = maxWatchedTime;
+                v.play().catch(() => {});
+                showSkipWarning();
+                return;
+            }
             if (v.duration > 0 && v.currentTime >= v.duration - 0.5) {
-                playIcon.classList.remove('hidden');
-                pauseIcon.classList.add('hidden');
                 onVideoFinished();
             }
         });
 
-        // Drive fallback if direct lh3 fails
         v.addEventListener('error', () => {
-            if (driveId) {
-                box.innerHTML = `
-                    <iframe src="https://drive.google.com/file/d/${driveId}/preview" class="w-full h-full rounded-xl" allow="autoplay; fullscreen" allowfullscreen frameborder="0"></iframe>
-                `;
-                // For iframe embed: only unlocks after genuinely watching elapsed duration
-                let elapsedSec = 0;
-                const reqSec = 60;
-                const timer = setInterval(() => {
-                    elapsedSec++;
-                    if (elapsedSec >= reqSec) {
-                        clearInterval(timer);
-                        onVideoFinished();
-                    }
-                }, 1000);
-            }
+            if (driveId) renderDriveFallback();
         });
     }
 
