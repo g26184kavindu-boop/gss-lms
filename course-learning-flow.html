@@ -45,12 +45,21 @@
         <p id="preview-note" class="hidden text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3 font-medium">Preview Mode: Admin / Super Admin ගේ ලකුණු සටහන් නොවේ.</p>
     </div>
 
-    <!-- Step 2: Interactive Video with Mastery Pause Rewind -->
+    <!-- Step 2: Interactive Video with Mastery Pause Rewind & Anti-Skip Engine -->
     <div id="step-video" class="hidden space-y-4">
         <div id="video-box" class="relative bg-black rounded-xl overflow-hidden aspect-video flex items-center justify-center text-stone-400 text-sm shadow-inner"></div>
+        
         <div class="p-3 bg-blue-50 border border-blue-100 rounded-xl flex items-center justify-between text-xs text-blue-800 font-medium">
-            <span>වීඩියෝව අතරමගදී ප්‍රශ්න අසනු ලැබේ. නිවැරදි පිළිතුර ලබා දීමෙන් පමණක් ඉදිරියට Play වේ.</span>
+            <span>වීඩියෝව අතරමගදී ප්‍රශ්න අසනු ලැබේ. Forward Skip කිරීම තහනම් කර ඇත.</span>
             <span id="video-status-text" class="font-bold"></span>
+        </div>
+
+        <!-- Mandatory "Mark Video as Watched" Button (Unlocks ONLY when video naturally ends) -->
+        <div class="flex justify-end pt-1">
+            <button type="button" id="mark-watched-btn" disabled class="py-2.5 px-5 bg-stone-200 text-stone-400 font-semibold rounded-xl text-xs transition cursor-not-allowed flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                <span id="mark-watched-btn-text">Mark Video as Watched</span>
+            </button>
         </div>
     </div>
 
@@ -98,6 +107,8 @@
 
     let course = null, quizzes = [], videoQs = [], steps = [], idx = 0, startedAt = null;
     let videoEnded = false;
+    let videoMarkedWatched = false; // 👈 Tracks if QAT confirmed watching
+    let maxWatchedTime = 0;         // 👈 Anti-skip tracker (highest legitimate playback timestamp)
     let checkpoints = [];
     let cpQuestionIndices = { 0: 0, 1: 0, 2: 0 };
 
@@ -106,7 +117,6 @@
     let timeLeftSeconds = 0;
     let isQuizActive = false;
 
-    // Fisher-Yates Array Shuffle (Randomization)
     function shuffle(array) {
         const arr = [...array];
         for (let i = arr.length - 1; i > 0; i--) {
@@ -122,11 +132,27 @@
         document.getElementById('step-' + s).classList.remove('hidden');
         const last = s === 'result';
         document.getElementById('nav').classList.toggle('hidden', last);
-        document.getElementById('back-btn').classList.toggle('invisible', idx === 0 || s === 'final-quiz'); // Cannot go back during quiz
+        document.getElementById('back-btn').classList.toggle('invisible', idx === 0 || s === 'final-quiz');
         document.getElementById('next-btn').innerHTML = s === 'details' ? 'Start Learning &rarr;' : s === 'final-quiz' ? 'Submit Quiz &check;' : 'Next &rarr;';
         document.getElementById('progress').textContent = last ? '' : `Step ${idx + 1} / ${steps.length - 1}`;
 
-        // When entering Final Quiz -> START LIVE COUNTDOWN TIMER!
+        const nextBtn = document.getElementById('next-btn');
+
+        // STRICT LOCK: On video step, Next button is DISABLED until video watched and button clicked!
+        if (s === 'video' && canSave && (course.video_url || course.drive_file_id || course.youtube_video_id)) {
+            if (!videoMarkedWatched) {
+                nextBtn.disabled = true;
+                nextBtn.classList.add('opacity-40', 'cursor-not-allowed');
+            } else {
+                nextBtn.disabled = false;
+                nextBtn.classList.remove('opacity-40', 'cursor-not-allowed');
+            }
+        } else {
+            nextBtn.disabled = false;
+            nextBtn.classList.remove('opacity-40', 'cursor-not-allowed');
+        }
+
+        // Start Quiz Countdown Timer
         if (s === 'final-quiz' && !isQuizActive) {
             isQuizActive = true;
             startQuizTimer(course.quiz_time_limit || 15);
@@ -135,7 +161,6 @@
         window.scrollTo(0, 0);
     }
 
-    /* Countdown Timer Engine */
     function startQuizTimer(minutes) {
         timeLeftSeconds = minutes * 60;
         const timerEl = document.getElementById('quiz-timer-badge');
@@ -147,7 +172,7 @@
                 clearInterval(timerInterval);
                 timerEl.textContent = '⏱️ Time Expired!';
                 alert('⏳ කාල සීමාව අවසන් විය! (Time is up!) ඔබ තෝරාගත් පිළිතුරු ස්වයංක්‍රීයව Submit වේ.');
-                submitQuiz(true); // Auto-Submit
+                submitQuiz(true);
                 return;
             }
 
@@ -156,7 +181,6 @@
             const s = timeLeftSeconds % 60;
             timerEl.textContent = `⏱️ Time Left: ${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 
-            // Turn Red & Blink in last 2 minutes
             if (timeLeftSeconds <= 120) {
                 timerEl.className = 'px-3.5 py-1.5 bg-rose-100 text-rose-700 rounded-full font-mono text-xs font-bold border border-rose-300 animate-pulse';
             }
@@ -164,9 +188,13 @@
     }
 
     document.getElementById('back-btn').addEventListener('click', () => { if (idx > 0) { idx--; show(); } });
+    
     document.getElementById('next-btn').addEventListener('click', () => {
-        if (steps[idx] === 'video' && canSave && (course.video_url || course.drive_file_id || course.youtube_video_id) && !videoEnded) {
-            return alert('වීඩියෝව සම්පූර්ණයෙන් නරඹා ප්‍රශ්න වලට නිවැරදිව පිළිතුරු දිය යුතුය.');
+        // Enforce video watched check
+        if (steps[idx] === 'video' && canSave && (course.video_url || course.drive_file_id || course.youtube_video_id)) {
+            if (!videoEnded || !videoMarkedWatched) {
+                return alert('වීඩියෝව සම්පූර්ණයෙන් නරඹා අවසන් වී, ප්‍රශ්න වලට පිළිතුරු දී "Mark Video as Watched" බොත්තම Click කළ යුතුය.');
+            }
         }
         if (steps[idx] === 'final-quiz') return submitQuiz(false);
         if (steps[idx] === 'details') startedAt = new Date().toISOString().split('T')[0];
@@ -176,7 +204,6 @@
     async function loadCourse() {
         if (!courseId) { document.getElementById('title').textContent = 'Course ID not found!'; return; }
 
-        // Retake Verification
         if (canSave) {
             const { data: doneRecord } = await supabaseClient
                 .from('qat_completed_courses')
@@ -202,11 +229,10 @@
         if (error || !data) { document.getElementById('title').textContent = 'Failed to load course details.'; return; }
         
         course = data;
-        // Strip correct answers from in-memory objects to prevent Inspect Element leaks!
         const rawQuizzes = Array.isArray(data.final_quizzes) ? data.final_quizzes : [];
         quizzes = shuffle(rawQuizzes.map(q => {
             const sanitized = { ...q };
-            delete sanitized.answer; // 👈 Correct answer deleted from client memory!
+            delete sanitized.answer;
             return sanitized;
         }));
 
@@ -228,7 +254,7 @@
         
         document.getElementById('details-info').innerHTML = `
             <p>Department: <b class="text-blue-700">${esc(assignedDept)}</b></p>
-            <p>Created by Admin: <b class="font-mono text-stone-800">${esc(assignedAdmin)}</b></p>
+            <p>Created by Trainer: <b class="font-mono text-stone-800">${esc(assignedAdmin)}</b></p>
             <p>Quiz Questions: <b>${quizzes.length}</b> (Shuffled) | Total Marks: <b>${round2(total)}</b></p>
             <p>Time Limit: <b class="text-blue-700">${course.quiz_time_limit || 15} Minutes</b></p>
             <p>Pass Mark: <b>${Number(data.pass_percent) || 50}%</b></p>
@@ -246,65 +272,46 @@
         show();
     }
 
-    function renderIframeFallback(box, iframeSrc) {
-        box.innerHTML = `<iframe title="Course Video" src="${esc(iframeSrc)}" class="w-full h-full border-0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
-        const statusEl = document.getElementById('video-status-text');
-        if (statusEl) {
-            statusEl.innerHTML = `<button type="button" id="mark-watched-btn" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold transition">Mark Video Watched &check;</button>`;
-            document.getElementById('mark-watched-btn').addEventListener('click', function () {
-                videoEnded = true;
-                this.textContent = 'Watched ✓';
-                this.disabled = true;
-                this.className = 'px-3 py-1 bg-emerald-100 text-emerald-700 rounded-lg text-xs font-semibold';
-            });
-        }
-    }
-
-    function extractIframeUrl(data) {
-        if (data.youtube_video_id && !data.video_url) {
-            return `https://www.youtube.com/embed/${encodeURIComponent(data.youtube_video_id)}?rel=0`;
-        }
-        if (!data.video_url && data.drive_file_id) {
-            return `https://drive.google.com/file/d/${encodeURIComponent(data.drive_file_id)}/preview`;
-        }
-        const url = String(data.video_url || '').trim();
-        const driveMatch = url.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:.*&)?id=)([a-zA-Z0-9_-]+)/);
-        if (driveMatch) {
-            return `https://drive.google.com/file/d/${encodeURIComponent(driveMatch[1])}/preview`;
-        }
-        const ytMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{6,})/);
-        if (ytMatch) {
-            return `https://www.youtube.com/embed/${encodeURIComponent(ytMatch[1])}?rel=0`;
-        }
-        return null;
-    }
-
+    /* =========================================================================
+       INTERACTIVE VIDEO ENGINE: ANTI-SKIP LOCK & REWIND CONTROLLER
+       ========================================================================= */
     function setupVideo(data) {
         const box = document.getElementById('video-box');
         checkpoints = videoQs.filter(p => p.pause_time != null).sort((a, b) => a.pause_time - b.pause_time);
 
-        const iframeSrc = extractIframeUrl(data);
-        if (iframeSrc) {
-            renderIframeFallback(box, iframeSrc);
-            return;
+        const src = data.video_url || (data.drive_file_id ? `https://drive.google.com/file/d/${data.drive_file_id}/preview` : '');
+        if (!src && !data.youtube_video_id) { 
+            box.textContent = 'වීඩියෝවක් අමුණා නැත.'; 
+            videoEnded = true; 
+            videoMarkedWatched = true;
+            return; 
         }
 
-        const src = data.video_url || '';
-        if (!src) { box.textContent = 'වීඩියෝවක් අමුණා නැත.'; return; }
-
+        // controlsList="nodownload noplaybackrate" prevents downloading and speed alterations
         box.innerHTML = `
-            <video id="player" class="w-full h-full" controls controlsList="nodownload" playsinline src="${esc(src)}"></video>
+            <video id="player" class="w-full h-full" controls controlsList="nodownload noplaybackrate" playsinline src="${esc(src)}"></video>
             <div id="cp-overlay" class="hidden absolute inset-0 bg-white/95 backdrop-blur-sm z-30 overflow-y-auto p-6 flex flex-col justify-center"></div>
         `;
         const v = document.getElementById('player');
 
-        v.addEventListener('error', () => {
-            if (data.drive_file_id) {
-                renderIframeFallback(box, `https://drive.google.com/file/d/${encodeURIComponent(data.drive_file_id)}/preview`);
+        // 1. Strict Playback Rate Lockdown (Disallow Fast-Forward Extensions)
+        v.addEventListener('ratechange', () => {
+            if (canSave && v.playbackRate > 1.25) {
+                v.playbackRate = 1.0;
+                alert('වීඩියෝව වේගවත් කර (Fast Forward) නැරඹීම තහනම් කර ඇත.');
             }
         });
 
+        // 2. Strict Anti-Skip Forward Protection
         v.addEventListener('timeupdate', () => {
+            if (!v.seeking) {
+                // Legitimate continuous playback progress
+                if (v.currentTime > maxWatchedTime && v.currentTime - maxWatchedTime < 2) {
+                    maxWatchedTime = v.currentTime;
+                }
+            }
+
+            // Trigger pause points
             checkpoints.forEach((cp, ci) => {
                 if (!cp.passed && v.currentTime >= cp.pause_time && !cp.active) {
                     triggerCheckpoint(v, cp, ci);
@@ -312,15 +319,70 @@
             });
         });
 
+        // 3. Prevent Dragging / Seeking Forward past legitimate watched timestamp
+        v.addEventListener('seeking', () => {
+            if (canSave) {
+                if (v.currentTime > maxWatchedTime + 0.5) {
+                    v.currentTime = maxWatchedTime; // Snap back immediately!
+                    const statusText = document.getElementById('video-status-text');
+                    if (statusText) {
+                        statusText.textContent = '⚠️ Forward Skip තහනම්! වීඩියෝව සම්පූර්ණයෙන්ම නැරඹිය යුතුය.';
+                        statusText.className = 'font-bold text-rose-600 animate-pulse';
+                        setTimeout(() => { if (statusText) statusText.textContent = ''; }, 2500);
+                    }
+                }
+            }
+        });
+
+        // 4. Video Ended Listener (All checkpoints must be cleared)
         v.addEventListener('ended', () => {
             const allPassed = checkpoints.every(c => c.passed);
             if (allPassed) {
                 videoEnded = true;
-                const statusEl = document.getElementById('video-status-text');
-                if (statusEl) statusEl.textContent = 'Video Completed ✓';
+                const markBtn = document.getElementById('mark-watched-btn');
+                const markBtnText = document.getElementById('mark-watched-btn-text');
+                
+                // UNLOCK "Mark Video as Watched" button
+                if (markBtn) {
+                    markBtn.disabled = false;
+                    markBtn.className = 'py-2.5 px-5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl text-xs transition shadow-sm flex items-center gap-2 cursor-pointer animate-bounce';
+                    if (markBtnText) markBtnText.textContent = 'Mark Video as Watched (Click Here)';
+                }
+
+                const statusText = document.getElementById('video-status-text');
+                if (statusText) {
+                    statusText.textContent = '✓ වීඩියෝව සම්පූර්ණයි! "Mark Video as Watched" බොත්තම ඔබන්න.';
+                    statusText.className = 'font-bold text-emerald-600';
+                }
             }
         });
     }
+
+    // "Mark Video as Watched" Button Click Handler
+    document.getElementById('mark-watched-btn').addEventListener('click', function() {
+        if (!videoEnded) return;
+
+        videoMarkedWatched = true;
+        this.disabled = true;
+        this.className = 'py-2.5 px-5 bg-emerald-50 text-emerald-700 font-semibold rounded-xl text-xs border border-emerald-200 flex items-center gap-2 cursor-default';
+        this.innerHTML = `
+            <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            <span>✓ Video Marked as Watched</span>
+        `;
+
+        // UNLOCK NEXT BUTTON!
+        const nextBtn = document.getElementById('next-btn');
+        if (nextBtn) {
+            nextBtn.disabled = false;
+            nextBtn.classList.remove('opacity-40', 'cursor-not-allowed');
+        }
+
+        const statusText = document.getElementById('video-status-text');
+        if (statusText) {
+            statusText.textContent = '✓ තහවුරු විය. ඔබට දැන් "Next" ඔබා ඉදිරියට යා හැක.';
+            statusText.className = 'font-bold text-emerald-600';
+        }
+    });
 
     function triggerCheckpoint(v, cp, ci) {
         cp.active = true;
@@ -374,28 +436,34 @@
                 cp.active = false;
 
                 if (ci === 0) {
+                    // Checkpoint 1 failed -> Rewind to start, reset maxWatchedTime
                     fb.textContent = '✗ වැරදියි! වීඩියෝව නැවත මුල සිට ආරම්භ වේ.';
                     fb.className = 'text-xs font-bold text-rose-600';
                     setTimeout(() => {
                         ov.classList.add('hidden');
                         v.currentTime = 0;
+                        maxWatchedTime = 0; // Rewind lock
                         v.play();
                     }, 1800);
                 } else if (ci === 1) {
+                    // Checkpoint 2 failed -> Rewind to Checkpoint 1 pause time
                     const prevTime = checkpoints[0]?.pause_time || 0;
                     fb.textContent = '✗ වැරදියි! වීඩියෝව පළමු Checkpoint එකෙන් නැවත ධාවනය වේ.';
                     fb.className = 'text-xs font-bold text-rose-600';
                     setTimeout(() => {
                         ov.classList.add('hidden');
                         v.currentTime = prevTime;
+                        maxWatchedTime = prevTime; // Rewind lock
                         v.play();
                     }, 1800);
                 } else {
+                    // Checkpoint 3 (End) failed -> Rewind to start
                     fb.textContent = '✗ වැරදියි! සම්පූර්ණ වීඩියෝව නැවත මුල සිට නැරඹිය යුතුය.';
                     fb.className = 'text-xs font-bold text-rose-600';
                     setTimeout(() => {
                         ov.classList.add('hidden');
                         v.currentTime = 0;
+                        maxWatchedTime = 0; // Rewind lock
                         v.play();
                     }, 1800);
                 }
@@ -455,14 +523,10 @@
         }).join('');
     }
 
-    /* =========================================================================
-       SUBMIT QUIZ: 100% SERVER-SIDE EVALUATION & LEAK-PROOF SCORING
-       ========================================================================= */
     async function submitQuiz(autoSubmit = false) {
         clearInterval(timerInterval);
         document.getElementById('quiz-timer-badge')?.classList.add('hidden');
 
-        // Gather Student Answers mapping { "question_text": "A" }
         const studentAnswers = {};
         let missing = 0;
 
@@ -479,7 +543,6 @@
         if (!autoSubmit && missing > 0) {
             const proceed = confirm(`පිළිතුරු නොදුන් ප්‍රශ්න ${missing}ක් ඇත. ඔබගේ Quiz එක Submit කිරීමට අවශ්‍යද?`);
             if (!proceed) {
-                // Resume timer if user canceled
                 startQuizTimer(Math.max(1, Math.ceil(timeLeftSeconds / 60)));
                 return;
             }
@@ -489,11 +552,10 @@
         nextBtn.disabled = true;
         nextBtn.innerText = 'Evaluating Quiz...';
 
-        const refAdmin = refAdminFromUrl || course.created_by || 'Admin';
+        const refAdmin = refAdminFromUrl || course.created_by || 'Trainer';
         const courseDept = deptFromUrl || course.department || 'Training';
 
         try {
-            // CALL SERVER-SIDE RPC FUNCTION (Evaluation happens securely inside Database)
             const { data: result, error: rpcErr } = await supabaseClient.rpc('submit_secure_quiz', {
                 p_course_id: String(course.id),
                 p_qat_gid: String(session.gid),
@@ -517,7 +579,7 @@
 
             el.innerHTML += `
                 <p class="text-stone-700 mt-2">Score: <b>${result.score} / ${result.total_marks}</b> (${result.percent}%) | Pass Mark: <b>${result.pass_mark}%</b></p>
-                <p class="text-xs text-stone-500 mt-1">${passed ? 'ප්‍රතිඵලය සාර්ථකව පද්ධතියේ සටහන් විය.' : 'නැවත හැදෑරීම සඳහා ඔබගේ Super Admin ගේ අවසරය ලබාගන්න.'}</p>
+                <p class="text-xs text-stone-500 mt-1">${passed ? 'ප්‍රතිඵලය සාර්ථකව පද්ධතියේ සටහන් විය.' : 'නැවත හැදෑරීම සඳහා ඔබගේ Department Head ගේ අවසරය ලබාගන්න.'}</p>
                 <div class="flex gap-3 justify-center pt-4">
                     <a href="qat-dashboard.html" class="py-2.5 px-6 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-sm transition">Go to Dashboard</a>
                 </div>
